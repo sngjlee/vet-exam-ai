@@ -1,15 +1,18 @@
 // app/retry-wrong/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../../components/QuestionCard";
 import type { Question } from "../../lib/questions";
 import { RETRY_SESSION_KEY } from "../../lib/storage";
 import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
+import { useAttempts } from "../../lib/hooks/useAttempts";
 
 export default function RetryWrongPage() {
   const { deleteNote } = useWrongNotes();
+  const { logAttempt } = useAttempts();
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -38,6 +41,17 @@ export default function RetryWrongPage() {
     selectedAnswer: string;
     isCorrect: boolean;
   }) {
+    if (currentQuestion) {
+      void logAttempt({
+        sessionId: sessionIdRef.current,
+        questionId: currentQuestion.id,
+        category: currentQuestion.category,
+        selectedAnswer: payload.selectedAnswer,
+        correctAnswer: currentQuestion.answer,
+        isCorrect: payload.isCorrect,
+      });
+    }
+
     if (payload.isCorrect) {
       setScore((prev) => prev + 1);
       void deleteNote(payload.questionId);

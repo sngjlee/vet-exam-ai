@@ -81,8 +81,10 @@ export interface Database {
           id: string;           // uuid
           user_id: string;      // uuid — references profiles.id
           session_id: string;   // uuid — client-generated per quiz session
-          question_id: string;  // references questions.id
+          question_id: string;
+          category: string;
           selected_answer: string;
+          correct_answer: string;
           is_correct: boolean;
           answered_at: string;
         };
@@ -91,7 +93,9 @@ export interface Database {
           user_id: string;
           session_id: string;
           question_id: string;
+          category: string;
           selected_answer: string;
+          correct_answer: string;
           is_correct: boolean;
           answered_at?: string;
         };

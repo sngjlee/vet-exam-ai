@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../components/QuestionCard";
 import {
@@ -11,6 +11,7 @@ import {
 } from "../lib/questions";
 import type { WrongAnswerNote } from "../lib/types";
 import { useWrongNotes } from "../lib/hooks/useWrongNotes";
+import { useAttempts } from "../lib/hooks/useAttempts";
 
 const TOTAL_QUESTIONS = 5;
 
@@ -22,6 +23,9 @@ export default function Home() {
   const [score, setScore] = useState(0);
   const [started, setStarted] = useState(false);
   const { notes: wrongNotes, addNote } = useWrongNotes();
+  const { logAttempt } = useAttempts();
+  // One UUID per quiz session; refreshed each time startSession() is called.
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
 
   const currentQuestion = sessionQuestions[currentIndex];
   const finished = started && currentIndex >= sessionQuestions.length;
@@ -37,6 +41,7 @@ export default function Home() {
     const total = Math.min(TOTAL_QUESTIONS, pool.length);
     const newSession = createSessionQuestions(total, categoryFilter);
 
+    sessionIdRef.current = crypto.randomUUID();
     setSessionQuestions(newSession);
     setCurrentIndex(0);
     setScore(0);
@@ -49,6 +54,15 @@ export default function Home() {
     isCorrect: boolean;
   }) {
     if (!currentQuestion) return;
+
+    void logAttempt({
+      sessionId: sessionIdRef.current,
+      questionId: currentQuestion.id,
+      category: currentQuestion.category,
+      selectedAnswer: payload.selectedAnswer,
+      correctAnswer: currentQuestion.answer,
+      isCorrect: payload.isCorrect,
+    });
 
     if (payload.isCorrect) {
       setScore((prev) => prev + 1);

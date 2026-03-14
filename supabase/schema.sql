@@ -130,8 +130,10 @@ create table public.attempts (
   id              uuid        primary key default gen_random_uuid(),
   user_id         uuid        not null references public.profiles (id) on delete cascade,
   session_id      uuid        not null,
-  question_id     text        not null references public.questions (id),
+  question_id     text        not null,
+  category        text        not null,
   selected_answer text        not null,
+  correct_answer  text        not null,
   is_correct      boolean     not null,
   answered_at     timestamptz not null default now()
 );
