@@ -3,7 +3,11 @@
     "allow": [
       "Read(//c/Users/Seongju/.claude/**)",
       "Bash(cd:*)",
-      "Bash(supabase:*)"
+      "Bash(supabase:*)",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(tree:*)"
     ]
   }
 }
