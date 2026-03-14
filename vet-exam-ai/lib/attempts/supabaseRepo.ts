@@ -21,6 +21,6 @@ export class SupabaseAttemptsRepository {
       is_correct: payload.isCorrect,
     };
     const { error } = await this.supabase.from("attempts").insert(row);
-    if (error) console.error("attempt insert failed:", error);
+    if (error) console.error("attempt insert failed:", error.message, error.code, error.details);
   }
 }

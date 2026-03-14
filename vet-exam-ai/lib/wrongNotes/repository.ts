@@ -10,4 +10,17 @@ export interface WrongNotesRepository {
   upsert(note: WrongAnswerNote): Promise<void>;
   delete(questionId: string): Promise<void>;
   clearAll(): Promise<void>;
+  /** Returns notes whose next_review_at is now or in the past. */
+  getDue(): Promise<WrongAnswerNote[]>;
+  /**
+   * Update review metadata after a review attempt.
+   * @param currentReviewCount - the review_count value BEFORE this review
+   * Correct: increments review_count and schedules next interval.
+   * Incorrect: resets review_count to 0 and sets next_review_at to now.
+   */
+  updateReview(
+    questionId: string,
+    isCorrect: boolean,
+    currentReviewCount: number,
+  ): Promise<void>;
 }

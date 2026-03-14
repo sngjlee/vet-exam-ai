@@ -7,4 +7,8 @@ export type WrongAnswerNote = {
     correctAnswer: string;
     selectedAnswer: string;
     explanation: string;
+    // Spaced-repetition review metadata (optional — absent for guest/localStorage notes)
+    reviewCount?: number;
+    lastReviewedAt?: string | null;
+    nextReviewAt?: string | null;
   };

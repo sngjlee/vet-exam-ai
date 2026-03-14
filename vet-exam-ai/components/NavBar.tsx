@@ -28,6 +28,29 @@ export default function NavBar() {
             Wrong Notes
           </Link>
 
+          {!loading && user && (
+            <>
+              <Link
+                href="/my-stats"
+                className="text-neutral-400 hover:text-neutral-200"
+              >
+                My Stats
+              </Link>
+              <Link
+                href="/practice/weakest"
+                className="text-neutral-400 hover:text-neutral-200"
+              >
+                Practice
+              </Link>
+              <Link
+                href="/review"
+                className="text-neutral-400 hover:text-neutral-200"
+              >
+                Review
+              </Link>
+            </>
+          )}
+
           {!loading && (
             user ? (
               <>

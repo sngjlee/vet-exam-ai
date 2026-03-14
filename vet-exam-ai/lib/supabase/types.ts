@@ -117,6 +117,9 @@ export interface Database {
           selected_answer: string;
           explanation: string;
           saved_at: string;
+          review_count: number;
+          last_reviewed_at: string | null;
+          next_review_at: string;
         };
         Insert: {
           id?: string;
@@ -129,10 +132,16 @@ export interface Database {
           selected_answer: string;
           explanation: string;
           saved_at?: string;
+          review_count?: number;
+          last_reviewed_at?: string | null;
+          next_review_at?: string;
         };
         Update: {
           selected_answer?: string;
           saved_at?: string;
+          review_count?: number;
+          last_reviewed_at?: string | null;
+          next_review_at?: string;
         };
         Relationships: [];
       };

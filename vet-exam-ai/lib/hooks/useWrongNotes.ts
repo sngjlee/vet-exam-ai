@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { WrongAnswerNote } from "../types";
 import { useAuth } from "./useAuth";
 import { resolveWrongNotesRepository } from "../wrongNotes/resolver";
+import { migrateGuestNotes } from "../wrongNotes/migrateGuestNotes";
 
 export function useWrongNotes() {
   const { user, loading: authLoading } = useAuth();
@@ -14,14 +15,20 @@ export function useWrongNotes() {
   const repo = useMemo(() => resolveWrongNotesRepository(user), [user]);
 
   // Load notes once auth state is resolved.
+  // On sign-in, migrate any guest localStorage notes first so they appear
+  // immediately in the same session rather than requiring a page refresh.
   useEffect(() => {
     if (authLoading) return;
     setLoading(true);
-    void repo.getAll().then((all) => {
+    void (async () => {
+      if (user) {
+        await migrateGuestNotes(user.id);
+      }
+      const all = await repo.getAll();
       setNotes(all);
       setLoading(false);
-    });
-  }, [repo, authLoading]);
+    })();
+  }, [repo, authLoading]); // repo already changes when user changes
 
   const addNote = useCallback(
     async (note: WrongAnswerNote) => {

@@ -39,4 +39,16 @@ export class LocalStorageWrongNotesRepository implements WrongNotesRepository {
   async clearAll(): Promise<void> {
     this.write([]);
   }
+
+  // Guests don't have review metadata — return all notes as due.
+  async getDue(): Promise<WrongAnswerNote[]> {
+    return this.getAll();
+  }
+
+  // No-op for guests — review metadata is not persisted in localStorage.
+  async updateReview(
+    _questionId: string,
+    _isCorrect: boolean,
+    _currentReviewCount: number,
+  ): Promise<void> {}
 }
