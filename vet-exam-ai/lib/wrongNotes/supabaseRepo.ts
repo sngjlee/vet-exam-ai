@@ -42,6 +42,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
   }
 
   async upsert(note: WrongAnswerNote): Promise<void> {
+    const now = new Date().toISOString();
     const row: WrongNoteInsert = {
       user_id: this.userId,
       question_id: note.questionId,
@@ -51,7 +52,13 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
       correct_answer: note.correctAnswer,
       selected_answer: note.selectedAnswer,
       explanation: note.explanation,
-      saved_at: new Date().toISOString(),
+      saved_at: now,
+      // Always reset review schedule when a question is answered wrong outside /review.
+      // On INSERT (new note): sets initial state.
+      // On UPDATE (re-wrong existing note): makes it due immediately again.
+      // last_reviewed_at is intentionally omitted so it is never touched here.
+      review_count: 0,
+      next_review_at: now,
     };
     const { error } = await this.supabase
       .from("wrong_notes")

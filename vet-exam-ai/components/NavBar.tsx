@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../lib/hooks/useAuth";
+import { useDueCountCtx } from "../lib/context/DueCountContext";
 
 export default function NavBar() {
   const { user, loading, signOut } = useAuth();
+  const dueCount = useDueCountCtx();
   const router = useRouter();
 
   async function handleSignOut() {
@@ -46,7 +48,7 @@ export default function NavBar() {
                 href="/review"
                 className="text-neutral-400 hover:text-neutral-200"
               >
-                Review
+                Review{dueCount > 0 && ` (${dueCount})`}
               </Link>
             </>
           )}

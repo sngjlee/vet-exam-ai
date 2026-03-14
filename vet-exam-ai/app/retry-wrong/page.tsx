@@ -10,7 +10,7 @@ import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 import { useAttempts } from "../../lib/hooks/useAttempts";
 
 export default function RetryWrongPage() {
-  const { deleteNote } = useWrongNotes();
+  const { addNote, deleteNote } = useWrongNotes();
   const { logAttempt } = useAttempts();
   const sessionIdRef = useRef<string>(crypto.randomUUID());
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
@@ -41,20 +41,31 @@ export default function RetryWrongPage() {
     selectedAnswer: string;
     isCorrect: boolean;
   }) {
-    if (currentQuestion) {
-      void logAttempt({
-        sessionId: sessionIdRef.current,
-        questionId: currentQuestion.id,
-        category: currentQuestion.category,
-        selectedAnswer: payload.selectedAnswer,
-        correctAnswer: currentQuestion.answer,
-        isCorrect: payload.isCorrect,
-      });
-    }
+    if (!currentQuestion) return;
+
+    void logAttempt({
+      sessionId: sessionIdRef.current,
+      questionId: currentQuestion.id,
+      category: currentQuestion.category,
+      selectedAnswer: payload.selectedAnswer,
+      correctAnswer: currentQuestion.answer,
+      isCorrect: payload.isCorrect,
+    });
 
     if (payload.isCorrect) {
       setScore((prev) => prev + 1);
       void deleteNote(payload.questionId);
+    } else {
+      // Reset review schedule so the note becomes due immediately in /review.
+      void addNote({
+        questionId: currentQuestion.id,
+        question: currentQuestion.question,
+        category: currentQuestion.category,
+        choices: currentQuestion.choices,
+        correctAnswer: currentQuestion.answer,
+        selectedAnswer: payload.selectedAnswer,
+        explanation: currentQuestion.explanation,
+      });
     }
   }
 

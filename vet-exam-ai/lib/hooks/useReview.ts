@@ -12,6 +12,10 @@ export function useReview() {
 
   const repo = useMemo(() => resolveWrongNotesRepository(user), [user]);
 
+  const refreshDue = useCallback(() => {
+    void repo.getDue().then((notes) => setDueNotes(notes));
+  }, [repo]);
+
   useEffect(() => {
     if (authLoading) return;
     setLoading(true);
@@ -28,13 +32,12 @@ export function useReview() {
       currentReviewCount: number,
     ) => {
       await repo.updateReview(questionId, isCorrect, currentReviewCount);
-      // Remove from the in-memory due list so the current session progresses.
-      // Incorrect answers get next_review_at = now in the DB and will reappear
-      // on the next session load.
+      // Remove from in-memory list so the session progresses.
+      // Re-fetch after the session ends gives accurate post-session state.
       setDueNotes((prev) => prev.filter((n) => n.questionId !== questionId));
     },
     [repo],
   );
 
-  return { dueNotes, loading, authLoading, user, submitReview };
+  return { dueNotes, loading, authLoading, user, submitReview, refreshDue };
 }

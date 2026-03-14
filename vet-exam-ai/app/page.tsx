@@ -12,6 +12,8 @@ import {
 import type { WrongAnswerNote } from "../lib/types";
 import { useWrongNotes } from "../lib/hooks/useWrongNotes";
 import { useAttempts } from "../lib/hooks/useAttempts";
+import { useAuth } from "../lib/hooks/useAuth";
+import { useDueCountCtx } from "../lib/context/DueCountContext";
 
 const TOTAL_QUESTIONS = 5;
 
@@ -24,6 +26,8 @@ export default function Home() {
   const [started, setStarted] = useState(false);
   const { notes: wrongNotes, addNote } = useWrongNotes();
   const { logAttempt } = useAttempts();
+  const { user, loading: authLoading } = useAuth();
+  const dueCount = useDueCountCtx();
   // One UUID per quiz session; refreshed each time startSession() is called.
   const sessionIdRef = useRef<string>(crypto.randomUUID());
 
@@ -98,6 +102,27 @@ export default function Home() {
           Veterinary board-style question practice
         </p>
       </div>
+
+      {!started && !authLoading && user && (
+        <section className="mb-4 flex items-center justify-between rounded-xl border border-neutral-700 px-5 py-4">
+          <div>
+            <p className="text-sm font-medium">Due for review</p>
+            {dueCount > 0 ? (
+              <p className="text-2xl font-bold">{dueCount}</p>
+            ) : (
+              <p className="text-sm text-neutral-400">No reviews due today</p>
+            )}
+          </div>
+          {dueCount > 0 && (
+            <Link
+              href="/review"
+              className="rounded-lg bg-white px-4 py-2 text-sm text-black"
+            >
+              Start Review
+            </Link>
+          )}
+        </section>
+      )}
 
       {!started && (
         <section className="rounded-xl border border-neutral-700 p-6">

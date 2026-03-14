@@ -1,7 +1,7 @@
 // app/review/page.tsx
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../../components/QuestionCard";
 import type { Question } from "../../lib/questions";
@@ -23,7 +23,7 @@ function noteToQuestion(note: WrongAnswerNote): Question {
 }
 
 export default function ReviewPage() {
-  const { dueNotes, loading, authLoading, user, submitReview } = useReview();
+  const { dueNotes, loading, authLoading, user, submitReview, refreshDue } = useReview();
   const { logAttempt } = useAttempts();
   const sessionIdRef = useRef<string>(crypto.randomUUID());
 
@@ -36,6 +36,13 @@ export default function ReviewPage() {
   const currentQuestion = sessionQuestions[currentIndex];
   const currentNote = sessionNotes[currentIndex];
   const finished = started && currentIndex >= sessionQuestions.length;
+
+  // Re-fetch due notes from DB when the session finishes so the summary
+  // and "Review Again" count reflect the actual current queue (including
+  // items answered wrong that are immediately due again).
+  useEffect(() => {
+    if (finished) refreshDue();
+  }, [finished, refreshDue]);
 
   function startSession() {
     const notes = dueNotes.slice(0, MAX_REVIEW);
@@ -180,18 +187,41 @@ export default function ReviewPage() {
       )}
 
       {finished && (
-        <section className="rounded-xl border border-neutral-700 p-6">
+        <section className="space-y-4 rounded-xl border border-neutral-700 p-6">
           <h2 className="text-2xl font-semibold">Review Complete</h2>
-          <p className="mt-2">
-            You answered {score} out of {sessionQuestions.length} correctly.
+
+          <div className="flex gap-6 text-sm">
+            <div>
+              <p className="text-neutral-400">Reviewed</p>
+              <p className="text-xl font-bold">{sessionQuestions.length}</p>
+            </div>
+            <div>
+              <p className="text-neutral-400">Correct</p>
+              <p className="text-xl font-bold text-green-400">{score}</p>
+            </div>
+            <div>
+              <p className="text-neutral-400">Incorrect</p>
+              <p className="text-xl font-bold text-red-400">
+                {sessionQuestions.length - score}
+              </p>
+            </div>
+          </div>
+
+          <p className="text-sm text-neutral-400">
+            {score === sessionQuestions.length
+              ? "All reviewed items were rescheduled."
+              : "Some items are due again now."}
           </p>
-          <div className="mt-4 flex gap-3">
-            <Link
-              href="/wrong-notes"
-              className="rounded-lg border border-neutral-600 px-4 py-2 hover:border-neutral-400"
-            >
-              Wrong Notes
-            </Link>
+
+          <div className="flex gap-3">
+            {dueNotes.length > 0 && (
+              <button
+                onClick={startSession}
+                className="rounded-lg border border-neutral-600 px-4 py-2 hover:border-neutral-400"
+              >
+                Review Again ({dueNotes.length})
+              </button>
+            )}
             <Link href="/" className="rounded-lg bg-white px-4 py-2 text-black">
               Back Home
             </Link>
