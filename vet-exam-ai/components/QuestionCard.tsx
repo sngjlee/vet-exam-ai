@@ -1,12 +1,19 @@
+// components/QuestionCard.tsx
 "use client";
 
 import { useState } from "react";
-import type { Question } from "../lib/ai";
+import type { Question } from "../lib/questions";
+
+type AnswerPayload = {
+  questionId: string;
+  selectedAnswer: string;
+  isCorrect: boolean;
+};
 
 type Props = {
   question: Question;
   onNext: () => void;
-  onAnswer: (isCorrect: boolean) => void;
+  onAnswer: (payload: AnswerPayload) => void;
 };
 
 export default function QuestionCard({ question, onNext, onAnswer }: Props) {
@@ -17,33 +24,35 @@ export default function QuestionCard({ question, onNext, onAnswer }: Props) {
 
   function handleSubmit() {
     if (!selected) return;
+
     setSubmitted(true);
-    onAnswer(isCorrect);
+
+    onAnswer({
+      questionId: question.id,
+      selectedAnswer: selected,
+      isCorrect,
+    });
   }
 
   return (
-    <div style={{ marginTop: 24, maxWidth: 700 }}>
-      <p><strong>Category:</strong> {question.category}</p>
-      <h2>{question.question}</h2>
+    <div className="rounded-xl border border-neutral-700 p-6">
+      <p className="mb-2 text-sm text-neutral-400">
+        Category: {question.category}
+      </p>
 
-      <div style={{ marginTop: 16 }}>
-        {question.choices.map((choice, index) => (
+      <h2 className="mb-4 text-xl font-semibold">{question.question}</h2>
+
+      <div className="space-y-3">
+        {question.choices.map((choice) => (
           <button
-            key={index}
+            key={choice}
             onClick={() => setSelected(choice)}
             disabled={submitted}
-            style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
-              marginBottom: 10,
-              padding: "12px 14px",
-              border: selected === choice ? "2px solid white" : "1px solid gray",
-              borderRadius: 8,
-              background: "transparent",
-              color: "white",
-              cursor: submitted ? "default" : "pointer",
-            }}
+            className={`block w-full rounded-lg border px-4 py-3 text-left transition ${
+              selected === choice
+                ? "border-white"
+                : "border-neutral-600 hover:border-neutral-400"
+            } ${submitted ? "cursor-default" : "cursor-pointer"}`}
           >
             {choice}
           </button>
@@ -51,18 +60,24 @@ export default function QuestionCard({ question, onNext, onAnswer }: Props) {
       </div>
 
       {!submitted && (
-        <button onClick={handleSubmit} style={{ marginTop: 12 }}>
+        <button
+          onClick={handleSubmit}
+          className="mt-5 rounded-lg bg-white px-4 py-2 text-black"
+        >
           Check Answer
         </button>
       )}
 
       {submitted && (
-        <div style={{ marginTop: 20 }}>
-          <p><strong>{isCorrect ? "Correct" : "Wrong"}</strong></p>
-          <p><strong>Answer:</strong> {question.answer}</p>
-          <p><strong>Explanation:</strong> {question.explanation}</p>
+        <div className="mt-5 space-y-3">
+          <p className="font-semibold">{isCorrect ? "Correct" : "Wrong"}</p>
+          <p>Answer: {question.answer}</p>
+          <p>Explanation: {question.explanation}</p>
 
-          <button onClick={onNext} style={{ marginTop: 12 }}>
+          <button
+            onClick={onNext}
+            className="rounded-lg bg-white px-4 py-2 text-black"
+          >
             Next Question
           </button>
         </div>

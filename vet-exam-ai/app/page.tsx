@@ -1,86 +1,230 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { generateQuestion, type Question } from "../lib/ai";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import QuestionCard from "../components/QuestionCard";
+import {
+  createSessionQuestions,
+  getCategories,
+  questions,
+  type Question,
+} from "../lib/questions";
+import type { WrongAnswerNote } from "../lib/types";
 
 const TOTAL_QUESTIONS = 5;
+const WRONG_NOTES_KEY = "vet-wrong-notes";
 
 export default function Home() {
-  const [question, setQuestion] = useState<Question | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [questionCount, setQuestionCount] = useState(0);
+  const categories = useMemo(() => getCategories(), []);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [finished, setFinished] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [wrongNotes, setWrongNotes] = useState<WrongAnswerNote[]>([]);
+  const [isWrongNotesLoaded, setIsWrongNotesLoaded] = useState(false);
 
-  async function loadQuestion() {
-    if (questionCount >= TOTAL_QUESTIONS) {
-      setFinished(true);
+  const currentQuestion = sessionQuestions[currentIndex];
+  const finished = started && currentIndex >= sessionQuestions.length;
+
+  useEffect(() => {
+    const saved = localStorage.getItem(WRONG_NOTES_KEY);
+
+    if (saved) {
+      try {
+        const parsed: WrongAnswerNote[] = JSON.parse(saved);
+        setWrongNotes(parsed);
+      } catch (error) {
+        console.error("Failed to parse wrong notes:", error);
+      }
+    }
+
+    setIsWrongNotesLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isWrongNotesLoaded) return;
+    localStorage.setItem(WRONG_NOTES_KEY, JSON.stringify(wrongNotes));
+  }, [wrongNotes, isWrongNotesLoaded]);
+
+  function startSession() {
+    const categoryFilter =
+      selectedCategory === "All" ? undefined : selectedCategory;
+
+    const pool = categoryFilter
+      ? questions.filter((q) => q.category === categoryFilter)
+      : questions;
+
+    const total = Math.min(TOTAL_QUESTIONS, pool.length);
+    const newSession = createSessionQuestions(total, categoryFilter);
+
+    setSessionQuestions(newSession);
+    setCurrentIndex(0);
+    setScore(0);
+    setStarted(true);
+  }
+
+  function handleAnswer(payload: {
+    questionId: string;
+    selectedAnswer: string;
+    isCorrect: boolean;
+  }) {
+    if (!currentQuestion) return;
+
+    if (payload.isCorrect) {
+      setScore((prev) => prev + 1);
       return;
     }
 
-    setLoading(true);
-    const q = await generateQuestion();
-    setQuestion(q);
-    setLoading(false);
-  }
+    const newWrongNote: WrongAnswerNote = {
+      questionId: currentQuestion.id,
+      question: currentQuestion.question,
+      category: currentQuestion.category,
+      choices: currentQuestion.choices,
+      correctAnswer: currentQuestion.answer,
+      selectedAnswer: payload.selectedAnswer,
+      explanation: currentQuestion.explanation,
+    };
 
-  function handleAnswer(isCorrect: boolean) {
-    if (isCorrect) {
-      setScore((prev) => prev + 1);
-    }
+    setWrongNotes((prev) => {
+      const alreadyExists = prev.some(
+        (note) => note.questionId === newWrongNote.questionId
+      );
+
+      if (alreadyExists) {
+        return prev.map((note) =>
+          note.questionId === newWrongNote.questionId ? newWrongNote : note
+        );
+      }
+
+      return [...prev, newWrongNote];
+    });
   }
 
   function handleNext() {
-    const nextCount = questionCount + 1;
-    setQuestionCount(nextCount);
-
-    if (nextCount >= TOTAL_QUESTIONS) {
-      setFinished(true);
-      setQuestion(null);
-      return;
-    }
-
-    loadQuestion();
+    setCurrentIndex((prev) => prev + 1);
   }
 
   function handleRestart() {
-    setScore(0);
-    setQuestionCount(0);
-    setFinished(false);
-    loadQuestion();
+    startSession();
   }
 
-  useEffect(() => {
-    loadQuestion();
-  }, []);
-
   return (
-    <main style={{ padding: 40 }}>
-      <h1>Veterinary Exam AI</h1>
-      <p>AI-generated veterinary board-style questions</p>
+    <main className="mx-auto max-w-3xl px-6 py-10">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">Veterinary Exam AI</h1>
+          <p className="text-neutral-400">
+            Veterinary board-style question practice
+          </p>
+        </div>
 
-      <div style={{ marginTop: 16 }}>
-        <p><strong>Progress:</strong> {questionCount} / {TOTAL_QUESTIONS}</p>
-        <p><strong>Score:</strong> {score}</p>
+        <Link
+          href="/wrong-notes"
+          className="rounded-lg border border-neutral-600 px-4 py-2 text-sm hover:border-neutral-400"
+        >
+          Wrong Notes
+        </Link>
       </div>
 
-      {loading && <p>Loading question...</p>}
+      {!started && (
+        <section className="rounded-xl border border-neutral-700 p-6">
+          <h2 className="mb-4 text-xl font-semibold">Start New Session</h2>
 
-      {!loading && !finished && question && (
-        <QuestionCard
-          question={question}
-          onAnswer={handleAnswer}
-          onNext={handleNext}
-        />
+          <label className="mb-2 block text-sm font-medium">
+            Select subject
+          </label>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="mb-4 w-full rounded-lg border border-neutral-600 bg-transparent px-3 py-2"
+          >
+            <option value="All">All</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={startSession}
+            className="rounded-lg bg-white px-4 py-2 text-black"
+          >
+            Start Session
+          </button>
+        </section>
+      )}
+
+      {started && !finished && currentQuestion && (
+        <>
+          <div className="mb-6 flex items-center justify-between text-sm text-neutral-300">
+            <span>
+              Progress: {currentIndex + 1} / {sessionQuestions.length}
+            </span>
+            <span>Score: {score}</span>
+          </div>
+
+          <QuestionCard
+            question={currentQuestion}
+            onAnswer={handleAnswer}
+            onNext={handleNext}
+          />
+        </>
       )}
 
       {finished && (
-        <div style={{ marginTop: 24 }}>
-          <h2>Session Complete</h2>
-          <p>You answered {score} out of {TOTAL_QUESTIONS} correctly.</p>
-          <button onClick={handleRestart}>Restart</button>
-        </div>
+        <section className="space-y-6 rounded-xl border border-neutral-700 p-6">
+          <div>
+            <h2 className="text-2xl font-semibold">Session Complete</h2>
+            <p className="mt-2">
+              You answered {score} out of {sessionQuestions.length} correctly.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="mb-3 text-xl font-semibold">Wrong Answer Notes</h3>
+
+            {wrongNotes.length === 0 ? (
+              <p>No wrong answers saved yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {wrongNotes.map((note) => (
+                  <div
+                    key={note.questionId}
+                    className="rounded-lg border border-neutral-700 p-4"
+                  >
+                    <p className="mb-1 text-sm text-neutral-400">
+                      {note.category}
+                    </p>
+                    <p className="mb-2 font-medium">{note.question}</p>
+                    <p>My answer: {note.selectedAnswer}</p>
+                    <p>Correct answer: {note.correctAnswer}</p>
+                    <p className="mt-2 text-neutral-300">
+                      Explanation: {note.explanation}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleRestart}
+              className="rounded-lg bg-white px-4 py-2 text-black"
+            >
+              Restart
+            </button>
+
+            <Link
+              href="/wrong-notes"
+              className="rounded-lg border border-neutral-600 px-4 py-2"
+            >
+              View Wrong Notes
+            </Link>
+          </div>
+        </section>
       )}
     </main>
   );

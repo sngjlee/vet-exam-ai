@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Seongju/.claude/**)",
+      "Bash(cd:*)"
+    ]
+  }
+}
