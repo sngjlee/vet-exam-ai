@@ -2,36 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { RETRY_SESSION_KEY } from "../../lib/storage";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { WrongAnswerNote } from "../../lib/types";
-
-const WRONG_NOTES_KEY = "vet-wrong-notes";
+import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 
 export default function WrongNotesPage() {
-  const [wrongNotes, setWrongNotes] = useState<WrongAnswerNote[]>([]);
+  const { notes: wrongNotes, loading, deleteNote, clearAll } = useWrongNotes();
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(WRONG_NOTES_KEY);
-
-    if (saved) {
-      try {
-        const parsed: WrongAnswerNote[] = JSON.parse(saved);
-        setWrongNotes(parsed);
-      } catch (error) {
-        console.error("Failed to parse wrong notes:", error);
-      }
-    }
-
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (!loaded) return;
-    localStorage.setItem(WRONG_NOTES_KEY, JSON.stringify(wrongNotes));
-  }, [wrongNotes, loaded]);
 
   const categories = useMemo(() => {
     return [...new Set(wrongNotes.map((note) => note.category))];
@@ -43,11 +20,11 @@ export default function WrongNotesPage() {
       : wrongNotes.filter((note) => note.category === selectedCategory);
 
   function handleDelete(questionId: string) {
-    setWrongNotes((prev) => prev.filter((note) => note.questionId !== questionId));
+    void deleteNote(questionId);
   }
 
   function handleClearAll() {
-    setWrongNotes([]);
+    void clearAll();
   }
 
   const router = useRouter();
@@ -65,6 +42,14 @@ function handleRetryWrongAnswers() {
   localStorage.setItem(RETRY_SESSION_KEY, JSON.stringify(retryQuestions));
   router.push("/retry-wrong");
 }
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-4xl px-6 py-10">
+        <p className="text-neutral-400">Loading…</p>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">

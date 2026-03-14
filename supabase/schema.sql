@@ -184,7 +184,7 @@ alter table public.attempts enable row level security;
 create table public.wrong_notes (
   id              uuid        primary key default gen_random_uuid(),
   user_id         uuid        not null references public.profiles (id) on delete cascade,
-  question_id     text        not null references public.questions (id),
+  question_id     text        not null,
   question_text   text        not null,
   category        text        not null,
   choices         text[]      not null,

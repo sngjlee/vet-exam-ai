@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../components/QuestionCard";
 import {
@@ -10,9 +10,9 @@ import {
   type Question,
 } from "../lib/questions";
 import type { WrongAnswerNote } from "../lib/types";
+import { useWrongNotes } from "../lib/hooks/useWrongNotes";
 
 const TOTAL_QUESTIONS = 5;
-const WRONG_NOTES_KEY = "vet-wrong-notes";
 
 export default function Home() {
   const categories = useMemo(() => getCategories(), []);
@@ -21,31 +21,10 @@ export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [started, setStarted] = useState(false);
-  const [wrongNotes, setWrongNotes] = useState<WrongAnswerNote[]>([]);
-  const [isWrongNotesLoaded, setIsWrongNotesLoaded] = useState(false);
+  const { notes: wrongNotes, addNote } = useWrongNotes();
 
   const currentQuestion = sessionQuestions[currentIndex];
   const finished = started && currentIndex >= sessionQuestions.length;
-
-  useEffect(() => {
-    const saved = localStorage.getItem(WRONG_NOTES_KEY);
-
-    if (saved) {
-      try {
-        const parsed: WrongAnswerNote[] = JSON.parse(saved);
-        setWrongNotes(parsed);
-      } catch (error) {
-        console.error("Failed to parse wrong notes:", error);
-      }
-    }
-
-    setIsWrongNotesLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isWrongNotesLoaded) return;
-    localStorage.setItem(WRONG_NOTES_KEY, JSON.stringify(wrongNotes));
-  }, [wrongNotes, isWrongNotesLoaded]);
 
   function startSession() {
     const categoryFilter =
@@ -86,19 +65,7 @@ export default function Home() {
       explanation: currentQuestion.explanation,
     };
 
-    setWrongNotes((prev) => {
-      const alreadyExists = prev.some(
-        (note) => note.questionId === newWrongNote.questionId
-      );
-
-      if (alreadyExists) {
-        return prev.map((note) =>
-          note.questionId === newWrongNote.questionId ? newWrongNote : note
-        );
-      }
-
-      return [...prev, newWrongNote];
-    });
+    void addNote(newWrongNote);
   }
 
   function handleNext() {
@@ -111,20 +78,11 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="mb-2 text-3xl font-bold">Veterinary Exam AI</h1>
-          <p className="text-neutral-400">
-            Veterinary board-style question practice
-          </p>
-        </div>
-
-        <Link
-          href="/wrong-notes"
-          className="rounded-lg border border-neutral-600 px-4 py-2 text-sm hover:border-neutral-400"
-        >
-          Wrong Notes
-        </Link>
+      <div className="mb-6">
+        <h1 className="mb-2 text-3xl font-bold">Veterinary Exam AI</h1>
+        <p className="text-neutral-400">
+          Veterinary board-style question practice
+        </p>
       </div>
 
       {!started && (
@@ -166,6 +124,7 @@ export default function Home() {
           </div>
 
           <QuestionCard
+            key={currentQuestion.id}
             question={currentQuestion}
             onAnswer={handleAnswer}
             onNext={handleNext}

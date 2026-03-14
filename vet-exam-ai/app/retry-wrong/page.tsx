@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../../components/QuestionCard";
 import type { Question } from "../../lib/questions";
-import type { WrongAnswerNote } from "../../lib/types";
-import { RETRY_SESSION_KEY, WRONG_NOTES_KEY } from "../../lib/storage";
+import { RETRY_SESSION_KEY } from "../../lib/storage";
+import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 
 export default function RetryWrongPage() {
+  const { deleteNote } = useWrongNotes();
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -39,19 +40,7 @@ export default function RetryWrongPage() {
   }) {
     if (payload.isCorrect) {
       setScore((prev) => prev + 1);
-
-      const savedWrongNotes = localStorage.getItem(WRONG_NOTES_KEY);
-      if (savedWrongNotes) {
-        try {
-          const parsed: WrongAnswerNote[] = JSON.parse(savedWrongNotes);
-          const updated = parsed.filter(
-            (note) => note.questionId !== payload.questionId
-          );
-          localStorage.setItem(WRONG_NOTES_KEY, JSON.stringify(updated));
-        } catch (error) {
-          console.error("Failed to update wrong notes:", error);
-        }
-      }
+      void deleteNote(payload.questionId);
     }
   }
 

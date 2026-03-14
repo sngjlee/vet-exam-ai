@@ -1,6 +1,10 @@
 // Hand-written Database type matching the planned SQL schema.
 // Replace this file with the output of `supabase gen types typescript` once
 // the Supabase project is created and the schema is applied.
+//
+// NOTE: @supabase/supabase-js ≥ v2.x requires a `Relationships` key on every
+// table for its internal type machinery to resolve correctly. Without it,
+// upsert/insert/update overloads collapse to `never`.
 
 export interface Database {
   public: {
@@ -19,6 +23,7 @@ export interface Database {
         Update: {
           display_name?: string | null;
         };
+        Relationships: [];
       };
 
       questions: {
@@ -68,6 +73,7 @@ export interface Database {
           tags?: string[] | null;
           is_active?: boolean;
         };
+        Relationships: [];
       };
 
       attempts: {
@@ -89,7 +95,10 @@ export interface Database {
           is_correct: boolean;
           answered_at?: string;
         };
-        Update: never;          // attempts are immutable
+        Update: {
+          // attempts are immutable — no fields may be updated
+        };
+        Relationships: [];
       };
 
       wrong_notes: {
@@ -121,6 +130,7 @@ export interface Database {
           selected_answer?: string;
           saved_at?: string;
         };
+        Relationships: [];
       };
     };
 
