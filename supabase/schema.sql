@@ -1,33 +1,31 @@
 -- =============================================================================
--- Veterinary Exam AI — Supabase SQL Schema
+-- Veterinary Exam AI — Supabase SQL Schema (Canonical / Current State)
 -- =============================================================================
--- Conventions used throughout:
---   • All primary keys: uuid (gen_random_uuid()) except questions (text, see below)
---   • All timestamps: timestamptz named created_at / updated_at
+-- This file is the single source of truth for the *current* database state.
+-- It is kept in sync with the incremental migrations in supabase/migrations/.
+--
+-- Migration history applied (in order):
+--   20260314000000  initial_schema
+--   20260314000001  drop_wrong_notes_question_fk
+--   20260314000002  attempts_add_columns
+--   20260314000004  wrong_notes_add_review
+--   20260317000005  questions_allow_anon_read
+--
+-- Conventions:
+--   • All primary keys: uuid (gen_random_uuid()) except questions (text)
+--   • All timestamps: timestamptz, named created_at / updated_at / saved_at
 --   • Soft-delete pattern: is_active boolean, never hard-delete content rows
---   • Row-Level Security (RLS) enabled on every table; policies defined at the end
---   • "denormalised" columns are intentional and noted inline
+--   • RLS enabled on every table; policies defined at the end of this file
+--   • Denormalised columns are intentional and noted inline
 -- =============================================================================
-
-
--- -----------------------------------------------------------------------------
--- 0. Extensions
--- -----------------------------------------------------------------------------
--- pgcrypto is already enabled on Supabase by default; listed here for clarity.
--- No additional extensions are required for this schema.
 
 
 -- =============================================================================
 -- 1. profiles
 -- =============================================================================
--- One row per user. Created automatically when a new auth.users record is made
--- (see trigger at the bottom). This is the single source of truth for identity
--- inside the public schema — never join directly to auth.users in queries.
---
--- Columns:
---   id            — mirrors auth.users.id exactly (same uuid)
---   display_name  — user-facing name; nullable until the user sets one
---   created_at    — when the account was created
+-- One row per user, auto-created by the handle_new_user() trigger below.
+-- Single source of truth for user identity inside the public schema —
+-- never JOIN directly to auth.users in application queries.
 -- =============================================================================
 
 create table public.profiles (
@@ -45,30 +43,24 @@ alter table public.profiles enable row level security;
 -- =============================================================================
 -- 2. questions
 -- =============================================================================
--- Central content table. Seeded from lib/questions/bank.ts.
--- The primary key is text ("q1", "q2" …) to match the existing TypeScript ids;
--- switch to uuid only if the question set grows beyond manual curation.
+-- Central question bank. Questions are seeded via scripts/seed-questions.ts.
+-- The text primary key ("q1", "q2" …) matches the TypeScript bank IDs.
 --
 -- Columns:
---   id            — matches bank.ts id ("q1" … )
---   question      — the question stem
---   choices       — ordered answer options stored as a text array
---   answer        — the single correct choice (must be one of choices[])
---   explanation   — shown after the user submits
---   category      — legacy grouping kept for backwards compatibility
+--   id            — text key matching the TypeScript id ("q1", "q2" …)
+--   question      — question stem
+--   choices       — ordered answer options (text array)
+--   answer        — the single correct choice; must be one of choices[]
+--   explanation   — shown to the user after they submit an answer
+--   category      — primary grouping used for filtering and statistics
 --   subject       — coarser grouping, e.g. "Reproductive Physiology"
 --   topic         — finer grouping, e.g. "Ovulation"
 --   difficulty    — easy / medium / hard
---   source        — where the question came from
+--   source        — provenance: manual | past_exam | ai_generated
 --   year          — exam year for past_exam questions; null otherwise
 --   tags          — free-form search labels
 --   is_active     — false = soft-deleted; excluded from new sessions
 --   created_at    — when the row was inserted
---
--- NOT stored here (belongs elsewhere):
---   • per-user attempt history  → attempts table
---   • per-user wrong notes      → wrong_notes table
---   • correct-answer statistics → derivable from attempts via query
 -- =============================================================================
 
 create type public.difficulty_level as enum ('easy', 'medium', 'hard');
@@ -92,11 +84,11 @@ create table public.questions (
 );
 
 comment on table public.questions is
-  'Question bank. Seeded from lib/questions/bank.ts. Read-only for end users.';
+  'Question bank. Seeded via scripts/seed-questions.ts. Read-only for end users.';
 comment on column public.questions.answer is
   'Must be one of the values in choices[]. Enforced at the application layer.';
 comment on column public.questions.is_active is
-  'Set to false to hide a question from sessions without deleting it.';
+  'Set to false to hide a question without deleting it (soft-delete).';
 
 alter table public.questions enable row level security;
 
@@ -104,26 +96,21 @@ alter table public.questions enable row level security;
 -- =============================================================================
 -- 3. attempts
 -- =============================================================================
--- Append-only log of every answer a user submits. Never updated or hard-deleted.
--- A "session" is a client-generated UUID created when the user clicks Start;
+-- Append-only log of every answer a user submits. Never updated or deleted.
+-- A "session" is a UUID created client-side when the user clicks Start;
 -- grouping rows by session_id reconstructs a full quiz session.
 --
 -- Columns:
 --   id              — surrogate uuid
---   user_id         — the user who answered
---   session_id      — groups all answers from one quiz session together
---   question_id     — which question was answered
+--   user_id         — the user who answered (references profiles)
+--   session_id      — client-generated uuid grouping one quiz session
+--   question_id     — which question was answered (no FK — questions may be
+--                     deactivated or removed after attempts are recorded)
+--   category        — denormalised from the question at submission time
 --   selected_answer — the text of the option the user chose
---   is_correct      — pre-computed at submit time (avoids joining questions)
+--   correct_answer  — denormalised correct answer (avoids join on analytics)
+--   is_correct      — pre-computed at submit time
 --   answered_at     — when the answer was submitted
---
--- NOT stored here:
---   • the correct answer or explanation — fetch from questions if needed
---   • session metadata (category filter, total count) — see sessions table note below
---
--- Future expansion:
---   A lightweight "sessions" table can be added later to store per-session
---   metadata (category, question_count, score) without changing this table.
 -- =============================================================================
 
 create table public.attempts (
@@ -143,7 +130,9 @@ comment on table public.attempts is
 comment on column public.attempts.session_id is
   'UUID generated on the client when the user clicks Start Session.';
 comment on column public.attempts.is_correct is
-  'Denormalised for query performance — avoids joining questions on every analytics read.';
+  'Denormalised for query performance — avoids joining questions on every stats read.';
+comment on column public.attempts.correct_answer is
+  'Denormalised at submission time — preserved even if the question is later edited.';
 
 create index attempts_user_session  on public.attempts (user_id, session_id);
 create index attempts_user_question on public.attempts (user_id, question_id);
@@ -157,43 +146,46 @@ alter table public.attempts enable row level security;
 -- =============================================================================
 -- One row per (user, question). Upserted when a user answers incorrectly;
 -- deleted when the user answers correctly on a retry.
--- The unique constraint makes all upserts idempotent — safe to re-import from
--- localStorage more than once without creating duplicates.
+-- Stores a denormalised snapshot of the question so the review UI works without
+-- a join, and so notes are preserved even if the question is later deactivated.
 --
 -- Columns:
 --   id              — surrogate uuid
---   user_id         — owner of this note
---   question_id     — which question was missed
---   question_text   — denormalised snapshot of the question stem at note creation
+--   user_id         — owner of this note (references profiles)
+--   question_id     — which question was missed (no FK — see above rationale)
+--   question_text   — snapshot of the question stem at note creation
 --   category        — denormalised for fast filtering without a join
 --   choices         — denormalised so the retry UI never needs to re-fetch
---   correct_answer  — the right answer, stored for review
+--   correct_answer  — the right answer
 --   selected_answer — what the user actually chose
---   explanation     — stored so the review page works offline / without a DB read
---   saved_at        — last time this note was updated (most recent wrong attempt)
+--   explanation     — stored so the review page never needs a DB read
+--   saved_at        — last time this note was updated
+--   review_count    — how many times the user has correctly reviewed this note
+--   last_reviewed_at — when the user last reviewed it (NULL = never reviewed)
+--   next_review_at  — when the note is next due for review
 --
--- Denormalisation rationale:
---   wrong_notes is a user-facing review list that must load quickly. Storing
---   question_text, category, choices, correct_answer, and explanation avoids a
---   join to questions on every page load and also preserves the note even if the
---   question is later deactivated or edited.
---
--- NOT stored here:
---   • full attempt history for a question — that is in attempts
---   • how many times the user got it wrong — count from attempts if needed
+-- Spaced-repetition schedule (enforced in application code):
+--   correct review #1 → +1 day
+--   correct review #2 → +3 days
+--   correct review #3 → +7 days
+--   correct review #4+ → +14 days
+--   incorrect review   → review_count reset to 0, due immediately
 -- =============================================================================
 
 create table public.wrong_notes (
-  id              uuid        primary key default gen_random_uuid(),
-  user_id         uuid        not null references public.profiles (id) on delete cascade,
-  question_id     text        not null,
-  question_text   text        not null,
-  category        text        not null,
-  choices         text[]      not null,
-  correct_answer  text        not null,
-  selected_answer text        not null,
-  explanation     text        not null,
-  saved_at        timestamptz not null default now(),
+  id               uuid        primary key default gen_random_uuid(),
+  user_id          uuid        not null references public.profiles (id) on delete cascade,
+  question_id      text        not null,
+  question_text    text        not null,
+  category         text        not null,
+  choices          text[]      not null,
+  correct_answer   text        not null,
+  selected_answer  text        not null,
+  explanation      text        not null,
+  saved_at         timestamptz not null default now(),
+  review_count     integer     not null default 0,
+  last_reviewed_at timestamptz,
+  next_review_at   timestamptz not null default now(),
 
   unique (user_id, question_id)
 );
@@ -202,11 +194,14 @@ comment on table public.wrong_notes is
   'One note per (user, question). Upserted on wrong answer; deleted on correct retry.';
 comment on column public.wrong_notes.question_text is
   'Snapshot of question stem at time of wrong answer. Intentionally denormalised.';
-comment on column public.wrong_notes.saved_at is
-  'Updated on each new wrong answer to keep the note current.';
+comment on column public.wrong_notes.review_count is
+  'Incremented on each correct review. Drives the spaced-repetition interval.';
+comment on column public.wrong_notes.next_review_at is
+  'When the item is next due. Defaults to now() so all new notes are due immediately.';
 
 create index wrong_notes_user     on public.wrong_notes (user_id);
 create index wrong_notes_category on public.wrong_notes (user_id, category);
+create index wrong_notes_due      on public.wrong_notes (user_id, next_review_at);
 
 alter table public.wrong_notes enable row level security;
 
@@ -215,7 +210,7 @@ alter table public.wrong_notes enable row level security;
 -- Row-Level Security Policies
 -- =============================================================================
 
--- profiles: users can only read and update their own row
+-- profiles: owner can read and update their own row only
 create policy "profiles: owner read"
   on public.profiles for select
   using (auth.uid() = id);
@@ -224,13 +219,13 @@ create policy "profiles: owner update"
   on public.profiles for update
   using (auth.uid() = id);
 
--- questions: any authenticated user can read; writes are service_role only
-create policy "questions: authenticated read"
+-- questions: publicly readable by anyone (including unauthenticated guests)
+-- so that the quiz works without sign-in. Writes are service_role only.
+create policy "questions: public read"
   on public.questions for select
-  to authenticated
   using (true);
 
--- attempts: users can read and insert their own rows only
+-- attempts: owner can read and insert their own rows; no update or delete
 create policy "attempts: owner read"
   on public.attempts for select
   using (auth.uid() = user_id);
@@ -239,7 +234,7 @@ create policy "attempts: owner insert"
   on public.attempts for insert
   with check (auth.uid() = user_id);
 
--- wrong_notes: users can read, insert, update, and delete their own rows
+-- wrong_notes: owner can read, insert, update, and delete their own rows
 create policy "wrong_notes: owner read"
   on public.wrong_notes for select
   using (auth.uid() = user_id);
@@ -260,9 +255,9 @@ create policy "wrong_notes: owner delete"
 -- =============================================================================
 -- Trigger: auto-create profile on sign-up
 -- =============================================================================
--- Fires after a new row is inserted into auth.users (e.g. email sign-up,
--- OAuth first login). Creates the matching profiles row so no application code
--- needs to handle the insert manually.
+-- Fires after a new row is inserted into auth.users (email sign-up or OAuth
+-- first login). Creates the matching profiles row automatically so no
+-- application code needs to handle the insert.
 
 create or replace function public.handle_new_user()
 returns trigger

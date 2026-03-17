@@ -1,8 +1,7 @@
-import { questions } from "./bank";
 import type { Question } from "./types";
 
-export function getCategories(): string[] {
-  return [...new Set(questions.map((q) => q.category))];
+export function getCategories(pool: Question[]): string[] {
+  return [...new Set(pool.map((q) => q.category))];
 }
 
 export function shuffleArray<T>(array: T[]): T[] {
@@ -15,13 +14,14 @@ export function shuffleArray<T>(array: T[]): T[] {
 }
 
 export function createSessionQuestions(
+  pool: Question[],
   total: number,
-  category?: string
+  category?: string,
 ): Question[] {
-  const pool = questions.filter((q) => q.isActive !== false);
+  const active = pool.filter((q) => q.isActive !== false);
   const filtered = category
-    ? pool.filter((q) => q.category === category)
-    : pool;
+    ? active.filter((q) => q.category === category)
+    : active;
 
   const shuffled = shuffleArray(filtered);
   return shuffled.slice(0, total);

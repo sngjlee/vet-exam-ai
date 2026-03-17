@@ -1,6 +1,8 @@
-// Hand-written Database type matching the planned SQL schema.
-// Replace this file with the output of `supabase gen types typescript` once
-// the Supabase project is created and the schema is applied.
+// Database types for the Veterinary Exam AI Supabase schema.
+// Kept in sync with supabase/schema.sql and supabase/migrations/.
+//
+// To regenerate from a live project run:
+//   supabase gen types typescript --project-id <id> > lib/supabase/types.ts
 //
 // NOTE: @supabase/supabase-js ≥ v2.x requires a `Relationships` key on every
 // table for its internal type machinery to resolve correctly. Without it,
@@ -149,7 +151,10 @@ export interface Database {
 
     Views: Record<string, never>;
     Functions: Record<string, never>;
-    Enums: Record<string, never>;
+    Enums: {
+      difficulty_level: "easy" | "medium" | "hard";
+      question_source: "manual" | "past_exam" | "ai_generated";
+    };
   };
 }
 

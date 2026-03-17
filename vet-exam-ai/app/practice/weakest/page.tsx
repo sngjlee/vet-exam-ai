@@ -6,6 +6,7 @@ import Link from "next/link";
 import QuestionCard from "../../../components/QuestionCard";
 import type { Question } from "../../../lib/questions";
 import { createSessionQuestions } from "../../../lib/questions";
+import { useQuestions } from "../../../lib/hooks/useQuestions";
 import type { WrongAnswerNote } from "../../../lib/types";
 import { useAuth } from "../../../lib/hooks/useAuth";
 import { useStats, type CategoryStat } from "../../../lib/hooks/useStats";
@@ -23,6 +24,7 @@ export default function PracticeWeakestPage() {
   );
   const { logAttempt } = useAttempts();
   const { addNote } = useWrongNotes();
+  const { questions, loading: questionsLoading } = useQuestions();
 
   const sessionIdRef = useRef<string>(crypto.randomUUID());
   const [weakest, setWeakest] = useState<CategoryStat | null>(null);
@@ -41,7 +43,7 @@ export default function PracticeWeakestPage() {
 
   function startPractice() {
     if (!weakest) return;
-    const qs = createSessionQuestions(PRACTICE_COUNT, weakest.category);
+    const qs = createSessionQuestions(questions, PRACTICE_COUNT, weakest.category);
     sessionIdRef.current = crypto.randomUUID();
     setSessionQuestions(qs);
     setCurrentIndex(0);
@@ -86,7 +88,7 @@ export default function PracticeWeakestPage() {
     setCurrentIndex((prev) => prev + 1);
   }
 
-  if (authLoading || statsLoading) {
+  if (authLoading || statsLoading || questionsLoading) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-10">
         <p className="text-neutral-400">Loading...</p>

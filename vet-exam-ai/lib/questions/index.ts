@@ -1,5 +1,5 @@
-// Barrel export — drop-in replacement for the old lib/ai import path.
-// Import from "@/lib/questions" instead of "@/lib/ai".
+// Public API for the questions module.
+// Data comes from Supabase (via useQuestions hook or /api/questions).
+// bank.ts is retained only as a seed reference — do not import it in app code.
 export type { Question, Difficulty, QuestionSource } from "./types";
-export { questions } from "./bank";
 export { getCategories, shuffleArray, createSessionQuestions } from "./utils";

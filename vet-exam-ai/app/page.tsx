@@ -1,24 +1,20 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../components/QuestionCard";
-import {
-  createSessionQuestions,
-  getCategories,
-  questions,
-  type Question,
-} from "../lib/questions";
+import { createSessionQuestions, type Question } from "../lib/questions";
 import type { WrongAnswerNote } from "../lib/types";
 import { useWrongNotes } from "../lib/hooks/useWrongNotes";
 import { useAttempts } from "../lib/hooks/useAttempts";
 import { useAuth } from "../lib/hooks/useAuth";
 import { useDueCountCtx } from "../lib/context/DueCountContext";
+import { useQuestions } from "../lib/hooks/useQuestions";
 
 const TOTAL_QUESTIONS = 5;
 
 export default function Home() {
-  const categories = useMemo(() => getCategories(), []);
+  const { questions, categories, loading: questionsLoading } = useQuestions();
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -43,7 +39,7 @@ export default function Home() {
       : questions;
 
     const total = Math.min(TOTAL_QUESTIONS, pool.length);
-    const newSession = createSessionQuestions(total, categoryFilter);
+    const newSession = createSessionQuestions(questions, total, categoryFilter);
 
     sessionIdRef.current = crypto.randomUUID();
     setSessionQuestions(newSession);
@@ -146,9 +142,10 @@ export default function Home() {
 
           <button
             onClick={startSession}
-            className="rounded-lg bg-white px-4 py-2 text-black"
+            disabled={questionsLoading}
+            className="rounded-lg bg-white px-4 py-2 text-black disabled:opacity-50"
           >
-            Start Session
+            {questionsLoading ? "Loading questions…" : "Start Session"}
           </button>
         </section>
       )}
