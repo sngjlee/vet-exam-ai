@@ -22,7 +22,7 @@ export default function NavBar() {
   const linkClass = (path: string) =>
     `flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 ${
       isActive(path)
-        ? "text-[var(--gold)] bg-[var(--gold-dim)]"
+        ? "text-[var(--teal)] bg-[var(--teal-dim)]"
         : "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-raised)]"
     }`;
 
@@ -39,7 +39,7 @@ export default function NavBar() {
         <Link href="/" className="flex flex-col leading-tight">
           <span
             className="font-bold text-lg tracking-tight"
-            style={{ fontFamily: "var(--font-serif)", color: "var(--gold)" }}
+            style={{ fontFamily: "var(--font-serif)", color: "var(--teal)" }}
           >
             Vexa
           </span>
@@ -73,8 +73,8 @@ export default function NavBar() {
                   <BookOpen size={16} />
                   {dueCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--gold)] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--gold)]"></span>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--teal)] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--teal)]"></span>
                     </span>
                   )}
                 </div>
@@ -82,7 +82,7 @@ export default function NavBar() {
                 {dueCount > 0 && (
                   <span
                     className="ml-1 rounded-full px-1.5 py-0.5 text-[10px] kvle-mono"
-                    style={{ background: "var(--gold-dim)", color: "var(--gold)" }}
+                    style={{ background: "var(--teal-dim)", color: "var(--teal)" }}
                   >
                     {dueCount}
                   </span>
@@ -109,8 +109,20 @@ export default function NavBar() {
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center justify-center p-2 rounded-lg transition-colors"
-                  style={{ color: "var(--text-muted)" }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "44px",
+                    height: "44px",
+                    borderRadius: "8px",
+                    color: "var(--text-muted)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "color 150ms, background 150ms",
+                    flexShrink: 0,
+                  }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.color = "var(--wrong)";
                     (e.currentTarget as HTMLElement).style.background = "var(--wrong-dim)";
@@ -120,6 +132,7 @@ export default function NavBar() {
                     (e.currentTarget as HTMLElement).style.background = "transparent";
                   }}
                   title="로그아웃"
+                  aria-label="로그아웃"
                 >
                   <LogOut size={16} />
                 </button>
@@ -127,7 +140,22 @@ export default function NavBar() {
             ) : (
               <Link
                 href="/auth/login"
-                className="kvle-btn-primary text-sm"
+                className="inline-flex items-center gap-2 font-semibold active:scale-[0.98]"
+                style={{
+                  background: "var(--teal)",
+                  color: "#080D1A",
+                  borderRadius: "9999px",
+                  padding: "8px 18px",
+                  fontSize: "0.875rem",
+                  transition: "opacity 200ms",
+                  textDecoration: "none",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.opacity = "0.88";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.opacity = "1";
+                }}
               >
                 로그인
               </Link>

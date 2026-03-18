@@ -45,6 +45,21 @@ export default function RootLayout({
           <NavBar />
           {children}
         </DueCountProvider>
+        {/* Scroll-reveal fallback for browsers without animation-timeline: view() */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  if(typeof CSS !== 'undefined' && CSS.supports && CSS.supports('animation-timeline','view()')) return;
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.style.animationPlayState='running'; io.unobserve(e.target); }
+    });
+  },{threshold:0.1});
+  function observe(){ document.querySelectorAll('.scroll-reveal').forEach(function(el){ io.observe(el); }); }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',observe); } else { observe(); }
+})();`,
+          }}
+        />
       </body>
     </html>
   );

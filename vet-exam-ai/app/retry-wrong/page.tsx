@@ -8,6 +8,8 @@ import type { Question } from "../../lib/questions";
 import { RETRY_SESSION_KEY } from "../../lib/storage";
 import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 import { useAttempts } from "../../lib/hooks/useAttempts";
+import SessionProgress from "../../components/SessionProgress";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function RetryWrongPage() {
   const { addNote, deleteNote } = useWrongNotes();
@@ -73,7 +75,7 @@ export default function RetryWrongPage() {
   if (!loaded) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <p style={{ color: "var(--text-muted)" }}>로딩 중…</p>
+        <LoadingSpinner />
       </main>
     );
   }
@@ -114,14 +116,7 @@ export default function RetryWrongPage() {
 
       {!finished && currentQuestion && (
         <>
-          <div className="mb-6 flex items-center justify-between text-sm">
-            <span className="kvle-mono" style={{ color: "var(--text-muted)" }}>
-              진행: {currentIndex + 1} / {sessionQuestions.length}
-            </span>
-            <span className="kvle-mono" style={{ color: "var(--text-muted)" }}>
-              점수: {score}
-            </span>
-          </div>
+          <SessionProgress current={currentIndex} total={sessionQuestions.length} score={score} />
           <QuestionCard
             question={currentQuestion}
             onAnswer={handleAnswer}
@@ -137,7 +132,7 @@ export default function RetryWrongPage() {
           </h2>
           <p style={{ color: "var(--text-muted)" }}>
             총 <span className="kvle-mono font-bold" style={{ color: "var(--text)" }}>{sessionQuestions.length}</span>문제 중{" "}
-            <span className="kvle-mono font-bold" style={{ color: "var(--gold)" }}>{score}</span>문제를 맞혔습니다.
+            <span className="kvle-mono font-bold" style={{ color: "var(--teal)" }}>{score}</span>문제를 맞혔습니다.
           </p>
           <div className="flex gap-3">
             <Link href="/wrong-notes" className="kvle-btn-ghost">

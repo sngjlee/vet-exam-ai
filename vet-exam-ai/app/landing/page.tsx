@@ -130,9 +130,9 @@ export default function LandingPage() {
           <div
             className="fade-in inline-flex items-center gap-2 mb-8"
             style={{
-              background: "var(--gold-dim)",
-              border: "1px solid var(--gold-border)",
-              color: "var(--gold)",
+              background: "var(--teal-dim)",
+              border: "1px solid var(--teal-border)",
+              color: "var(--teal)",
               borderRadius: "9999px",
               padding: "6px 14px 6px 10px",
               fontSize: "0.65rem",
@@ -141,7 +141,7 @@ export default function LandingPage() {
               animationDelay: "0ms",
             }}
           >
-            <Zap size={10} />
+            <Zap size={12} />
             수의미래연구소 공식 학습 플랫폼
           </div>
 
@@ -156,7 +156,7 @@ export default function LandingPage() {
           >
             데이터로 설계하는
             <br />
-            <span style={{ color: "var(--gold)" }}>확실한 합격</span>
+            <span style={{ color: "var(--teal)" }}>확실한 합격</span>
           </h1>
 
           {/* 서브카피 */}
@@ -182,7 +182,7 @@ export default function LandingPage() {
               href="/auth/login?mode=signup"
               className="inline-flex items-center gap-3 font-semibold active:scale-[0.98]"
               style={{
-                background: "var(--gold)",
+                background: "var(--teal)",
                 color: "#fff",
                 borderRadius: "9999px",
                 padding: "10px 10px 10px 22px",
@@ -210,7 +210,7 @@ export default function LandingPage() {
             {/* Ghost — pill */}
             <Link
               href="/auth/login?mode=signin"
-              className="inline-flex items-center gap-2 font-medium active:scale-[0.98] hover:text-[var(--text)] hover:border-[var(--gold-border)]"
+              className="inline-flex items-center gap-2 font-medium active:scale-[0.98] hover:text-[var(--text)] hover:border-[var(--teal-border)]"
               style={{
                 color: "var(--text-muted)",
                 border: "1px solid var(--border)",
@@ -284,7 +284,7 @@ export default function LandingPage() {
                         background: "var(--surface-raised)",
                         border: "1px solid var(--border)",
                         borderTop: item.accent
-                          ? "2px solid var(--gold)"
+                          ? "2px solid var(--teal)"
                           : "1px solid var(--border)",
                       }}
                     >
@@ -296,7 +296,7 @@ export default function LandingPage() {
                       </span>
                       <p
                         className="text-base font-bold kvle-mono"
-                        style={{ color: item.accent ? "var(--gold)" : "var(--text)" }}
+                        style={{ color: item.accent ? "var(--teal)" : "var(--text)" }}
                       >
                         {item.value}
                       </p>
@@ -310,7 +310,7 @@ export default function LandingPage() {
                   style={{
                     background: "var(--bg)",
                     border: "1px solid var(--border)",
-                    borderLeft: "3px solid var(--gold)",
+                    borderLeft: "3px solid var(--teal)",
                   }}
                 >
                   <span
@@ -412,7 +412,7 @@ export default function LandingPage() {
           >
             막연하게 공부하지 마세요.
             <br />
-            <span style={{ color: "var(--gold)" }}>지금 내 취약점을 먼저</span>
+            <span style={{ color: "var(--teal)" }}>지금 내 취약점을 먼저</span>
           </h2>
         </div>
 
@@ -445,8 +445,8 @@ export default function LandingPage() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      background: highlight ? "var(--gold-dim)" : "var(--surface-raised)",
-                      color: highlight ? "var(--gold)" : "var(--text-muted)",
+                      background: highlight ? "var(--teal-dim)" : "var(--surface-raised)",
+                      color: highlight ? "var(--teal)" : "var(--text-muted)",
                       boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07)",
                     }}
                   >
@@ -456,7 +456,7 @@ export default function LandingPage() {
 
                 <span
                   className="text-xs font-bold tracking-widest mb-2"
-                  style={{ color: highlight ? "var(--gold)" : "var(--text-faint)" }}
+                  style={{ color: highlight ? "var(--teal)" : "var(--text-faint)" }}
                 >
                   {label}
                 </span>
@@ -543,8 +543,8 @@ export default function LandingPage() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      background: active ? "var(--gold-dim)" : "var(--surface-raised)",
-                      color: active ? "var(--gold)" : "var(--text-faint)",
+                      background: active ? "var(--teal-dim)" : "var(--surface-raised)",
+                      color: active ? "var(--teal)" : "var(--text-faint)",
                       boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
                     }}
                   >
@@ -617,7 +617,7 @@ export default function LandingPage() {
                 href="/auth/login?mode=signup"
                 className="inline-flex items-center gap-3 font-semibold active:scale-[0.98]"
                 style={{
-                  background: "var(--gold)",
+                  background: "var(--teal)",
                   color: "#fff",
                   borderRadius: "9999px",
                   padding: "12px 12px 12px 26px",
@@ -655,7 +655,7 @@ export default function LandingPage() {
           <div className="flex flex-col items-center md:items-start">
             <span
               className="font-bold text-lg"
-              style={{ fontFamily: "var(--font-serif)", color: "var(--gold)" }}
+              style={{ fontFamily: "var(--font-serif)", color: "var(--teal)" }}
             >
               Vexa
             </span>
@@ -676,6 +676,8 @@ export default function LandingPage() {
                 color: "var(--text-muted)",
                 transition: "color 300ms cubic-bezier(0.32,0.72,0,1)",
               }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--text)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--text-muted)"; }}
             >
               로그인
             </Link>
@@ -685,6 +687,8 @@ export default function LandingPage() {
                 color: "var(--text-muted)",
                 transition: "color 300ms cubic-bezier(0.32,0.72,0,1)",
               }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--text)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--text-muted)"; }}
             >
               회원가입
             </Link>

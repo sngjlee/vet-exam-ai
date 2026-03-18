@@ -8,6 +8,9 @@ import type { Question } from "../../lib/questions";
 import type { WrongAnswerNote } from "../../lib/types";
 import { useReview } from "../../lib/hooks/useReview";
 import { useAttempts } from "../../lib/hooks/useAttempts";
+import { BookOpen } from "lucide-react";
+import SessionProgress from "../../components/SessionProgress";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const MAX_REVIEW = 5;
 
@@ -85,7 +88,7 @@ export default function ReviewPage() {
   if (authLoading || loading) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <p style={{ color: "var(--text-muted)" }}>로딩 중…</p>
+        <LoadingSpinner />
       </main>
     );
   }
@@ -127,25 +130,72 @@ export default function ReviewPage() {
   }
 
   if (!started) {
-    return (
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <div className="kvle-card space-y-4">
-          <h1 className="text-2xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
-            복습 큐
-          </h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            {dueNotes.length}개 문제 복습 대기중
-          </p>
-          <p className="text-sm" style={{ color: "var(--text-faint)" }}>
-            한 번에 최대 {MAX_REVIEW}문제씩 복습합니다.
-          </p>
-          <button onClick={startSession} className="kvle-btn-primary">
-            복습 시작
-          </button>
+  return (
+    <main className="mx-auto max-w-3xl px-6 py-12">
+      <div
+        style={{
+          padding: "6px",
+          borderRadius: "22px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.07)",
+        }}
+      >
+        <div
+          style={{
+            borderRadius: "16px",
+            padding: "2rem",
+            background: "var(--surface)",
+            borderTop: "3px solid var(--blue)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              background:
+                "radial-gradient(ellipse 80% 60% at 100% 0%, rgba(74,127,168,0.07) 0%, transparent 60%)",
+            }}
+          />
+          <div style={{ position: "relative" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                marginBottom: "1rem",
+              }}
+            >
+              <BookOpen size={15} style={{ color: "var(--blue)" }} />
+              <span className="kvle-label" style={{ color: "var(--blue)" }}>
+                간격 반복 복습
+              </span>
+            </div>
+            <div
+              className="text-5xl font-black kvle-mono tracking-tight"
+              style={{ color: "var(--text)", marginBottom: "0.25rem" }}
+            >
+              {dueNotes.length}
+            </div>
+            <p className="text-sm mb-1" style={{ color: "var(--text-muted)" }}>
+              개 문제 복습 대기중
+            </p>
+            <p className="text-xs mb-6" style={{ color: "var(--text-faint)" }}>
+              한 번에 최대 {MAX_REVIEW}문제씩 복습합니다.
+            </p>
+            <button onClick={startSession} className="kvle-btn-primary">
+              복습 시작
+            </button>
+          </div>
         </div>
-      </main>
-    );
-  }
+      </div>
+    </main>
+  );
+}
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -163,14 +213,7 @@ export default function ReviewPage() {
 
       {!finished && currentQuestion && (
         <>
-          <div className="mb-6 flex items-center justify-between text-sm">
-            <span className="kvle-mono" style={{ color: "var(--text-muted)" }}>
-              진행: {currentIndex + 1} / {sessionQuestions.length}
-            </span>
-            <span className="kvle-mono" style={{ color: "var(--text-muted)" }}>
-              점수: {score}
-            </span>
-          </div>
+          <SessionProgress current={currentIndex} total={sessionQuestions.length} score={score} />
           <QuestionCard
             key={currentQuestion.id}
             question={currentQuestion}

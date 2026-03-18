@@ -132,7 +132,7 @@ export default function Home() {
             style={{ color: "var(--text)" }}
           >
             Vexa로{" "}
-            <span style={{ color: "var(--gold)" }}>체계적으로 준비하세요</span>
+            <span style={{ color: "var(--teal)" }}>체계적으로 준비하세요</span>
           </h1>
         </div>
       )}
@@ -163,7 +163,7 @@ export default function Home() {
                 overflow: "hidden",
                 height: "100%",
                 background: "var(--surface)",
-                borderTop: "3px solid var(--gold)",
+                borderTop: "3px solid var(--teal)",
                 boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
                 display: "flex",
                 flexDirection: "column",
@@ -183,7 +183,7 @@ export default function Home() {
               <div style={{ position: "relative", display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                    <Sparkles size={15} style={{ color: "var(--gold)" }} />
+                    <Sparkles size={15} style={{ color: "var(--teal)" }} />
                     <span className="kvle-label">스마트 학습</span>
                   </div>
                   <h2
@@ -219,7 +219,7 @@ export default function Home() {
                     disabled={questionsLoading}
                     className="flex-shrink-0 inline-flex items-center gap-3 font-semibold active:scale-[0.98] w-full sm:w-auto justify-center"
                     style={{
-                      background: "var(--gold)",
+                      background: "var(--teal)",
                       color: "#fff",
                       borderRadius: "9999px",
                       padding: "10px 10px 10px 22px",
@@ -396,7 +396,7 @@ export default function Home() {
               position: "relative",
               overflow: "hidden",
               background: "var(--surface)",
-              borderTop: "3px solid var(--gold)",
+              borderTop: "3px solid var(--teal)",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
             }}
           >
@@ -427,7 +427,7 @@ export default function Home() {
               disabled={questionsLoading}
               className="inline-flex items-center gap-3 font-semibold active:scale-[0.98] flex-shrink-0"
               style={{
-                background: "var(--gold)",
+                background: "var(--teal)",
                 color: "#fff",
                 borderRadius: "9999px",
                 padding: "10px 10px 10px 22px",
@@ -502,7 +502,7 @@ export default function Home() {
                 border: "1px solid var(--border)",
               }}
             >
-              <Target size={13} style={{ color: "var(--gold)" }} />
+              <Target size={13} style={{ color: "var(--teal)" }} />
               <span className="font-semibold kvle-mono text-sm" style={{ color: "var(--text)" }}>
                 {score}
                 <span style={{ color: "var(--text-faint)" }}> / {sessionQuestions.length}</span>
@@ -526,7 +526,7 @@ export default function Home() {
                 height: "100%",
                 borderRadius: "9999px",
                 width: `${(currentIndex / sessionQuestions.length) * 100}%`,
-                background: "var(--gold)",
+                background: "var(--teal)",
                 transition: "width 500ms cubic-bezier(0.32,0.72,0,1)",
               }}
             />
@@ -623,7 +623,7 @@ export default function Home() {
                     {sessionQuestions.length}
                   </span>
                   문제 중{" "}
-                  <span className="kvle-mono font-bold" style={{ color: "var(--gold)" }}>
+                  <span className="kvle-mono font-bold" style={{ color: "var(--teal)" }}>
                     {score}
                   </span>
                   문제 정답
@@ -663,7 +663,7 @@ export default function Home() {
               >
                 <Sparkles
                   size={24}
-                  style={{ color: "var(--gold)", margin: "0 auto 0.75rem" }}
+                  style={{ color: "var(--teal)", margin: "0 auto 0.75rem" }}
                 />
                 <p className="font-medium text-sm" style={{ color: "var(--text-muted)" }}>
                   완벽합니다. 틀린 문제가 없습니다.
@@ -774,7 +774,7 @@ export default function Home() {
               onClick={handleRestart}
               className="flex-1 inline-flex items-center justify-center gap-3 font-semibold active:scale-[0.98]"
               style={{
-                background: "var(--gold)",
+                background: "var(--teal)",
                 color: "#fff",
                 borderRadius: "9999px",
                 padding: "10px 10px 10px 22px",
@@ -816,7 +816,7 @@ export default function Home() {
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.color = "var(--text)";
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--gold-border)";
+                (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--teal-border)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-muted)";

@@ -6,10 +6,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 import { BookOpen } from "lucide-react";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 export default function WrongNotesPage() {
   const { notes: wrongNotes, loading, deleteNote, clearAll } = useWrongNotes();
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const categories = useMemo(() => [...new Set(wrongNotes.map((n) => n.category))], [wrongNotes]);
   const filteredNotes = selectedCategory === "All"
@@ -34,13 +37,21 @@ export default function WrongNotesPage() {
   if (loading) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <p style={{ color: "var(--text-muted)" }}>로딩 중…</p>
+        <LoadingSpinner />
       </main>
     );
   }
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12 space-y-8">
+      <ConfirmDialog
+        open={confirmOpen}
+        title="전체 삭제"
+        description="저장된 오답 노트를 모두 삭제합니다. 이 작업은 되돌릴 수 없습니다."
+        confirmLabel="전체 삭제"
+        onConfirm={() => { setConfirmOpen(false); void clearAll(); }}
+        onCancel={() => setConfirmOpen(false)}
+      />
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
@@ -52,7 +63,14 @@ export default function WrongNotesPage() {
       </div>
 
       {/* Filter & actions */}
-      <section className="kvle-card">
+      <section
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: "12px",
+          padding: "1.5rem",
+        }}
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <label className="kvle-label mb-2">과목으로 필터</label>
@@ -74,7 +92,7 @@ export default function WrongNotesPage() {
             >
               오답 재풀이
             </button>
-            <button onClick={() => void clearAll()} className="kvle-btn-danger text-sm">
+            <button onClick={() => setConfirmOpen(true)} className="kvle-btn-danger text-sm">
               전체 삭제
             </button>
           </div>

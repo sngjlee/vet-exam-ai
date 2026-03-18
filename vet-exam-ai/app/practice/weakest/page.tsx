@@ -13,6 +13,9 @@ import { useStats, type CategoryStat } from "../../../lib/hooks/useStats";
 import { useAttempts } from "../../../lib/hooks/useAttempts";
 import { useWrongNotes } from "../../../lib/hooks/useWrongNotes";
 import { findWeakestCategory } from "../../../lib/stats/weakCategory";
+import { Target } from "lucide-react";
+import SessionProgress from "../../../components/SessionProgress";
+import LoadingSpinner from "../../../components/LoadingSpinner";
 
 const PRACTICE_COUNT = 5;
 
@@ -88,7 +91,7 @@ export default function PracticeWeakestPage() {
   if (authLoading || statsLoading || questionsLoading) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <p style={{ color: "var(--text-muted)" }}>로딩 중…</p>
+        <LoadingSpinner />
       </main>
     );
   }
@@ -130,32 +133,79 @@ export default function PracticeWeakestPage() {
   }
 
   if (!started) {
-    return (
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <div className="kvle-card space-y-4">
-          <h1 className="text-2xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
-            약점 집중 연습
-          </h1>
-          <p style={{ color: "var(--text-muted)" }}>현재 가장 취약한 과목:</p>
-          <p
-            className="text-2xl font-bold"
-            style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
-          >
-            {weakest.category}
-          </p>
-          <p className="text-sm kvle-mono" style={{ color: "var(--text-faint)" }}>
-            {weakest.attempts}회 시도 · {weakest.accuracy}% 정답률 · {weakest.attempts - weakest.correct}개 오답
-          </p>
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            이 과목에서 {PRACTICE_COUNT}문제가 출제됩니다.
-          </p>
-          <button onClick={startPractice} className="kvle-btn-primary">
-            연습 시작
-          </button>
+  return (
+    <main className="mx-auto max-w-3xl px-6 py-12">
+      <div
+        style={{
+          padding: "6px",
+          borderRadius: "22px",
+          background: "rgba(255,255,255,0.02)",
+          border: "1px solid rgba(255,255,255,0.07)",
+        }}
+      >
+        <div
+          style={{
+            borderRadius: "16px",
+            padding: "2rem",
+            background: "var(--surface)",
+            borderTop: "3px solid var(--wrong)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              background:
+                "radial-gradient(ellipse 80% 60% at 100% 0%, rgba(192,74,58,0.06) 0%, transparent 60%)",
+            }}
+          />
+          <div style={{ position: "relative" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                marginBottom: "1rem",
+              }}
+            >
+              <Target size={15} style={{ color: "var(--wrong)" }} />
+              <span className="kvle-label" style={{ color: "var(--wrong)" }}>
+                약점 집중 연습
+              </span>
+            </div>
+            <p className="text-sm mb-1" style={{ color: "var(--text-muted)" }}>
+              현재 가장 취약한 과목
+            </p>
+            <p
+              className="text-2xl font-bold mb-1"
+              style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
+            >
+              {weakest.category}
+            </p>
+            <p
+              className="text-sm kvle-mono mb-6"
+              style={{ color: "var(--text-faint)" }}
+            >
+              {weakest.attempts}회 시도 · {weakest.accuracy}% 정답률 ·{" "}
+              {weakest.attempts - weakest.correct}개 오답
+            </p>
+            <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
+              이 과목에서 {PRACTICE_COUNT}문제가 출제됩니다.
+            </p>
+            <button onClick={startPractice} className="kvle-btn-primary">
+              연습 시작
+            </button>
+          </div>
         </div>
-      </main>
-    );
-  }
+      </div>
+    </main>
+  );
+}
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -173,14 +223,7 @@ export default function PracticeWeakestPage() {
 
       {!finished && currentQuestion && (
         <>
-          <div className="mb-6 flex items-center justify-between text-sm">
-            <span className="kvle-mono" style={{ color: "var(--text-muted)" }}>
-              진행: {currentIndex + 1} / {sessionQuestions.length}
-            </span>
-            <span className="kvle-mono" style={{ color: "var(--text-muted)" }}>
-              점수: {score}
-            </span>
-          </div>
+          <SessionProgress current={currentIndex} total={sessionQuestions.length} score={score} />
           <QuestionCard
             key={currentQuestion.id}
             question={currentQuestion}
@@ -197,7 +240,7 @@ export default function PracticeWeakestPage() {
           </h2>
           <p style={{ color: "var(--text-muted)" }}>
             총 <span className="kvle-mono font-bold" style={{ color: "var(--text)" }}>{sessionQuestions.length}</span>문제 중{" "}
-            <span className="kvle-mono font-bold" style={{ color: "var(--gold)" }}>{score}</span>문제를 맞혔습니다.
+            <span className="kvle-mono font-bold" style={{ color: "var(--teal)" }}>{score}</span>문제를 맞혔습니다.
           </p>
           <div className="flex gap-3">
             <button onClick={startPractice} className="kvle-btn-primary">

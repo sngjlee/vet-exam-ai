@@ -37,8 +37,8 @@ export default function QuestionCard({ question, onNext, onAnswer }: Props) {
     if (!submitted) {
       if (isSelected) {
         return {
-          background: "var(--gold-dim)",
-          border: "1px solid var(--gold-border)",
+          background: "var(--teal-dim)",
+          border: "1px solid var(--teal-border)",
           color: "var(--text)",
         };
       }
@@ -80,7 +80,7 @@ export default function QuestionCard({ question, onNext, onAnswer }: Props) {
 
     if (showCorrect) return { background: "var(--correct)", color: "#fff" };
     if (isWrongSelection) return { background: "var(--wrong)", color: "#fff" };
-    if (isSelected && !submitted) return { background: "var(--gold)", color: "#fff" };
+    if (isSelected && !submitted) return { background: "var(--teal)", color: "#fff" };
     return { background: "var(--surface-raised)", color: "var(--text-muted)" };
   }
 
@@ -90,7 +90,7 @@ export default function QuestionCard({ question, onNext, onAnswer }: Props) {
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",
-        borderLeft: "4px solid var(--gold)",
+        borderLeft: "4px solid var(--teal)",
         borderRadius: "12px",
         padding: "2rem",
       }}
@@ -205,8 +205,7 @@ export default function QuestionCard({ question, onNext, onAnswer }: Props) {
 
             <button
               onClick={onNext}
-              className="kvle-btn-primary w-full sm:w-auto active:scale-[0.98] transition-all duration-200"
-              style={{ background: "var(--gold-dim)", borderColor: "var(--gold)" }}
+              className="kvle-btn-primary w-full sm:w-auto active:scale-[0.98]"
             >
               다음 문제
               <ArrowRight size={18} />
