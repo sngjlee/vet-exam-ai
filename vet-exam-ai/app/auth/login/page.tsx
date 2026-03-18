@@ -21,10 +21,7 @@ export default function LoginPage() {
     const supabase = createClient();
 
     if (mode === "signin") {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setMessage(error.message);
       } else {
@@ -36,12 +33,10 @@ export default function LoginPage() {
       if (error) {
         setMessage(error.message);
       } else if (data.session) {
-        // Email confirmation is disabled — user is signed in immediately.
         router.push("/");
         router.refresh();
       } else {
-        // Email confirmation is enabled — user must click the link.
-        setMessage("Account created. Check your email for a confirmation link.");
+        setMessage("계정이 생성되었습니다. 이메일로 전송된 인증 링크를 확인해 주세요.");
       }
     }
 
@@ -55,67 +50,80 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto max-w-sm px-6 py-20">
-      <div className="mb-2 text-sm">
-        <Link href="/" className="text-neutral-400 hover:text-neutral-200">
-          ← Back
+      <div className="mb-6">
+        <Link
+          href="/"
+          className="text-sm"
+          style={{ color: "var(--text-muted)" }}
+        >
+          ← 돌아가기
         </Link>
       </div>
 
-      <h1 className="mb-6 text-2xl font-bold">
-        {mode === "signin" ? "Sign in" : "Create account"}
-      </h1>
+      <div className="kvle-card">
+        <h1
+          className="mb-6 text-2xl font-bold"
+          style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
+        >
+          {mode === "signin" ? "로그인" : "회원가입"}
+        </h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full rounded-lg border border-neutral-600 bg-transparent px-3 py-2"
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="kvle-label mb-2">이메일</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="kvle-input"
+            />
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            className="w-full rounded-lg border border-neutral-600 bg-transparent px-3 py-2"
-          />
-        </div>
+          <div>
+            <label className="kvle-label mb-2">비밀번호</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              className="kvle-input"
+            />
+          </div>
 
-        {message && (
-          <p className="rounded-lg border border-neutral-700 px-3 py-2 text-sm text-neutral-300">
-            {message}
-          </p>
-        )}
+          {message && (
+            <div
+              className="rounded-lg px-3 py-2 text-sm"
+              style={{
+                background: "var(--surface-raised)",
+                border: "1px solid var(--border)",
+                color: "var(--text-muted)",
+              }}
+            >
+              {message}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="kvle-btn-primary w-full"
+          >
+            {loading ? "처리 중…" : mode === "signin" ? "로그인" : "회원가입"}
+          </button>
+        </form>
 
         <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-white px-4 py-2 text-black disabled:opacity-50"
+          onClick={toggleMode}
+          className="mt-4 text-sm w-full text-center"
+          style={{ color: "var(--text-muted)" }}
         >
-          {loading
-            ? "Loading…"
-            : mode === "signin"
-              ? "Sign in"
-              : "Create account"}
+          {mode === "signin"
+            ? "계정이 없으신가요? 회원가입"
+            : "이미 계정이 있으신가요? 로그인"}
         </button>
-      </form>
-
-      <button
-        onClick={toggleMode}
-        className="mt-4 text-sm text-neutral-400 hover:text-neutral-200"
-      >
-        {mode === "signin"
-          ? "Don't have an account? Sign up"
-          : "Already have an account? Sign in"}
-      </button>
+      </div>
     </main>
   );
 }

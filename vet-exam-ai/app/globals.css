@@ -1,26 +1,212 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  color-scheme: dark;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Background & Surface */
+  --bg:             #080D1A;
+  --surface:        #0F1729;
+  --surface-raised: #1A2540;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Gold — primary accent */
+  --gold:           #D4A843;
+  --gold-dim:       rgba(212, 168, 67, 0.12);
+  --gold-border:    rgba(212, 168, 67, 0.25);
+
+  /* Blue — secondary accent (review queue) */
+  --blue:           #5B8DB8;
+  --blue-dim:       rgba(91, 141, 184, 0.12);
+
+  /* Text */
+  --text:           #F0EDD8;
+  --text-muted:     #8A94A8;
+  --text-faint:     #4A5568;
+
+  /* Feedback */
+  --correct:        #2D9F6B;
+  --correct-dim:    rgba(45, 159, 107, 0.12);
+  --wrong:          #C04A3A;
+  --wrong-dim:      rgba(192, 74, 58, 0.12);
+
+  /* Borders & Rules */
+  --border:         rgba(255, 255, 255, 0.06);
+  --rule:           rgba(212, 168, 67, 0.20);
+
+  /* Fonts */
+  --font-serif: var(--font-noto-serif-kr), serif;
+  --font-sans:  var(--font-noto-sans-kr), sans-serif;
+  --font-mono:  var(--font-ibm-plex-mono), monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: radial-gradient(ellipse at 50% 30%, #0D1525 0%, #080D1A 70%);
+  color: var(--text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+/* Korean text — prevent mid-syllable line breaks */
+p, h1, h2, h3, h4, button, label, span, td, th {
+  word-break: keep-all;
+}
+
+/* Focus rings */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@layer utilities {
+  /* Cards */
+  .kvle-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--gold);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+
+  .kvle-card-raised {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--gold);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+
+  /* Section label — gold, letter-spaced. NO text-transform (Korean has no uppercase). */
+  .kvle-label {
+    display: block;
+    color: var(--gold);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+
+  /* Divider */
+  .kvle-rule {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 1.5rem 0;
+  }
+
+  /* Buttons */
+  .kvle-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--gold);
+    border: 1px solid var(--gold-border);
+    background: transparent;
+    border-radius: 8px;
+    padding: 0.625rem 1.5rem;
+    font-weight: 600;
+    transition: background 150ms, border-color 150ms;
+    cursor: pointer;
+  }
+  .kvle-btn-primary:hover {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+  }
+  .kvle-btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .kvle-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    background: transparent;
+    border-radius: 8px;
+    padding: 0.625rem 1.5rem;
+    font-weight: 500;
+    transition: color 150ms, border-color 150ms;
+    cursor: pointer;
+  }
+  .kvle-btn-ghost:hover {
+    color: var(--text);
+    border-color: var(--gold-border);
+  }
+  .kvle-btn-ghost:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .kvle-btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--wrong);
+    border: 1px solid rgba(192, 74, 58, 0.3);
+    background: transparent;
+    border-radius: 8px;
+    padding: 0.625rem 1.5rem;
+    font-weight: 500;
+    transition: background 150ms;
+    cursor: pointer;
+  }
+  .kvle-btn-danger:hover {
+    background: var(--wrong-dim);
+  }
+
+  /* Input */
+  .kvle-input {
+    width: 100%;
+    background: var(--surface-raised);
+    border: 1px solid var(--gold-border);
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+  .kvle-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(212, 168, 67, 0.2);
+  }
+
+  /* Badge */
+  .kvle-badge {
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  /* Mono wrapper for numeric data */
+  .kvle-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Mount animation — applied in JSX on elements that appear dynamically */
+  .fade-in {
+    animation: fadeIn 300ms ease forwards;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in {
+      animation: none;
+      opacity: 1;
+    }
+  }
 }

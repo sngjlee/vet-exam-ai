@@ -23,7 +23,6 @@ export default function RetryWrongPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem(RETRY_SESSION_KEY);
-
     if (saved) {
       try {
         const parsed: Question[] = JSON.parse(saved);
@@ -32,7 +31,6 @@ export default function RetryWrongPage() {
         console.error("Failed to parse retry session:", error);
       }
     }
-
     setLoaded(true);
   }, []);
 
@@ -56,7 +54,6 @@ export default function RetryWrongPage() {
       setScore((prev) => prev + 1);
       void deleteNote(payload.questionId);
     } else {
-      // Reset review schedule so the note becomes due immediately in /review.
       void addNote({
         questionId: currentQuestion.id,
         question: currentQuestion.question,
@@ -75,25 +72,24 @@ export default function RetryWrongPage() {
 
   if (!loaded) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <p>Loading...</p>
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <p style={{ color: "var(--text-muted)" }}>로딩 중…</p>
       </main>
     );
   }
 
   if (sessionQuestions.length === 0) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <div className="rounded-xl border border-neutral-700 p-6">
-          <h1 className="text-2xl font-semibold">Retry Wrong Answers</h1>
-          <p className="mt-3 text-neutral-400">
-            There are no retry questions available.
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <div className="kvle-card">
+          <h1 className="text-2xl font-bold mb-3" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            오답 재풀이
+          </h1>
+          <p className="mb-4" style={{ color: "var(--text-muted)" }}>
+            재풀이할 문제가 없습니다.
           </p>
-          <Link
-            href="/wrong-notes"
-            className="mt-4 inline-block rounded-lg border border-neutral-600 px-4 py-2"
-          >
-            Back to Wrong Notes
+          <Link href="/wrong-notes" className="kvle-btn-ghost text-sm">
+            오답 노트로
           </Link>
         </div>
       </main>
@@ -101,32 +97,31 @@ export default function RetryWrongPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <main className="mx-auto max-w-3xl px-6 py-12">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Retry Wrong Answers</h1>
-          <p className="mt-2 text-neutral-400">
-            Re-attempt previously incorrect questions
+          <h1 className="text-3xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            오답 재풀이
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+            이전에 틀린 문제를 다시 풀어보세요
           </p>
         </div>
-
-        <Link
-          href="/wrong-notes"
-          className="rounded-lg border border-neutral-600 px-4 py-2 hover:border-neutral-400"
-        >
-          Back
+        <Link href="/wrong-notes" className="kvle-btn-ghost text-sm">
+          돌아가기
         </Link>
       </div>
 
       {!finished && currentQuestion && (
         <>
-          <div className="mb-6 flex items-center justify-between text-sm text-neutral-300">
-            <span>
-              Progress: {currentIndex + 1} / {sessionQuestions.length}
+          <div className="mb-6 flex items-center justify-between text-sm">
+            <span className="kvle-mono" style={{ color: "var(--text-muted)" }}>
+              진행: {currentIndex + 1} / {sessionQuestions.length}
             </span>
-            <span>Score: {score}</span>
+            <span className="kvle-mono" style={{ color: "var(--text-muted)" }}>
+              점수: {score}
+            </span>
           </div>
-
           <QuestionCard
             question={currentQuestion}
             onAnswer={handleAnswer}
@@ -136,25 +131,20 @@ export default function RetryWrongPage() {
       )}
 
       {finished && (
-        <section className="rounded-xl border border-neutral-700 p-6">
-          <h2 className="text-2xl font-semibold">Retry Complete</h2>
-          <p className="mt-2">
-            You answered {score} out of {sessionQuestions.length} correctly.
+        <section className="kvle-card fade-in space-y-4">
+          <h2 className="text-2xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            재풀이 완료!
+          </h2>
+          <p style={{ color: "var(--text-muted)" }}>
+            총 <span className="kvle-mono font-bold" style={{ color: "var(--text)" }}>{sessionQuestions.length}</span>문제 중{" "}
+            <span className="kvle-mono font-bold" style={{ color: "var(--gold)" }}>{score}</span>문제를 맞혔습니다.
           </p>
-
-          <div className="mt-4 flex gap-3">
-            <Link
-              href="/wrong-notes"
-              className="rounded-lg border border-neutral-600 px-4 py-2"
-            >
-              Back to Wrong Notes
+          <div className="flex gap-3">
+            <Link href="/wrong-notes" className="kvle-btn-ghost">
+              오답 노트로
             </Link>
-
-            <Link
-              href="/"
-              className="rounded-lg bg-white px-4 py-2 text-black"
-            >
-              Back Home
+            <Link href="/" className="kvle-btn-primary">
+              홈으로
             </Link>
           </div>
         </section>

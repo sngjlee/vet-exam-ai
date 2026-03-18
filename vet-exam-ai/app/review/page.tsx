@@ -37,9 +37,6 @@ export default function ReviewPage() {
   const currentNote = sessionNotes[currentIndex];
   const finished = started && currentIndex >= sessionQuestions.length;
 
-  // Re-fetch due notes from DB when the session finishes so the summary
-  // and "Review Again" count reflect the actual current queue (including
-  // items answered wrong that are immediately due again).
   useEffect(() => {
     if (finished) refreshDue();
   }, [finished, refreshDue]);
@@ -87,25 +84,24 @@ export default function ReviewPage() {
 
   if (authLoading || loading) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <p className="text-neutral-400">Loading...</p>
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <p style={{ color: "var(--text-muted)" }}>로딩 중…</p>
       </main>
     );
   }
 
   if (!user) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <div className="rounded-xl border border-neutral-700 p-6">
-          <h1 className="text-2xl font-semibold">Review Queue</h1>
-          <p className="mt-3 text-neutral-400">
-            Sign in to use spaced-repetition review.
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <div className="kvle-card">
+          <h1 className="text-2xl font-bold mb-3" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            복습 큐
+          </h1>
+          <p className="mb-4" style={{ color: "var(--text-muted)" }}>
+            간격 반복 복습을 사용하려면 로그인하세요.
           </p>
-          <Link
-            href="/auth/login"
-            className="mt-4 inline-block rounded-lg border border-neutral-600 px-4 py-2 hover:border-neutral-400"
-          >
-            Sign in
+          <Link href="/auth/login" className="kvle-btn-primary text-sm">
+            로그인
           </Link>
         </div>
       </main>
@@ -114,17 +110,16 @@ export default function ReviewPage() {
 
   if (!started && dueNotes.length === 0) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <div className="rounded-xl border border-neutral-700 p-6">
-          <h1 className="text-2xl font-semibold">Review Queue</h1>
-          <p className="mt-3 text-neutral-400">
-            No reviews due right now. Check back later!
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <div className="kvle-card">
+          <h1 className="text-2xl font-bold mb-3" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            복습 큐
+          </h1>
+          <p className="mb-4" style={{ color: "var(--text-muted)" }}>
+            지금 복습할 항목이 없습니다. 나중에 다시 확인하세요.
           </p>
-          <Link
-            href="/wrong-notes"
-            className="mt-4 inline-block rounded-lg border border-neutral-600 px-4 py-2 hover:border-neutral-400"
-          >
-            Wrong Notes
+          <Link href="/wrong-notes" className="kvle-btn-ghost text-sm">
+            오답 노트
           </Link>
         </div>
       </main>
@@ -133,21 +128,19 @@ export default function ReviewPage() {
 
   if (!started) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <div className="space-y-4 rounded-xl border border-neutral-700 p-6">
-          <h1 className="text-2xl font-semibold">Review Queue</h1>
-          <p className="text-neutral-400">
-            {dueNotes.length} item{dueNotes.length !== 1 ? "s" : ""} due for
-            review.
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <div className="kvle-card space-y-4">
+          <h1 className="text-2xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            복습 큐
+          </h1>
+          <p style={{ color: "var(--text-muted)" }}>
+            {dueNotes.length}개 문제 복습 대기중
           </p>
-          <p className="text-sm text-neutral-500">
-            You&apos;ll review up to {MAX_REVIEW} at a time.
+          <p className="text-sm" style={{ color: "var(--text-faint)" }}>
+            한 번에 최대 {MAX_REVIEW}문제씩 복습합니다.
           </p>
-          <button
-            onClick={startSession}
-            className="rounded-lg bg-white px-4 py-2 text-black"
-          >
-            Start Review
+          <button onClick={startSession} className="kvle-btn-primary">
+            복습 시작
           </button>
         </div>
       </main>
@@ -155,27 +148,28 @@ export default function ReviewPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <main className="mx-auto max-w-3xl px-6 py-12">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Review Queue</h1>
-          <p className="mt-2 text-neutral-400">Spaced-repetition review</p>
+          <h1 className="text-3xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            복습 큐
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>간격 반복 복습</p>
         </div>
-        <Link
-          href="/wrong-notes"
-          className="rounded-lg border border-neutral-600 px-4 py-2 hover:border-neutral-400"
-        >
-          Back
+        <Link href="/wrong-notes" className="kvle-btn-ghost text-sm">
+          돌아가기
         </Link>
       </div>
 
       {!finished && currentQuestion && (
         <>
-          <div className="mb-6 flex items-center justify-between text-sm text-neutral-300">
-            <span>
-              Progress: {currentIndex + 1} / {sessionQuestions.length}
+          <div className="mb-6 flex items-center justify-between text-sm">
+            <span className="kvle-mono" style={{ color: "var(--text-muted)" }}>
+              진행: {currentIndex + 1} / {sessionQuestions.length}
             </span>
-            <span>Score: {score}</span>
+            <span className="kvle-mono" style={{ color: "var(--text-muted)" }}>
+              점수: {score}
+            </span>
           </div>
           <QuestionCard
             key={currentQuestion.id}
@@ -187,43 +181,42 @@ export default function ReviewPage() {
       )}
 
       {finished && (
-        <section className="space-y-4 rounded-xl border border-neutral-700 p-6">
-          <h2 className="text-2xl font-semibold">Review Complete</h2>
+        <section className="kvle-card space-y-6 fade-in">
+          <h2 className="text-2xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            복습 완료!
+          </h2>
 
           <div className="flex gap-6 text-sm">
             <div>
-              <p className="text-neutral-400">Reviewed</p>
-              <p className="text-xl font-bold">{sessionQuestions.length}</p>
+              <span className="kvle-label mb-1">복습한 문제</span>
+              <p className="text-xl font-bold kvle-mono" style={{ color: "var(--text)" }}>{sessionQuestions.length}</p>
             </div>
             <div>
-              <p className="text-neutral-400">Correct</p>
-              <p className="text-xl font-bold text-green-400">{score}</p>
+              <span className="kvle-label mb-1" style={{ color: "var(--correct)" }}>정답</span>
+              <p className="text-xl font-bold kvle-mono" style={{ color: "var(--correct)" }}>{score}</p>
             </div>
             <div>
-              <p className="text-neutral-400">Incorrect</p>
-              <p className="text-xl font-bold text-red-400">
+              <span className="kvle-label mb-1" style={{ color: "var(--wrong)" }}>오답</span>
+              <p className="text-xl font-bold kvle-mono" style={{ color: "var(--wrong)" }}>
                 {sessionQuestions.length - score}
               </p>
             </div>
           </div>
 
-          <p className="text-sm text-neutral-400">
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             {score === sessionQuestions.length
-              ? "All reviewed items were rescheduled."
-              : "Some items are due again now."}
+              ? "모든 복습 항목이 일정에 반영되었습니다."
+              : "일부 항목이 즉시 복습 대상이 됩니다."}
           </p>
 
           <div className="flex gap-3">
             {dueNotes.length > 0 && (
-              <button
-                onClick={startSession}
-                className="rounded-lg border border-neutral-600 px-4 py-2 hover:border-neutral-400"
-              >
-                Review Again ({dueNotes.length})
+              <button onClick={startSession} className="kvle-btn-primary">
+                다시 복습 ({dueNotes.length})
               </button>
             )}
-            <Link href="/" className="rounded-lg bg-white px-4 py-2 text-black">
-              Back Home
+            <Link href="/" className="kvle-btn-ghost">
+              홈으로
             </Link>
           </div>
         </section>

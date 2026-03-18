@@ -12,25 +12,24 @@ export default function MyStatsPage() {
 
   if (authLoading || statsLoading) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <p className="text-neutral-400">Loading...</p>
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <p style={{ color: "var(--text-muted)" }}>로딩 중…</p>
       </main>
     );
   }
 
   if (!user) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <div className="rounded-xl border border-neutral-700 p-6">
-          <h1 className="text-2xl font-semibold">My Stats</h1>
-          <p className="mt-3 text-neutral-400">
-            Sign in to see your quiz statistics.
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <div className="kvle-card">
+          <h1 className="text-2xl font-bold mb-3" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            나의 통계
+          </h1>
+          <p className="mb-4" style={{ color: "var(--text-muted)" }}>
+            통계를 확인하려면 로그인하세요.
           </p>
-          <Link
-            href="/auth/login"
-            className="mt-4 inline-block rounded-lg border border-neutral-600 px-4 py-2 hover:border-neutral-400"
-          >
-            Sign in
+          <Link href="/auth/login" className="kvle-btn-primary text-sm">
+            로그인
           </Link>
         </div>
       </main>
@@ -39,17 +38,16 @@ export default function MyStatsPage() {
 
   if (!stats || stats.totalAttempts === 0) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <div className="rounded-xl border border-neutral-700 p-6">
-          <h1 className="text-2xl font-semibold">My Stats</h1>
-          <p className="mt-3 text-neutral-400">
-            No attempts yet. Start a quiz session to see your stats here.
+      <main className="mx-auto max-w-3xl px-6 py-12">
+        <div className="kvle-card">
+          <h1 className="text-2xl font-bold mb-3" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            나의 통계
+          </h1>
+          <p className="mb-4" style={{ color: "var(--text-muted)" }}>
+            아직 풀이 내역이 없습니다. 퀴즈를 시작해 보세요.
           </p>
-          <Link
-            href="/"
-            className="mt-4 inline-block rounded-lg bg-white px-4 py-2 text-black"
-          >
-            Start Quiz
+          <Link href="/" className="kvle-btn-primary text-sm">
+            퀴즈 시작
           </Link>
         </div>
       </main>
@@ -59,53 +57,54 @@ export default function MyStatsPage() {
   const weakest = findWeakestCategory(stats.byCategory);
 
   return (
-    <main className="mx-auto max-w-3xl space-y-8 px-6 py-10">
+    <main className="mx-auto max-w-3xl space-y-8 px-6 py-12">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Stats</h1>
-          <p className="mt-1 text-neutral-400">{user.email}</p>
+          <h1 className="text-3xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+            나의 통계
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>{user.email}</p>
         </div>
         {weakest && (
-          <Link
-            href="/practice/weakest"
-            className="rounded-lg bg-white px-4 py-2 text-sm text-black"
-          >
-            Practice Weakest
+          <Link href="/practice/weakest" className="kvle-btn-primary text-sm">
+            약점 집중 연습
           </Link>
         )}
       </div>
 
       {/* Overview */}
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Total Attempts" value={stats.totalAttempts} />
-        <StatCard label="Total Correct" value={stats.totalCorrect} />
-        <StatCard label="Accuracy" value={`${stats.accuracy}%`} />
-        <StatCard label="Last 7 Days" value={stats.last7DaysAttempts} />
+        <StatCard label="총 시도" value={stats.totalAttempts} />
+        <StatCard label="총 정답" value={stats.totalCorrect} />
+        <StatCard label="정답률" value={`${stats.accuracy}%`} />
+        <StatCard label="최근 7일" value={stats.last7DaysAttempts} />
       </section>
 
       {/* Category breakdown */}
       <section>
-        <h2 className="mb-3 text-xl font-semibold">By Category</h2>
-        <div className="overflow-hidden rounded-xl border border-neutral-700">
+        <h2 className="mb-3 text-xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+          과목별 통계
+        </h2>
+        <div className="overflow-hidden rounded-xl" style={{ border: "1px solid var(--border)" }}>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-neutral-700 text-left text-neutral-400">
-                <th className="px-4 py-2 font-medium">Category</th>
-                <th className="px-4 py-2 text-right font-medium">Attempts</th>
-                <th className="px-4 py-2 text-right font-medium">Correct</th>
-                <th className="px-4 py-2 text-right font-medium">Accuracy</th>
+              <tr style={{ borderBottom: "1px solid var(--rule)" }}>
+                <th className="px-4 py-3 text-left font-medium" style={{ color: "var(--text-muted)" }}>과목</th>
+                <th className="px-4 py-3 text-right font-medium" style={{ color: "var(--text-muted)" }}>시도</th>
+                <th className="px-4 py-3 text-right font-medium" style={{ color: "var(--text-muted)" }}>정답</th>
+                <th className="px-4 py-3 text-right font-medium" style={{ color: "var(--text-muted)" }}>정답률</th>
               </tr>
             </thead>
             <tbody>
               {stats.byCategory.map((row) => (
                 <tr
                   key={row.category}
-                  className="border-b border-neutral-800 last:border-0"
+                  style={{ borderTop: "1px solid var(--rule)" }}
                 >
-                  <td className="px-4 py-2">{row.category}</td>
-                  <td className="px-4 py-2 text-right">{row.attempts}</td>
-                  <td className="px-4 py-2 text-right">{row.correct}</td>
-                  <td className="px-4 py-2 text-right">{row.accuracy}%</td>
+                  <td className="px-4 py-3" style={{ color: "var(--text)" }}>{row.category}</td>
+                  <td className="px-4 py-3 text-right kvle-mono" style={{ color: "var(--text-muted)" }}>{row.attempts}</td>
+                  <td className="px-4 py-3 text-right kvle-mono" style={{ color: "var(--text-muted)" }}>{row.correct}</td>
+                  <td className="px-4 py-3 text-right kvle-mono" style={{ color: "var(--text-muted)" }}>{row.accuracy}%</td>
                 </tr>
               ))}
             </tbody>
@@ -115,28 +114,31 @@ export default function MyStatsPage() {
 
       {/* Recent attempts */}
       <section>
-        <h2 className="mb-3 text-xl font-semibold">Recent Attempts</h2>
+        <h2 className="mb-3 text-xl font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}>
+          최근 시도
+        </h2>
         <div className="space-y-2">
           {stats.recentAttempts.map((attempt) => (
             <div
               key={attempt.id}
-              className="flex items-start justify-between rounded-lg border border-neutral-700 px-4 py-3 text-sm"
+              className="flex items-start justify-between rounded-lg px-4 py-3 text-sm"
+              style={{ border: "1px solid var(--border)", background: "var(--surface)" }}
             >
               <div className="min-w-0 flex-1 pr-4">
-                <p className="truncate font-medium">{attempt.question_id}</p>
-                <p className="mt-0.5 text-neutral-400">{attempt.category}</p>
-                <p className="mt-0.5 text-neutral-500">
-                  {new Date(attempt.answered_at).toLocaleString()}
+                <p className="truncate font-medium" style={{ color: "var(--text)" }}>{attempt.question_id}</p>
+                <p className="mt-0.5" style={{ color: "var(--text-muted)" }}>{attempt.category}</p>
+                <p className="mt-0.5 kvle-mono text-xs" style={{ color: "var(--text-faint)" }}>
+                  {new Date(attempt.answered_at).toLocaleString("ko-KR")}
                 </p>
               </div>
               <span
-                className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium ${
-                  attempt.is_correct
-                    ? "bg-green-900/40 text-green-400"
-                    : "bg-red-900/40 text-red-400"
-                }`}
+                className="shrink-0 rounded px-2 py-0.5 text-xs font-medium kvle-mono"
+                style={attempt.is_correct
+                  ? { background: "var(--correct-dim)", color: "var(--correct)" }
+                  : { background: "var(--wrong-dim)", color: "var(--wrong)" }
+                }
               >
-                {attempt.is_correct ? "Correct" : "Wrong"}
+                {attempt.is_correct ? "정답" : "오답"}
               </span>
             </div>
           ))}
@@ -146,17 +148,11 @@ export default function MyStatsPage() {
   );
 }
 
-function StatCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
+function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl border border-neutral-700 p-4">
-      <p className="text-sm text-neutral-400">{label}</p>
-      <p className="mt-1 text-2xl font-semibold">{value}</p>
+    <div className="kvle-card">
+      <span className="kvle-label mb-2">{label}</span>
+      <p className="mt-1 text-2xl font-bold kvle-mono" style={{ color: "var(--text)" }}>{value}</p>
     </div>
   );
 }

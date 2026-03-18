@@ -1,75 +1,135 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../lib/hooks/useAuth";
 import { useDueCountCtx } from "../lib/context/DueCountContext";
+import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User } from "lucide-react";
 
 export default function NavBar() {
   const { user, loading, signOut } = useAuth();
   const dueCount = useDueCountCtx();
   const router = useRouter();
+  const pathname = usePathname();
 
   async function handleSignOut() {
     await signOut();
     router.refresh();
   }
 
+  const isActive = (path: string) => pathname === path;
+
+  const linkClass = (path: string) =>
+    `flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 ${
+      isActive(path)
+        ? "text-[var(--gold)] bg-[var(--gold-dim)]"
+        : "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-raised)]"
+    }`;
+
   return (
-    <header className="border-b border-neutral-800 px-6 py-3">
-      <div className="mx-auto flex max-w-3xl items-center justify-between">
-        <Link href="/" className="font-semibold">
-          Veterinary Exam AI
+    <header
+      className="sticky top-0 z-50 w-full"
+      style={{
+        background: "var(--bg)",
+        borderBottom: "1px solid var(--rule)",
+      }}
+    >
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+        {/* Logo */}
+        <Link href="/" className="flex flex-col leading-tight group">
+          <span
+            className="font-bold text-lg tracking-tight"
+            style={{ fontFamily: "var(--font-serif)", color: "var(--gold)" }}
+          >
+            수의국시
+          </span>
+          <span
+            className="kvle-mono text-[10px]"
+            style={{ color: "var(--text-faint)" }}
+          >
+            KVLE
+          </span>
         </Link>
 
-        <nav className="flex items-center gap-3 text-sm">
-          <Link
-            href="/wrong-notes"
-            className="text-neutral-400 hover:text-neutral-200"
-          >
-            Wrong Notes
+        {/* Nav */}
+        <nav className="flex items-center gap-1 text-sm font-medium">
+          <Link href="/wrong-notes" className={linkClass("/wrong-notes")} aria-label="오답 노트">
+            <RotateCcw size={16} />
+            <span className="hidden sm:inline">오답 노트</span>
           </Link>
 
           {!loading && user && (
             <>
-              <Link
-                href="/my-stats"
-                className="text-neutral-400 hover:text-neutral-200"
-              >
-                My Stats
+              <Link href="/my-stats" className={linkClass("/my-stats")} aria-label="나의 통계">
+                <BarChart3 size={16} />
+                <span className="hidden sm:inline">나의 통계</span>
               </Link>
-              <Link
-                href="/practice/weakest"
-                className="text-neutral-400 hover:text-neutral-200"
-              >
-                Practice
+              <Link href="/practice/weakest" className={linkClass("/practice/weakest")} aria-label="약점 연습">
+                <PenTool size={16} />
+                <span className="hidden sm:inline">약점 연습</span>
               </Link>
-              <Link
-                href="/review"
-                className="text-neutral-400 hover:text-neutral-200"
-              >
-                Review{dueCount > 0 && ` (${dueCount})`}
+              <Link href="/review" className={linkClass("/review")} aria-label="복습하기">
+                <div className="relative">
+                  <BookOpen size={16} />
+                  {dueCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--gold)] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--gold)]"></span>
+                    </span>
+                  )}
+                </div>
+                <span className="hidden sm:inline">복습하기</span>
+                {dueCount > 0 && (
+                  <span
+                    className="ml-1 rounded-full px-1.5 py-0.5 text-[10px] kvle-mono"
+                    style={{ background: "var(--gold-dim)", color: "var(--gold)" }}
+                  >
+                    {dueCount}
+                  </span>
+                )}
               </Link>
             </>
           )}
 
+          <div className="h-6 w-px mx-2" style={{ background: "var(--border)" }}></div>
+
           {!loading && (
             user ? (
-              <>
-                <span className="text-neutral-500">{user.email}</span>
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
+                  style={{
+                    background: "var(--surface-raised)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  <User size={13} />
+                  <span className="truncate max-w-[120px]">{user.email}</span>
+                </div>
                 <button
                   onClick={handleSignOut}
-                  className="rounded border border-neutral-600 px-3 py-1 hover:border-neutral-400"
+                  className="flex items-center justify-center p-2 rounded-lg transition-colors"
+                  style={{ color: "var(--text-muted)" }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.color = "var(--wrong)";
+                    (e.currentTarget as HTMLElement).style.background = "var(--wrong-dim)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
+                  title="로그아웃"
                 >
-                  Sign out
+                  <LogOut size={16} />
                 </button>
-              </>
+              </div>
             ) : (
               <Link
                 href="/auth/login"
-                className="rounded border border-neutral-600 px-3 py-1 hover:border-neutral-400"
+                className="kvle-btn-primary text-sm"
               >
-                Sign in
+                로그인
               </Link>
             )
           )}
