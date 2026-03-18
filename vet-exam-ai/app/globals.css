@@ -90,6 +90,15 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     padding: 2rem;
   }
 
+  /* Footer links — muted text with CSS hover, no JS handlers (Server Component safe) */
+  .footer-link {
+    color: var(--text-muted);
+    transition: color 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .footer-link:hover {
+    color: var(--text);
+  }
+
   /* Section label — teal, letter-spaced. NO text-transform (Korean has no uppercase). */
   .kvle-label {
     display: block;

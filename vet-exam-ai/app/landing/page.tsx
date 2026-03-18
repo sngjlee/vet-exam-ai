@@ -670,26 +670,10 @@ export default function LandingPage() {
             © 2026 수의미래연구소. 수록된 문제 및 해설의 저작권은 수의미래연구소에 있습니다.
           </p>
           <div className="flex gap-5 text-sm">
-            <Link
-              href="/auth/login"
-              style={{
-                color: "var(--text-muted)",
-                transition: "color 300ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--text)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--text-muted)"; }}
-            >
+            <Link href="/auth/login" className="footer-link">
               로그인
             </Link>
-            <Link
-              href="/auth/login?mode=signup"
-              style={{
-                color: "var(--text-muted)",
-                transition: "color 300ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--text)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--text-muted)"; }}
-            >
+            <Link href="/auth/login?mode=signup" className="footer-link">
               회원가입
             </Link>
           </div>
