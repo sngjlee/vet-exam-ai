@@ -36,18 +36,18 @@ export default function NavBar() {
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link href="/" className="flex flex-col leading-tight group">
+        <Link href="/" className="flex flex-col leading-tight">
           <span
             className="font-bold text-lg tracking-tight"
             style={{ fontFamily: "var(--font-serif)", color: "var(--gold)" }}
           >
-            수의국시
+            Vexa
           </span>
           <span
-            className="kvle-mono text-[10px]"
-            style={{ color: "var(--text-faint)" }}
+            className="kvle-mono text-[9px]"
+            style={{ color: "var(--text-faint)", letterSpacing: "0.08em" }}
           >
-            KVLE
+            수의미래연구소
           </span>
         </Link>
 

@@ -6,14 +6,14 @@ import { DueCountProvider } from "../lib/context/DueCountContext";
 
 // IMPORTANT: Korean fonts must include the "korean" subset or glyphs fall back to system fonts
 const notoSerifKR = Noto_Serif_KR({
-  subsets: ["latin"],
+  subsets: ["latin", "korean"],
   weight: ["700"],
   variable: "--font-noto-serif-kr",
   display: "swap",
 });
 
 const notoSansKR = Noto_Sans_KR({
-  subsets: ["latin"],
+  subsets: ["latin", "korean"],
   weight: ["400", "500", "700"],
   variable: "--font-noto-sans-kr",
   display: "swap",

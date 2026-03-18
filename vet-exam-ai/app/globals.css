@@ -67,6 +67,11 @@ p, h1, h2, h3, h4, button, label, span, td, th {
   to   { opacity: 1; transform: none; }
 }
 
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @layer utilities {
   /* Cards */
   .kvle-card {
@@ -113,7 +118,9 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     border-radius: 8px;
     padding: 0.625rem 1.5rem;
     font-weight: 600;
-    transition: background 150ms, border-color 150ms;
+    transition: background 300ms cubic-bezier(0.32, 0.72, 0, 1),
+                border-color 300ms cubic-bezier(0.32, 0.72, 0, 1),
+                transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
     cursor: pointer;
   }
   .kvle-btn-primary:hover {
@@ -136,7 +143,9 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     border-radius: 8px;
     padding: 0.625rem 1.5rem;
     font-weight: 500;
-    transition: color 150ms, border-color 150ms;
+    transition: color 300ms cubic-bezier(0.32, 0.72, 0, 1),
+                border-color 300ms cubic-bezier(0.32, 0.72, 0, 1),
+                transform 200ms cubic-bezier(0.32, 0.72, 0, 1);
     cursor: pointer;
   }
   .kvle-btn-ghost:hover {
@@ -206,11 +215,25 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     animation: fadeIn 300ms ease forwards;
   }
 
+  /* Scroll-triggered reveal — uses CSS Scroll-Driven Animations where supported,
+     falls back to immediate fadeUp on page load in older browsers */
+  .scroll-reveal {
+    animation: fadeUp 0.7s cubic-bezier(0.32, 0.72, 0, 1) both;
+  }
+  @supports (animation-timeline: view()) {
+    .scroll-reveal {
+      animation-timeline: view();
+      animation-range: entry 0% entry 22%;
+    }
+  }
+
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .fade-in {
+    .fade-in,
+    .scroll-reveal {
       animation: none;
       opacity: 1;
+      transform: none;
     }
   }
 }

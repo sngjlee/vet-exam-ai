@@ -80,7 +80,7 @@ export default function QuestionCard({ question, onNext, onAnswer }: Props) {
 
     if (showCorrect) return { background: "var(--correct)", color: "#fff" };
     if (isWrongSelection) return { background: "var(--wrong)", color: "#fff" };
-    if (isSelected && !submitted) return { background: "var(--gold)", color: "#080D1A" };
+    if (isSelected && !submitted) return { background: "var(--gold)", color: "#fff" };
     return { background: "var(--surface-raised)", color: "var(--text-muted)" };
   }
 
@@ -150,7 +150,7 @@ export default function QuestionCard({ question, onNext, onAnswer }: Props) {
           <button
             onClick={handleSubmit}
             disabled={!selected}
-            className="kvle-btn-primary w-full sm:w-auto"
+            className="kvle-btn-primary w-full sm:w-auto active:scale-[0.98] transition-all duration-200"
           >
             정답 확인
             <ArrowRight size={18} />
@@ -205,7 +205,7 @@ export default function QuestionCard({ question, onNext, onAnswer }: Props) {
 
             <button
               onClick={onNext}
-              className="kvle-btn-primary w-full sm:w-auto"
+              className="kvle-btn-primary w-full sm:w-auto active:scale-[0.98] transition-all duration-200"
               style={{ background: "var(--gold-dim)", borderColor: "var(--gold)" }}
             >
               다음 문제
