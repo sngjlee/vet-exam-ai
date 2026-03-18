@@ -8,14 +8,18 @@
   --surface:        #0F1729;
   --surface-raised: #1A2540;
 
-  /* Gold — primary accent */
-  --gold:           #D4A843;
-  --gold-dim:       rgba(212, 168, 67, 0.12);
-  --gold-border:    rgba(212, 168, 67, 0.25);
+  /* Teal — primary accent (수의미래연구소 #1ea7bb) — 아끼며 사용 */
+  --gold:           #1ea7bb;
+  --gold-dim:       rgba(30, 167, 187, 0.10);
+  --gold-border:    rgba(30, 167, 187, 0.28);
 
-  /* Blue — secondary accent (review queue) */
-  --blue:           #5B8DB8;
-  --blue-dim:       rgba(91, 141, 184, 0.12);
+  /* Slate-blue — secondary accent (복습 큐, 차트 등) */
+  --blue:           #4A7FA8;
+  --blue-dim:       rgba(74, 127, 168, 0.12);
+
+  /* Amber — warm accent (강조 레이블, 마일스톤 등, 매우 드물게) */
+  --amber:          #C8895A;
+  --amber-dim:      rgba(200, 137, 90, 0.12);
 
   /* Text */
   --text:           #F0EDD8;
@@ -30,7 +34,7 @@
 
   /* Borders & Rules */
   --border:         rgba(255, 255, 255, 0.06);
-  --rule:           rgba(212, 168, 67, 0.20);
+  --rule:           rgba(30, 167, 187, 0.20);
 
   /* Fonts */
   --font-serif: var(--font-noto-serif-kr), serif;
@@ -175,7 +179,7 @@ p, h1, h2, h3, h4, button, label, span, td, th {
   }
   .kvle-input:focus {
     border-color: var(--gold);
-    box-shadow: 0 0 0 2px rgba(212, 168, 67, 0.2);
+    box-shadow: 0 0 0 2px rgba(30, 167, 187, 0.2);
   }
 
   /* Badge */

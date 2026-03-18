@@ -27,8 +27,8 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "수의국시",
-  description: "KVLE 기반 스마트 학습 시스템",
+  title: "Vexa — 수의사 국가시험 학습 플랫폼",
+  description: "수의사 국가시험 대비 스마트 학습 플랫폼. 약점 데이터 분석으로 합격을 설계합니다.",
 };
 
 export default function RootLayout({
