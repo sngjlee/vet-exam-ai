@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../lib/hooks/useAuth";
 import { useDueCountCtx } from "../lib/context/DueCountContext";
@@ -36,19 +37,8 @@ export default function NavBar() {
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link href="/" className="flex flex-col leading-tight">
-          <span
-            className="font-bold text-lg tracking-tight"
-            style={{ fontFamily: "var(--font-serif)", color: "var(--teal)" }}
-          >
-            Vexa
-          </span>
-          <span
-            className="kvle-mono text-[9px]"
-            style={{ color: "var(--text-faint)", letterSpacing: "0.08em" }}
-          >
-            수의미래연구소
-          </span>
+        <Link href="/dashboard" className="flex items-center">
+          <Image src="/logo.png" alt="Vexa 수의미래연구소" width={120} height={40} style={{ objectFit: "contain" }} priority />
         </Link>
 
         {/* Nav */}

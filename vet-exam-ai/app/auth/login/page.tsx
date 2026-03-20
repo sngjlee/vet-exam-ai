@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, ArrowLeft, Zap } from "lucide-react";
 import { createClient } from "../../../lib/supabase/client";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "signin";
@@ -28,7 +28,7 @@ export default function LoginPage() {
       if (error) {
         setMessage({ text: error.message, type: "error" });
       } else {
-        router.push("/");
+        router.push("/dashboard");
         router.refresh();
       }
     } else {
@@ -36,7 +36,7 @@ export default function LoginPage() {
       if (error) {
         setMessage({ text: error.message, type: "error" });
       } else if (data.session) {
-        router.push("/");
+        router.push("/dashboard");
         router.refresh();
       } else {
         setMessage({
@@ -95,7 +95,7 @@ export default function LoginPage() {
       {/* Back link */}
       <div style={{ position: "relative", width: "100%", maxWidth: "400px", marginBottom: "1.5rem" }}>
         <Link
-          href="/landing"
+          href="/"
           className="inline-flex items-center gap-1.5 text-sm font-medium"
           style={{ color: "var(--text-muted)", transition: "color 200ms" }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--text)"; }}
@@ -299,5 +299,13 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

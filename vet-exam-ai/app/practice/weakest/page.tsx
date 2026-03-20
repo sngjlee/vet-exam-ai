@@ -124,7 +124,7 @@ export default function PracticeWeakestPage() {
           <p className="mb-4" style={{ color: "var(--text-muted)" }}>
             아직 시도 기록이 부족합니다. 몇 번 더 풀어본 후 다시 오세요.
           </p>
-          <Link href="/" className="kvle-btn-primary text-sm">
+          <Link href="/dashboard" className="kvle-btn-primary text-sm">
             퀴즈 시작
           </Link>
         </div>

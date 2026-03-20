@@ -138,7 +138,7 @@ export default function RetryWrongPage() {
             <Link href="/wrong-notes" className="kvle-btn-ghost">
               오답 노트로
             </Link>
-            <Link href="/" className="kvle-btn-primary">
+            <Link href="/dashboard" className="kvle-btn-primary">
               홈으로
             </Link>
           </div>

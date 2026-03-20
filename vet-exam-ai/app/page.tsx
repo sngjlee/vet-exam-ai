@@ -1,405 +1,598 @@
-"use client";
-
-import { useRef, useState } from "react";
+// app/landing/page.tsx
 import Link from "next/link";
-import QuestionCard from "../components/QuestionCard";
-import { createSessionQuestions, type Question } from "../lib/questions";
-import { useWrongNotes } from "../lib/hooks/useWrongNotes";
-import { useAttempts } from "../lib/hooks/useAttempts";
-import { useAuth } from "../lib/hooks/useAuth";
-import { useDueCountCtx } from "../lib/context/DueCountContext";
-import { useQuestions } from "../lib/hooks/useQuestions";
+import Image from "next/image";
 import {
-  Play, Sparkles, BookOpen, Clock, Target,
-  ArrowRight, CheckCircle2, RotateCcw,
+  BookOpen, BarChart3, RotateCcw, Target,
+  CheckCircle2, ArrowRight, Zap, TrendingUp, Clock,
 } from "lucide-react";
 
-const TOTAL_QUESTIONS = 5;
+// ── 데이터 ────────────────────────────────────────────────────────────
 
-export default function Home() {
-  const { questions, categories, loading: questionsLoading } = useQuestions();
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [started, setStarted] = useState(false);
-  const { notes: wrongNotes, addNote } = useWrongNotes();
-  const { logAttempt } = useAttempts();
-  const { user, loading: authLoading } = useAuth();
-  const dueCount = useDueCountCtx();
-  const sessionIdRef = useRef<string>(crypto.randomUUID());
+const features = [
+  {
+    icon: RotateCcw,
+    label: "SRS",
+    title: "스마트 반복 학습",
+    desc: "틀린 문제는 자동으로 오답 노트에 저장됩니다. 간격 반복 알고리즘이 기억이 흐려지는 타이밍에 복습 큐를 올려줍니다.",
+    highlight: true,
+  },
+  {
+    icon: BarChart3,
+    label: "분석",
+    title: "과목별 약점 분석",
+    desc: "시도 횟수, 정답률, 오답 패턴을 과목별로 집계합니다. 어느 단원에 시간을 써야 할지 숫자로 확인합니다.",
+    highlight: false,
+  },
+  {
+    icon: Target,
+    label: "연습",
+    title: "약점 집중 연습",
+    desc: "정답률이 가장 낮은 과목 문제를 우선 출제합니다. 고루 공부하는 대신 취약점부터 보완하는 방식입니다.",
+    highlight: false,
+  },
+  {
+    icon: BookOpen,
+    label: "오답",
+    title: "오답 노트",
+    desc: "틀린 문제와 해설이 자동 저장됩니다. 과목 필터로 원하는 단원만 골라 복습하고, 오답 재풀이로 완전히 이해했는지 확인합니다.",
+    highlight: false,
+  },
+];
 
-  const currentQuestion = sessionQuestions[currentIndex];
-  const finished = started && currentIndex >= sessionQuestions.length;
+const steps = [
+  {
+    num: "01",
+    icon: BookOpen,
+    title: "문제 풀기",
+    desc: "과목을 선택하고 세션을 시작합니다. 틀린 문제는 자동으로 오답 노트에 저장됩니다.",
+    active: true,
+  },
+  {
+    num: "02",
+    icon: TrendingUp,
+    title: "데이터 확인",
+    desc: "과목별 정답률과 약점이 실시간 집계됩니다. 어디를 더 공부해야 할지 숫자로 보입니다.",
+    active: false,
+  },
+  {
+    num: "03",
+    icon: Clock,
+    title: "복습 완료",
+    desc: "간격 반복 알고리즘이 최적 타이밍에 복습 문제를 올려줍니다. 잊기 전에 다시 풀고 장기 기억으로 굳힙니다.",
+    active: false,
+  },
+];
 
-  function startSession() {
-    const categoryFilter = selectedCategory === "All" ? undefined : selectedCategory;
-    const pool = categoryFilter
-      ? questions.filter((q) => q.category === categoryFilter)
-      : questions;
-    const total = Math.min(TOTAL_QUESTIONS, pool.length);
-    const newSession = createSessionQuestions(questions, total, categoryFilter);
-    sessionIdRef.current = crypto.randomUUID();
-    setSessionQuestions(newSession);
-    setCurrentIndex(0);
-    setScore(0);
-    setStarted(true);
-  }
+// ── 컴포넌트 ──────────────────────────────────────────────────────────
 
-  function handleAnswer(payload: {
-    questionId: string;
-    selectedAnswer: string;
-    isCorrect: boolean;
-  }) {
-    if (!currentQuestion) return;
-    void logAttempt({
-      sessionId: sessionIdRef.current,
-      questionId: currentQuestion.id,
-      category: currentQuestion.category,
-      selectedAnswer: payload.selectedAnswer,
-      correctAnswer: currentQuestion.answer,
-      isCorrect: payload.isCorrect,
-    });
-    if (payload.isCorrect) {
-      setScore((prev) => prev + 1);
-      return;
-    }
-    void addNote({
-      questionId: currentQuestion.id,
-      question: currentQuestion.question,
-      category: currentQuestion.category,
-      choices: currentQuestion.choices,
-      correctAnswer: currentQuestion.answer,
-      selectedAnswer: payload.selectedAnswer,
-      explanation: currentQuestion.explanation,
-    });
-  }
-
-  function handleNext() { setCurrentIndex((prev) => prev + 1); }
-  function handleRestart() { startSession(); }
-
+export default function LandingPage() {
   return (
     <main
       style={{
+        background: "#080D1A",
+        color: "var(--text)",
+        fontFamily: "var(--font-sans)",
         position: "relative",
-        maxWidth: "80rem",
-        margin: "0 auto",
-        padding: "3rem 1.5rem",
         overflow: "hidden",
       }}
     >
-
-      {/* ━━━━ 배경 gradient orbs — pointer-events-none, no blur (GPU-safe) ━━ */}
+      {/* ━━━━ 배경 gradient orbs — pointer-events-none, GPU-safe ━━━━━━━ */}
       <div
         aria-hidden="true"
         style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}
       >
-        {/* 우상단 teal orb */}
+        {/* 우상단 틸 orb */}
         <div
           style={{
             position: "absolute",
-            width: "800px",
-            height: "800px",
-            top: "-280px",
-            right: "-160px",
+            width: "900px",
+            height: "900px",
+            top: "-320px",
+            right: "-180px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(30,167,187,0.05) 0%, transparent 65%)",
+            background: "radial-gradient(circle, rgba(30,167,187,0.045) 0%, transparent 65%)",
           }}
         />
-        {/* 좌하단 slate orb */}
+        {/* 중하단 슬레이트 orb */}
+        <div
+          style={{
+            position: "absolute",
+            width: "700px",
+            height: "700px",
+            top: "55%",
+            left: "-180px",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(74,127,168,0.03) 0%, transparent 65%)",
+          }}
+        />
+        {/* CTA 섹션 저하단 orb */}
         <div
           style={{
             position: "absolute",
             width: "600px",
             height: "600px",
-            bottom: "-80px",
-            left: "-150px",
+            bottom: "-200px",
+            right: "10%",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(74,127,168,0.04) 0%, transparent 65%)",
+            background: "radial-gradient(circle, rgba(30,167,187,0.03) 0%, transparent 65%)",
           }}
         />
       </div>
 
-      {/* ━━━━ 대시보드 헤더 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {!started && (
-        <div
-          className="fade-in"
-          style={{ position: "relative", marginBottom: "2.5rem", animationDelay: "0ms" }}
-        >
-          <span className="kvle-label mb-3 inline-block">학습 대시보드</span>
-          <h1
-            className="text-3xl md:text-4xl font-bold tracking-tight"
-            style={{ color: "var(--text)" }}
-          >
-            Vexa로{" "}
-            <span style={{ color: "var(--teal)" }}>체계적으로 준비하세요</span>
-          </h1>
-        </div>
-      )}
+      {/* ━━━━ HERO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section
+        className="mx-auto max-w-7xl px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[100dvh] py-24 lg:py-0"
+        style={{ position: "relative" }}
+      >
+        {/* LEFT: 카피 */}
+        <div className="flex flex-col items-start">
 
-      {/* ━━━━ 로그인 대시보드 카드 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {!started && !authLoading && user && (
-        <div
-          style={{ position: "relative", marginBottom: "2.5rem" }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-5"
-        >
-
-          {/* ── 세션 시작 카드 — Double-Bezel ─────────────────────────────── */}
+          {/* Eyebrow badge */}
           <div
-            className="fade-in md:col-span-2"
+            className="fade-in inline-flex items-center gap-2 mb-8"
+            style={{
+              background: "var(--teal-dim)",
+              border: "1px solid var(--teal-border)",
+              color: "var(--teal)",
+              borderRadius: "9999px",
+              padding: "6px 14px 6px 10px",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              animationDelay: "0ms",
+            }}
+          >
+            <Zap size={12} />
+            수의미래연구소 공식 학습 플랫폼
+          </div>
+
+          {/* 헤드라인 */}
+          <h1
+            className="fade-in text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.05] mb-6"
+            style={{
+              fontFamily: "var(--font-serif)",
+              color: "var(--text)",
+              animationDelay: "80ms",
+            }}
+          >
+            데이터로 설계하는
+            <br />
+            <span style={{ color: "var(--teal)" }}>확실한 합격</span>
+          </h1>
+
+          {/* 서브카피 */}
+          <p
+            className="fade-in text-base lg:text-lg leading-relaxed mb-10"
+            style={{
+              color: "var(--text-muted)",
+              maxWidth: "38ch",
+              animationDelay: "160ms",
+            }}
+          >
+            틀린 문제와 취약 과목을 데이터로 추적합니다.
+            공부 방향을 숫자로 확인하고 합격에 집중하세요.
+          </p>
+
+          {/* CTA 버튼 — Button-in-Button + pill */}
+          <div
+            className="fade-in flex flex-col sm:flex-row items-start sm:items-center gap-3"
+            style={{ animationDelay: "240ms" }}
+          >
+            {/* Primary — Button-in-Button */}
+            <Link
+              href="/auth/login?mode=signup"
+              className="inline-flex items-center gap-3 font-semibold active:scale-[0.98]"
+              style={{
+                background: "var(--teal)",
+                color: "#fff",
+                borderRadius: "9999px",
+                padding: "10px 10px 10px 22px",
+                fontSize: "0.9rem",
+                transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
+              }}
+            >
+              무료로 시작하기
+              <span
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  background: "rgba(0,0,0,0.18)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <ArrowRight size={14} />
+              </span>
+            </Link>
+
+            {/* Ghost — pill */}
+            <Link
+              href="/auth/login?mode=signin"
+              className="inline-flex items-center gap-2 font-medium active:scale-[0.98] hover:text-[var(--text)] hover:border-[var(--teal-border)]"
+              style={{
+                color: "var(--text-muted)",
+                border: "1px solid var(--border)",
+                borderRadius: "9999px",
+                padding: "10px 22px",
+                fontSize: "0.9rem",
+                transition: "color 300ms cubic-bezier(0.32,0.72,0,1), border-color 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
+              }}
+            >
+              로그인
+            </Link>
+          </div>
+        </div>
+
+        {/* RIGHT: 앱 프리뷰 — Double-Bezel */}
+        <div
+          className="fade-in w-full"
+          style={{ animationDelay: "300ms" }}
+        >
+          {/* Outer Shell */}
+          <div
             style={{
               padding: "6px",
               borderRadius: "22px",
               background: "rgba(255,255,255,0.02)",
               border: "1px solid rgba(255,255,255,0.07)",
-              animationDelay: "60ms",
             }}
           >
+            {/* Inner Core */}
             <div
               style={{
                 borderRadius: "16px",
-                padding: "1.5rem",
-                position: "relative",
                 overflow: "hidden",
-                height: "100%",
                 background: "var(--surface)",
-                borderTop: "3px solid var(--teal)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-                display: "flex",
-                flexDirection: "column",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 32px 64px rgba(0,0,0,0.5)",
               }}
             >
-              {/* inset glow */}
+              {/* 브라우저 크롬 */}
               <div
-                aria-hidden="true"
+                className="flex items-center gap-2 px-4 py-3"
                 style={{
-                  position: "absolute",
-                  inset: 0,
-                  pointerEvents: "none",
-                  background:
-                    "radial-gradient(ellipse 80% 60% at 100% 0%, rgba(30,167,187,0.07) 0%, transparent 60%)",
+                  borderBottom: "1px solid var(--border)",
+                  background: "var(--surface-raised)",
                 }}
-              />
-              <div style={{ position: "relative", display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                    <Sparkles size={15} style={{ color: "var(--teal)" }} />
-                    <span className="kvle-label">스마트 학습</span>
-                  </div>
-                  <h2
-                    className="text-lg font-bold tracking-tight"
-                    style={{ color: "var(--text)", marginBottom: "0.375rem" }}
-                  >
-                    오늘의 학습을 시작하세요
-                  </h2>
-                  <p
-                    className="text-sm"
-                    style={{ color: "var(--text-muted)", marginBottom: "1.5rem" }}
-                  >
-                    과목을 선택하고 KVLE 유형 문제를 풀어보세요.
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4 items-end">
-                  <div className="w-full sm:flex-1">
-                    <label className="kvle-label mb-2">과목 선택</label>
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="kvle-input"
-                    >
-                      <option value="All">전체 과목 (혼합)</option>
-                      {categories.map((category) => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Button-in-Button pill — solid gold (primary) */}
-                  <button
-                    onClick={startSession}
-                    disabled={questionsLoading}
-                    className="flex-shrink-0 inline-flex items-center gap-3 font-semibold active:scale-[0.98] w-full sm:w-auto justify-center"
-                    style={{
-                      background: "var(--teal)",
-                      color: "#fff",
-                      borderRadius: "9999px",
-                      padding: "10px 10px 10px 22px",
-                      fontSize: "0.875rem",
-                      border: "none",
-                      cursor: questionsLoading ? "not-allowed" : "pointer",
-                      opacity: questionsLoading ? 0.5 : 1,
-                      transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-                    }}
-                  >
-                    {questionsLoading ? "로딩 중…" : "세션 시작"}
-                    <span
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-[#C04A3A]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#C8895A]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#2D9F6B]" />
+                <span
+                  className="ml-3 text-xs kvle-mono px-3 py-1 rounded"
+                  style={{ background: "var(--bg)", color: "var(--text-faint)" }}
+                >
+                  app.vexa.study
+                </span>
+              </div>
+
+              {/* 대시보드 */}
+              <div className="p-5 space-y-3">
+                {/* 스탯 카드 */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { label: "총 시도", value: "312", accent: false },
+                    { label: "정답률", value: "74.3%", accent: true },
+                    { label: "복습 대기", value: "6", accent: false },
+                    { label: "최약 과목", value: "약리학", accent: false },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-lg p-3"
                       style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        background: "rgba(0,0,0,0.18)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
+                        background: "var(--surface-raised)",
+                        border: "1px solid var(--border)",
+                        borderTop: item.accent
+                          ? "2px solid var(--teal)"
+                          : "1px solid var(--border)",
                       }}
                     >
-                      <Play size={14} className="fill-current" />
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── 복습 큐 카드 — Double-Bezel ───────────────────────────────── */}
-          <div
-            className="fade-in"
-            style={{
-              padding: "6px",
-              borderRadius: "22px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              animationDelay: "120ms",
-            }}
-          >
-            <div
-              style={{
-                borderRadius: "16px",
-                padding: "1.5rem",
-                position: "relative",
-                overflow: "hidden",
-                height: "100%",
-                background: "var(--surface)",
-                borderTop: dueCount > 0 ? "3px solid var(--blue)" : "3px solid rgba(255,255,255,0.06)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  pointerEvents: "none",
-                  background:
-                    "radial-gradient(ellipse 80% 60% at 100% 100%, rgba(74,127,168,0.06) 0%, transparent 60%)",
-                }}
-              />
-              <div style={{ position: "relative" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                  <Clock size={15} style={{ color: "var(--blue)" }} />
-                  <span className="kvle-label" style={{ color: "var(--blue)" }}>오늘의 복습</span>
-                </div>
-                {dueCount > 0 ? (
-                  <div>
-                    <div
-                      className="text-5xl font-black kvle-mono tracking-tight"
-                      style={{ color: "var(--text)", marginBottom: "0.25rem" }}
-                    >
-                      {dueCount}
+                      <span
+                        className="block text-[0.6rem] tracking-widest mb-1.5"
+                        style={{ color: "var(--text-faint)" }}
+                      >
+                        {item.label}
+                      </span>
+                      <p
+                        className="text-base font-bold kvle-mono"
+                        style={{ color: item.accent ? "var(--teal)" : "var(--text)" }}
+                      >
+                        {item.value}
+                      </p>
                     </div>
-                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                      개 문제 복습 대기중
-                    </p>
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      padding: "1.5rem 0",
-                    }}
-                  >
-                    <CheckCircle2 size={36} style={{ color: "var(--text-faint)", marginBottom: "0.75rem" }} />
-                    <p className="font-medium text-sm" style={{ color: "var(--text-muted)" }}>
-                      오늘 복습 완료
-                    </p>
-                  </div>
-                )}
-              </div>
-              {dueCount > 0 && (
-                /* Button-in-Button pill — blue accent */
-                <Link
-                  href="/review"
-                  className="active:scale-[0.98]"
+                  ))}
+                </div>
+
+                {/* 문제 카드 미리보기 */}
+                <div
+                  className="rounded-xl p-4"
                   style={{
-                    position: "relative",
-                    marginTop: "1.5rem",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    borderRadius: "9999px",
-                    paddingLeft: "1rem",
-                    paddingRight: "0.375rem",
-                    paddingTop: "0.5rem",
-                    paddingBottom: "0.5rem",
-                    fontWeight: 600,
-                    fontSize: "0.875rem",
-                    background: "var(--blue-dim)",
-                    color: "var(--blue)",
-                    border: "1px solid rgba(74,127,168,0.25)",
-                    transition: "background 300ms cubic-bezier(0.32,0.72,0,1)",
-                    textDecoration: "none",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.background = "rgba(74,127,168,0.18)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.background = "var(--blue-dim)";
+                    background: "var(--bg)",
+                    border: "1px solid var(--border)",
+                    borderLeft: "3px solid var(--teal)",
                   }}
                 >
-                  복습 시작
                   <span
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold mb-3"
                     style={{
-                      width: "28px",
-                      height: "28px",
-                      borderRadius: "50%",
-                      background: "rgba(74,127,168,0.2)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
+                      background: "var(--surface-raised)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text-muted)",
                     }}
                   >
-                    <ArrowRight size={13} style={{ color: "var(--blue)" }} />
+                    약리학
                   </span>
-                </Link>
-              )}
+                  <p
+                    className="text-sm font-semibold mb-3 leading-snug"
+                    style={{ color: "var(--text)" }}
+                  >
+                    다음 중 β₂ 수용체 작용제로 기관지 확장에 사용되는 약물은?
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { text: "A. 아트로핀", correct: false },
+                      { text: "B. 살부타몰", correct: true },
+                      { text: "C. 프로프라놀롤", correct: false },
+                      { text: "D. 디곡신", correct: false },
+                    ].map((c) => (
+                      <div
+                        key={c.text}
+                        className="rounded-md px-3 py-1.5 text-xs flex items-center gap-1.5"
+                        style={
+                          c.correct
+                            ? {
+                                background: "var(--correct-dim)",
+                                border: "1px solid rgba(45,159,107,0.35)",
+                                color: "var(--text)",
+                              }
+                            : {
+                                background: "var(--surface-raised)",
+                                border: "1px solid var(--border)",
+                                color: "var(--text-muted)",
+                                opacity: 0.5,
+                              }
+                        }
+                      >
+                        {c.correct && (
+                          <CheckCircle2 size={11} style={{ color: "var(--correct)", flexShrink: 0 }} />
+                        )}
+                        {c.text}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* ━━━━ 비회원 카드 — Double-Bezel ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {!started && (!user || authLoading) && (
+      {/* ━━━━ TRUST BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <div
+        className="scroll-reveal"
+        style={{
+          borderTop: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border)",
+          position: "relative",
+        }}
+      >
+        <div className="mx-auto max-w-7xl px-6 py-5 flex items-stretch justify-center flex-wrap gap-0">
+          {[
+            { value: "5개 과목", label: "수의사 국가시험 전 과목 커버" },
+            { value: "SRS", label: "간격 반복 알고리즘 내장" },
+            { value: "실시간", label: "약점 데이터 집계 및 분석" },
+          ].map((s, i) => (
+            <div
+              key={s.label}
+              className="flex flex-col items-center justify-center px-6 md:px-12 py-3"
+              style={i > 0 ? { borderLeft: "1px solid var(--border)" } : undefined}
+            >
+              <div
+                className="text-xl font-black kvle-mono mb-0.5"
+                style={{ color: "var(--text)" }}
+              >
+                {s.value}
+              </div>
+              <div className="text-xs text-center" style={{ color: "var(--text-faint)" }}>
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ━━━━ FEATURES ZIG-ZAG ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="scroll-reveal mx-auto max-w-7xl px-6 py-28" style={{ position: "relative" }}>
+        <div className="mb-16">
+          <span className="kvle-label mb-3 inline-block">왜 Vexa인가</span>
+          <h2
+            className="text-3xl lg:text-4xl font-bold tracking-tight"
+            style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
+          >
+            막연하게 공부하지 마세요.
+            <br />
+            <span style={{ color: "var(--teal)" }}>지금 내 취약점을 먼저</span>
+          </h2>
+        </div>
+
+        <div style={{ borderTop: "1px solid var(--border)" }}>
+          {features.map(({ icon: Icon, label, title, desc, highlight }, i) => (
+            <div
+              key={title}
+              className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-24 py-14"
+              style={{ borderBottom: "1px solid var(--border)" }}
+            >
+              {/* 아이콘 + 제목 — 짝수/홀수 교번 */}
+              <div className={`flex flex-col justify-center ${i % 2 === 1 ? "md:order-last" : ""}`}>
+                {/* Icon Double-Bezel */}
+                <div
+                  className="mb-5"
+                  style={{
+                    display: "inline-flex",
+                    padding: "4px",
+                    borderRadius: "14px",
+                    background: highlight ? "rgba(30,167,187,0.06)" : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${highlight ? "rgba(30,167,187,0.16)" : "rgba(255,255,255,0.05)"}`,
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: highlight ? "var(--teal-dim)" : "var(--surface-raised)",
+                      color: highlight ? "var(--teal)" : "var(--text-muted)",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07)",
+                    }}
+                  >
+                    <Icon size={18} />
+                  </div>
+                </div>
+
+                <span
+                  className="text-xs font-bold tracking-widest mb-2"
+                  style={{ color: highlight ? "var(--teal)" : "var(--text-faint)" }}
+                >
+                  {label}
+                </span>
+                <h3
+                  className="text-xl font-bold tracking-tight"
+                  style={{ color: "var(--text)" }}
+                >
+                  {title}
+                </h3>
+              </div>
+
+              {/* 설명 */}
+              <div className="flex items-center">
+                <p
+                  className="text-base leading-relaxed"
+                  style={{ color: "var(--text-muted)", maxWidth: "46ch" }}
+                >
+                  {desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ━━━━ HOW IT WORKS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section
+        className="scroll-reveal py-28"
+        style={{
+          background: "var(--surface)",
+          borderTop: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border)",
+          position: "relative",
+        }}
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mb-14">
+            <span className="kvle-label mb-3 inline-block">사용 흐름</span>
+            <h2
+              className="text-3xl lg:text-4xl font-bold tracking-tight"
+              style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
+            >
+              3단계면 됩니다
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3">
+            {steps.map(({ num, icon: Icon, title, desc, active }, i) => (
+              <div
+                key={num}
+                className={[
+                  "py-10 md:py-0",
+                  i > 0 ? "border-t md:border-t-0 md:border-l md:pl-12" : "md:pr-12",
+                  i === 1 ? "md:px-12" : "",
+                ].join(" ")}
+                style={{ borderColor: "var(--border)" }}
+              >
+                <div
+                  className="text-7xl font-black kvle-mono leading-none mb-6 select-none"
+                  style={{
+                    color: active
+                      ? "rgba(30,167,187,0.13)"
+                      : "rgba(255,255,255,0.03)",
+                  }}
+                >
+                  {num}
+                </div>
+                {/* Step icon — Double-Bezel */}
+                <div
+                  className="mb-4"
+                  style={{
+                    display: "inline-flex",
+                    padding: "3px",
+                    borderRadius: "12px",
+                    background: active ? "rgba(30,167,187,0.06)" : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${active ? "rgba(30,167,187,0.16)" : "rgba(255,255,255,0.05)"}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "34px",
+                      height: "34px",
+                      borderRadius: "8px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: active ? "var(--teal-dim)" : "var(--surface-raised)",
+                      color: active ? "var(--teal)" : "var(--text-faint)",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+                    }}
+                  >
+                    <Icon size={16} />
+                  </div>
+                </div>
+                <h3
+                  className="text-base font-bold mb-3 tracking-tight"
+                  style={{ color: "var(--text)" }}
+                >
+                  {title}
+                </h3>
+                <p
+                  className="text-sm leading-relaxed"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  {desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ━━━━ FINAL CTA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="scroll-reveal mx-auto max-w-7xl px-6 py-28" style={{ position: "relative" }}>
+        {/* Double-Bezel CTA container */}
         <div
-          className="fade-in"
           style={{
-            marginBottom: "2.5rem",
-            padding: "6px",
-            borderRadius: "22px",
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.07)",
-            animationDelay: "60ms",
+            padding: "8px",
+            borderRadius: "28px",
+            background: "rgba(30,167,187,0.025)",
+            border: "1px solid rgba(30,167,187,0.09)",
           }}
         >
           <div
-            className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 items-center"
+            className="px-6 py-14 sm:px-12 sm:py-20 lg:px-16 lg:py-24"
             style={{
-              borderRadius: "16px",
-              padding: "1.5rem",
+              borderRadius: "20px",
+              textAlign: "center",
+              background: "var(--surface)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
               position: "relative",
               overflow: "hidden",
-              background: "var(--surface)",
-              borderTop: "3px solid var(--teal)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
             }}
           >
+            {/* 내부 배경 bloom */}
             <div
               aria-hidden="true"
               style={{
@@ -407,428 +600,75 @@ export default function Home() {
                 inset: 0,
                 pointerEvents: "none",
                 background:
-                  "radial-gradient(ellipse 60% 80% at 0% 50%, rgba(30,167,187,0.05) 0%, transparent 60%)",
+                  "radial-gradient(ellipse 70% 60% at 50% 110%, rgba(30,167,187,0.07) 0%, transparent 70%)",
               }}
             />
             <div style={{ position: "relative" }}>
               <h2
-                className="text-base font-bold tracking-tight"
-                style={{ color: "var(--text)", marginBottom: "0.375rem" }}
+                className="text-4xl lg:text-5xl font-bold tracking-tight mb-4"
+                style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
               >
-                비회원으로 연습하기
+                지금 바로 시작하세요
               </h2>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                문제를 풀어볼 수 있지만, 학습 기록 저장과 간격 반복 학습은 로그인이 필요합니다.
+              <p className="mb-10 text-base" style={{ color: "var(--text-muted)" }}>
+                회원가입은 무료입니다. 카드 정보가 필요 없습니다.
               </p>
-            </div>
-            {/* Button-in-Button pill — solid gold (primary) */}
-            <button
-              onClick={startSession}
-              disabled={questionsLoading}
-              className="inline-flex items-center gap-3 font-semibold active:scale-[0.98] flex-shrink-0"
-              style={{
-                background: "var(--teal)",
-                color: "#fff",
-                borderRadius: "9999px",
-                padding: "10px 10px 10px 22px",
-                fontSize: "0.875rem",
-                border: "none",
-                cursor: questionsLoading ? "not-allowed" : "pointer",
-                opacity: questionsLoading ? 0.5 : 1,
-                transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-            >
-              {questionsLoading ? "로딩 중…" : "바로 시작"}
-              <span
+              {/* Button-in-Button */}
+              <Link
+                href="/auth/login?mode=signup"
+                className="inline-flex items-center gap-3 font-semibold active:scale-[0.98]"
                 style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.18)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  background: "var(--teal)",
+                  color: "#fff",
+                  borderRadius: "9999px",
+                  padding: "12px 12px 12px 26px",
+                  fontSize: "0.95rem",
+                  transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
                 }}
               >
-                <Play size={14} className="fill-current" />
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ━━━━ 활성 세션 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {started && !finished && currentQuestion && (
-        <div style={{ position: "relative", maxWidth: "48rem", margin: "0 auto" }}>
-          {/* 진행 헤더 */}
-          <div
-            style={{
-              marginBottom: "1.25rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              <div
-                className="font-bold kvle-mono text-sm"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "2.25rem",
-                  height: "2.25rem",
-                  borderRadius: "0.5rem",
-                  background: "var(--surface-raised)",
-                  border: "1px solid var(--border)",
-                  color: "var(--text)",
-                }}
-              >
-                {currentIndex + 1}
-              </div>
-              <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-                / {sessionQuestions.length} 문제
-              </span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                borderRadius: "0.5rem",
-                padding: "0.5rem 0.75rem",
-                background: "var(--surface-raised)",
-                border: "1px solid var(--border)",
-              }}
-            >
-              <Target size={13} style={{ color: "var(--teal)" }} />
-              <span className="font-semibold kvle-mono text-sm" style={{ color: "var(--text)" }}>
-                {score}
-                <span style={{ color: "var(--text-faint)" }}> / {sessionQuestions.length}</span>
-              </span>
-            </div>
-          </div>
-
-          {/* 진행 바 */}
-          <div
-            style={{
-              width: "100%",
-              borderRadius: "9999px",
-              height: "3px",
-              marginBottom: "2rem",
-              overflow: "hidden",
-              background: "var(--surface-raised)",
-            }}
-          >
-            <div
-              style={{
-                height: "100%",
-                borderRadius: "9999px",
-                width: `${(currentIndex / sessionQuestions.length) * 100}%`,
-                background: "var(--teal)",
-                transition: "width 500ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-            />
-          </div>
-
-          <QuestionCard
-            key={currentQuestion.id}
-            question={currentQuestion}
-            onAnswer={handleAnswer}
-            onNext={handleNext}
-          />
-        </div>
-      )}
-
-      {/* ━━━━ 결과 화면 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {finished && (
-        <section
-          className="fade-in"
-          style={{ position: "relative", maxWidth: "48rem", margin: "0 auto" }}
-        >
-
-          {/* 완료 카드 — Double-Bezel ────────────────────────────────────── */}
-          <div
-            style={{
-              padding: "6px",
-              borderRadius: "22px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              marginBottom: "2rem",
-            }}
-          >
-            <div
-              style={{
-                borderRadius: "16px",
-                padding: "2rem",
-                textAlign: "center",
-                position: "relative",
-                overflow: "hidden",
-                background: "var(--surface)",
-                borderTop: "3px solid var(--correct)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  pointerEvents: "none",
-                  background:
-                    "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(45,159,107,0.08) 0%, transparent 70%)",
-                }}
-              />
-              <div style={{ position: "relative" }}>
-                {/* Double-Bezel icon wrapper */}
-                <div
+                무료로 시작하기
+                <span
                   style={{
-                    display: "inline-flex",
+                    width: "34px",
+                    height: "34px",
+                    borderRadius: "50%",
+                    background: "rgba(0,0,0,0.18)",
+                    display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    width: "68px",
-                    height: "68px",
-                    borderRadius: "50%",
-                    marginBottom: "1.25rem",
-                    padding: "4px",
-                    background: "rgba(45,159,107,0.06)",
-                    border: "1px solid rgba(45,159,107,0.15)",
+                    flexShrink: 0,
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      background: "var(--correct-dim)",
-                      border: "1px solid rgba(45,159,107,0.25)",
-                    }}
-                  >
-                    <CheckCircle2 size={30} style={{ color: "var(--correct)" }} />
-                  </div>
-                </div>
-                <h2
-                  className="text-2xl font-bold tracking-tight"
-                  style={{ color: "var(--text)", marginBottom: "0.75rem" }}
-                >
-                  세션 완료
-                </h2>
-                <p className="text-base" style={{ color: "var(--text-muted)" }}>
-                  총{" "}
-                  <span className="kvle-mono font-bold" style={{ color: "var(--text)" }}>
-                    {sessionQuestions.length}
-                  </span>
-                  문제 중{" "}
-                  <span className="kvle-mono font-bold" style={{ color: "var(--teal)" }}>
-                    {score}
-                  </span>
-                  문제 정답
-                </p>
-              </div>
+                  <ArrowRight size={15} />
+                </span>
+              </Link>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* 오답 개념 복습 ──────────────────────────────────────────────── */}
-          <div style={{ marginBottom: "2rem" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                marginBottom: "1.5rem",
-              }}
-            >
-              <BookOpen size={18} style={{ color: "var(--blue)" }} />
-              <h3
-                className="text-lg font-bold tracking-tight"
-                style={{ color: "var(--text)" }}
-              >
-                오답 개념 복습
-              </h3>
-            </div>
-
-            {wrongNotes.length === 0 ? (
-              <div
-                style={{
-                  borderRadius: "0.75rem",
-                  padding: "2rem",
-                  textAlign: "center",
-                  background: "var(--surface)",
-                  border: "1px dashed rgba(45,159,107,0.3)",
-                }}
-              >
-                <Sparkles
-                  size={24}
-                  style={{ color: "var(--teal)", margin: "0 auto 0.75rem" }}
-                />
-                <p className="font-medium text-sm" style={{ color: "var(--text-muted)" }}>
-                  완벽합니다. 틀린 문제가 없습니다.
-                </p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {wrongNotes.map((note, idx) => (
-                  <div
-                    key={note.questionId}
-                    style={{
-                      borderRadius: "0.75rem",
-                      padding: "1.5rem",
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
-                      borderLeft: "3px solid rgba(192,74,58,0.5)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                        marginBottom: "1rem",
-                      }}
-                    >
-                      <span className="kvle-badge">{note.category}</span>
-                      <span className="kvle-mono text-xs" style={{ color: "var(--text-faint)" }}>
-                        #{idx + 1}
-                      </span>
-                    </div>
-                    <p
-                      className="text-sm font-medium leading-relaxed"
-                      style={{ color: "var(--text)", marginBottom: "1.25rem" }}
-                    >
-                      {note.question}
-                    </p>
-                    <div
-                      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                      style={{ marginBottom: "0.75rem" }}
-                    >
-                      <div
-                        style={{
-                          borderRadius: "0.5rem",
-                          padding: "1rem",
-                          background: "var(--wrong-dim)",
-                          border: "1px solid rgba(192,74,58,0.2)",
-                        }}
-                      >
-                        <span
-                          className="kvle-label block"
-                          style={{ color: "var(--wrong)", marginBottom: "0.375rem" }}
-                        >
-                          내 답변
-                        </span>
-                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                          {note.selectedAnswer}
-                        </p>
-                      </div>
-                      <div
-                        style={{
-                          borderRadius: "0.5rem",
-                          padding: "1rem",
-                          background: "var(--correct-dim)",
-                          border: "1px solid rgba(45,159,107,0.2)",
-                        }}
-                      >
-                        <span
-                          className="kvle-label block"
-                          style={{ color: "var(--correct)", marginBottom: "0.375rem" }}
-                        >
-                          정답
-                        </span>
-                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                          {note.correctAnswer}
-                        </p>
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        borderRadius: "0.5rem",
-                        padding: "1rem",
-                        background: "var(--surface-raised)",
-                        border: "1px solid var(--border)",
-                      }}
-                    >
-                      <span
-                        className="kvle-label block"
-                        style={{ color: "var(--blue)", marginBottom: "0.375rem" }}
-                      >
-                        해설
-                      </span>
-                      <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                        {note.explanation}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* ━━━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <footer
+        className="py-10"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col items-center md:items-start">
+            <Image src="/logo.png" alt="Vexa 수의미래연구소" width={110} height={36} style={{ objectFit: "contain" }} />
           </div>
-
-          {/* 액션 버튼 ────────────────────────────────────────────────────── */}
-          <div className="flex flex-col sm:flex-row gap-3" style={{ paddingTop: "0.5rem" }}>
-
-            {/* Button-in-Button pill — solid gold (primary) */}
-            <button
-              onClick={handleRestart}
-              className="flex-1 inline-flex items-center justify-center gap-3 font-semibold active:scale-[0.98]"
-              style={{
-                background: "var(--teal)",
-                color: "#fff",
-                borderRadius: "9999px",
-                padding: "10px 10px 10px 22px",
-                fontSize: "0.875rem",
-                border: "none",
-                cursor: "pointer",
-                transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-            >
-              새 세션 시작
-              <span
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.18)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <RotateCcw size={14} />
-              </span>
-            </button>
-
-            {/* Ghost pill — secondary */}
-            <Link
-              href="/wrong-notes"
-              className="flex-1 inline-flex items-center justify-center gap-2 font-semibold active:scale-[0.98]"
-              style={{
-                color: "var(--text-muted)",
-                border: "1px solid var(--border)",
-                borderRadius: "9999px",
-                padding: "10px 22px",
-                fontSize: "0.875rem",
-                transition: "color 300ms cubic-bezier(0.32,0.72,0,1), border-color 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-                textDecoration: "none",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.color = "var(--text)";
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--teal-border)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-muted)";
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)";
-              }}
-            >
-              <BookOpen size={15} />
-              전체 오답 노트 보기
+          <p className="text-xs text-center" style={{ color: "var(--text-faint)" }}>
+            © 2026 수의미래연구소. 수록된 문제 및 해설의 저작권은 수의미래연구소에 있습니다.
+          </p>
+          <div className="flex gap-5 text-sm">
+            <Link href="/auth/login" className="footer-link">
+              로그인
+            </Link>
+            <Link href="/auth/login?mode=signup" className="footer-link">
+              회원가입
             </Link>
           </div>
-        </section>
-      )}
+        </div>
+      </footer>
     </main>
   );
 }

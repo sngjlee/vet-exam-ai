@@ -6,14 +6,14 @@ import { DueCountProvider } from "../lib/context/DueCountContext";
 
 // IMPORTANT: Korean fonts must include the "korean" subset or glyphs fall back to system fonts
 const notoSerifKR = Noto_Serif_KR({
-  subsets: ["latin", "korean"],
+  subsets: ["latin", "korean"] as never,
   weight: ["700"],
   variable: "--font-noto-serif-kr",
   display: "swap",
 });
 
 const notoSansKR = Noto_Sans_KR({
-  subsets: ["latin", "korean"],
+  subsets: ["latin", "korean"] as never,
   weight: ["400", "500", "700"],
   variable: "--font-noto-sans-kr",
   display: "swap",
@@ -29,6 +29,20 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Vexa — 수의사 국가시험 학습 플랫폼",
   description: "수의사 국가시험 대비 스마트 학습 플랫폼. 약점 데이터 분석으로 합격을 설계합니다.",
+  icons: { icon: "/favicon.ico" },
+  openGraph: {
+    title: "Vexa — 수의사 국가시험 학습 플랫폼",
+    description: "수의사 국가시험 대비 스마트 학습 플랫폼. 약점 데이터 분석으로 합격을 설계합니다.",
+    url: "https://vet-exam-ai.vercel.app",
+    siteName: "Vexa",
+    locale: "ko_KR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Vexa — 수의사 국가시험 학습 플랫폼",
+    description: "수의사 국가시험 대비 스마트 학습 플랫폼. 약점 데이터 분석으로 합격을 설계합니다.",
+  },
 };
 
 export default function RootLayout({

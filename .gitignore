@@ -3,3 +3,11 @@
 
 # Agent skills (global Claude Code config, not project-specific)
 .agent/
+
+# AI tool configs (not project-specific)
+.claude-octopus/
+.superpowers/
+AI_COWORK_PROTOCOL.md
+docs/superpowers/
+
+.vercel

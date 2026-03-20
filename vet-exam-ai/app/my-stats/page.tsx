@@ -53,7 +53,7 @@ export default function MyStatsPage() {
           <p className="mb-4" style={{ color: "var(--text-muted)" }}>
             아직 풀이 내역이 없습니다. 퀴즈를 시작해 보세요.
           </p>
-          <Link href="/" className="kvle-btn-primary text-sm">
+          <Link href="/dashboard" className="kvle-btn-primary text-sm">
             퀴즈 시작
           </Link>
         </div>

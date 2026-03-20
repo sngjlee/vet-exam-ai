@@ -258,7 +258,7 @@ export default function ReviewPage() {
                 다시 복습 ({dueNotes.length})
               </button>
             )}
-            <Link href="/" className="kvle-btn-ghost">
+            <Link href="/dashboard" className="kvle-btn-ghost">
               홈으로
             </Link>
           </div>

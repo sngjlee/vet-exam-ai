@@ -59,7 +59,7 @@ export default function WrongNotesPage() {
           </h1>
           <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>틀린 문제와 해설을 복습하세요</p>
         </div>
-        <Link href="/" className="kvle-btn-ghost text-sm">홈으로</Link>
+        <Link href="/dashboard" className="kvle-btn-ghost text-sm">홈으로</Link>
       </div>
 
       {/* Filter & actions */}
