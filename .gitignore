@@ -11,3 +11,11 @@ AI_COWORK_PROTOCOL.md
 docs/superpowers/
 
 .vercel
+
+# 기출문제 원본 HWP — 저작권/용량 이슈로 GitHub 제외
+raw-exams/
+
+# 파이프라인 중간 결과물
+pipeline/output/
+pipeline/.env
+pipeline/.venv/
