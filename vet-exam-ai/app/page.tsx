@@ -1,674 +1,572 @@
-// app/landing/page.tsx
 import Link from "next/link";
 import Image from "next/image";
-import {
-  BookOpen, BarChart3, RotateCcw, Target,
-  CheckCircle2, ArrowRight, Zap, TrendingUp, Clock,
-} from "lucide-react";
 
-// ── 데이터 ────────────────────────────────────────────────────────────
-
-const features = [
-  {
-    icon: RotateCcw,
-    label: "SRS",
-    title: "스마트 반복 학습",
-    desc: "틀린 문제는 자동으로 오답 노트에 저장됩니다. 간격 반복 알고리즘이 기억이 흐려지는 타이밍에 복습 큐를 올려줍니다.",
-    highlight: true,
-  },
-  {
-    icon: BarChart3,
-    label: "분석",
-    title: "과목별 약점 분석",
-    desc: "시도 횟수, 정답률, 오답 패턴을 과목별로 집계합니다. 어느 단원에 시간을 써야 할지 숫자로 확인합니다.",
-    highlight: false,
-  },
-  {
-    icon: Target,
-    label: "연습",
-    title: "약점 집중 연습",
-    desc: "정답률이 가장 낮은 과목 문제를 우선 출제합니다. 고루 공부하는 대신 취약점부터 보완하는 방식입니다.",
-    highlight: false,
-  },
-  {
-    icon: BookOpen,
-    label: "오답",
-    title: "오답 노트",
-    desc: "틀린 문제와 해설이 자동 저장됩니다. 과목 필터로 원하는 단원만 골라 복습하고, 오답 재풀이로 완전히 이해했는지 확인합니다.",
-    highlight: false,
-  },
+// ── Rail items (duplicated for seamless marquee loop) ──────────────────────
+const RAIL_ITEMS = [
+  { bullet: true,  mono: null,     text: "수의사 국가고시 대비" },
+  { bullet: false, mono: "5과목",  text: "전과목 커버" },
+  { bullet: true,  mono: null,     text: "간격 반복 학습" },
+  { bullet: false, mono: "SM-2",   text: "알고리즘 기반" },
+  { bullet: true,  mono: null,     text: "실시간 약점 분석" },
+  { bullet: false, mono: "2,400+", text: "검증된 문제" },
+  { bullet: true,  mono: null,     text: "자동 오답노트" },
 ];
 
-const steps = [
-  {
-    num: "01",
-    icon: BookOpen,
-    title: "문제 풀기",
-    desc: "과목을 선택하고 세션을 시작합니다. 틀린 문제는 자동으로 오답 노트에 저장됩니다.",
-    active: true,
-  },
-  {
-    num: "02",
-    icon: TrendingUp,
-    title: "데이터 확인",
-    desc: "과목별 정답률과 약점이 실시간 집계됩니다. 어디를 더 공부해야 할지 숫자로 보입니다.",
-    active: false,
-  },
-  {
-    num: "03",
-    icon: Clock,
-    title: "복습 완료",
-    desc: "간격 반복 알고리즘이 최적 타이밍에 복습 문제를 올려줍니다. 잊기 전에 다시 풀고 장기 기억으로 굳힙니다.",
-    active: false,
-  },
+// ── Weak-subject ranking data ──────────────────────────────────────────────
+const WEAK_SUBJECTS = [
+  { name: "약리학",   pct: 61.5, bar: "var(--wrong)",   color: "var(--wrong)"   },
+  { name: "내과학",   pct: 76.5, bar: "var(--amber)",   color: "var(--text)"    },
+  { name: "외과학",   pct: 80.7, bar: "var(--blue)",    color: "var(--text)"    },
+  { name: "공중보건학",pct: 83.3, bar: "var(--blue)",   color: "var(--text)"    },
+  { name: "해부학",   pct: 87.1, bar: "var(--correct)", color: "var(--correct)" },
 ];
 
-// ── 컴포넌트 ──────────────────────────────────────────────────────────
+// ── SRS queue rows ─────────────────────────────────────────────────────────
+const SRS_ROWS = [
+  { day: "D+1",  w: "28%", tag: "지연 1개", tagColor: "var(--wrong)"     },
+  { day: "D+3",  w: "62%", tag: "오늘 3개", tagColor: "var(--teal)"      },
+  { day: "D+7",  w: "78%", tag: "예정 2개", tagColor: "var(--text-faint)" },
+  { day: "D+14", w: "92%", tag: "예정 4개", tagColor: "var(--text-faint)" },
+];
+
+// ── Arrow SVG (reused in several buttons) ─────────────────────────────────
+function ArrowSVG({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12h14M13 5l7 7-7 7" />
+    </svg>
+  );
+}
 
 export default function LandingPage() {
   return (
-    <main
-      style={{
-        background: "#080D1A",
-        color: "var(--text)",
-        fontFamily: "var(--font-sans)",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {/* ━━━━ 배경 gradient orbs — pointer-events-none, GPU-safe ━━━━━━━ */}
-      <div
-        aria-hidden="true"
-        style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}
-      >
-        {/* 우상단 틸 orb */}
-        <div
-          style={{
-            position: "absolute",
-            width: "900px",
-            height: "900px",
-            top: "-320px",
-            right: "-180px",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(30,167,187,0.045) 0%, transparent 65%)",
-          }}
-        />
-        {/* 중하단 슬레이트 orb */}
-        <div
-          style={{
-            position: "absolute",
-            width: "700px",
-            height: "700px",
-            top: "55%",
-            left: "-180px",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(74,127,168,0.03) 0%, transparent 65%)",
-          }}
-        />
-        {/* CTA 섹션 저하단 orb */}
-        <div
-          style={{
-            position: "absolute",
-            width: "600px",
-            height: "600px",
-            bottom: "-200px",
-            right: "10%",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(30,167,187,0.03) 0%, transparent 65%)",
-          }}
-        />
+    <>
+      {/* ── Background ambient orbs ─────────────────────────────────────── */}
+      <div aria-hidden="true" style={{
+        position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0,
+      }}>
+        <div style={{ position: "absolute", width: "900px", height: "900px", top: "-320px", right: "-180px", borderRadius: "50%", background: "radial-gradient(circle, rgba(30,167,187,0.06) 0%, transparent 65%)" }} />
+        <div style={{ position: "absolute", width: "700px", height: "700px", top: "55%", left: "-180px", borderRadius: "50%", background: "radial-gradient(circle, rgba(74,127,168,0.04) 0%, transparent 65%)" }} />
       </div>
 
-      {/* ━━━━ HERO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section
-        className="mx-auto max-w-7xl px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[100dvh] py-24 lg:py-0"
-        style={{ position: "relative" }}
-      >
-        {/* LEFT: 카피 */}
-        <div className="flex flex-col items-start">
+      {/* ── 1. STICKY NAV ───────────────────────────────────────────────── */}
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 50,
+        background: "rgba(8,13,26,0.7)", backdropFilter: "blur(20px)",
+        borderBottom: "1px solid var(--border)",
+      }}>
+        <div style={{
+          maxWidth: "1240px", margin: "0 auto", padding: "16px 32px",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px",
+        }}>
+          {/* Logo */}
+          <a href="#" style={{ display: "inline-flex", alignItems: "center", gap: "10px", color: "inherit", textDecoration: "none" }}>
+            <span style={{
+              width: "28px", height: "28px", borderRadius: "8px", flexShrink: 0,
+              background: "linear-gradient(135deg, var(--teal) 0%, #1689a0 100%)",
+              display: "grid", placeItems: "center", color: "#fff", fontWeight: 800, fontSize: "15px",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 8px rgba(30,167,187,0.28)",
+            }}>V</span>
+            <span style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+              <span style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "-0.01em" }}>Vexa</span>
+              <span style={{ fontSize: "9px", color: "var(--text-faint)", letterSpacing: "0.14em", marginTop: "3px", fontWeight: 600 }}>수의미래연구소</span>
+            </span>
+          </a>
 
-          {/* Eyebrow badge */}
-          <div
-            className="fade-in inline-flex items-center gap-2 mb-8"
-            style={{
-              background: "var(--teal-dim)",
-              border: "1px solid var(--teal-border)",
-              color: "var(--teal)",
-              borderRadius: "9999px",
-              padding: "6px 14px 6px 10px",
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              animationDelay: "0ms",
-            }}
-          >
-            <Zap size={12} />
-            수의미래연구소 공식 학습 플랫폼
+          {/* Section links */}
+          <div style={{ display: "flex", gap: "28px", fontSize: "13px", fontWeight: 500 }}>
+            <a href="#how" className="landing-nav-link">사용 흐름</a>
+            <a href="#features" className="landing-nav-link">기능</a>
+            <a href="#problem" className="landing-nav-link">왜 Vexa?</a>
           </div>
 
-          {/* 헤드라인 */}
-          <h1
-            className="fade-in text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.05] mb-6"
-            style={{
-              fontFamily: "var(--font-serif)",
-              color: "var(--text)",
-              animationDelay: "80ms",
-            }}
-          >
-            데이터로 설계하는
-            <br />
-            <span style={{ color: "var(--teal)" }}>확실한 합격</span>
-          </h1>
-
-          {/* 서브카피 */}
-          <p
-            className="fade-in text-base lg:text-lg leading-relaxed mb-10"
-            style={{
-              color: "var(--text-muted)",
-              maxWidth: "38ch",
-              animationDelay: "160ms",
-            }}
-          >
-            틀린 문제와 취약 과목을 데이터로 추적합니다.
-            공부 방향을 숫자로 확인하고 합격에 집중하세요.
-          </p>
-
-          {/* CTA 버튼 — Button-in-Button + pill */}
-          <div
-            className="fade-in flex flex-col sm:flex-row items-start sm:items-center gap-3"
-            style={{ animationDelay: "240ms" }}
-          >
-            {/* Primary — Button-in-Button */}
-            <Link
-              href="/auth/login?mode=signup"
-              className="inline-flex items-center gap-3 font-semibold active:scale-[0.98]"
-              style={{
-                background: "var(--teal)",
-                color: "#fff",
-                borderRadius: "9999px",
-                padding: "10px 10px 10px 22px",
-                fontSize: "0.9rem",
-                transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-            >
-              무료로 시작하기
-              <span
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.18)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <ArrowRight size={14} />
+          {/* CTA buttons */}
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <Link href="/auth/login" className="btn-ghost-pill" style={{
+              display: "inline-flex", alignItems: "center",
+              padding: "8px 16px", borderRadius: "999px",
+              border: "1px solid var(--border)", color: "var(--text-muted)",
+              fontSize: "13px", fontWeight: 600, background: "transparent",
+            }}>로그인</Link>
+            <Link href="/auth/login?mode=signup" className="btn-primary-pill" style={{
+              display: "inline-flex", alignItems: "center", gap: "8px",
+              padding: "8px 8px 8px 16px", borderRadius: "999px",
+              background: "var(--teal)", color: "#061218",
+              fontSize: "13px", fontWeight: 700,
+              boxShadow: "0 8px 20px rgba(30,167,187,0.2), inset 0 1px 0 rgba(255,255,255,0.2)",
+            }}>
+              무료로 시작
+              <span style={{ width: "26px", height: "26px", borderRadius: "999px", background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center" }}>
+                <ArrowSVG size={11} />
               </span>
-            </Link>
-
-            {/* Ghost — pill */}
-            <Link
-              href="/auth/login?mode=signin"
-              className="inline-flex items-center gap-2 font-medium active:scale-[0.98] hover:text-[var(--text)] hover:border-[var(--teal-border)]"
-              style={{
-                color: "var(--text-muted)",
-                border: "1px solid var(--border)",
-                borderRadius: "9999px",
-                padding: "10px 22px",
-                fontSize: "0.9rem",
-                transition: "color 300ms cubic-bezier(0.32,0.72,0,1), border-color 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-            >
-              로그인
             </Link>
           </div>
         </div>
+      </nav>
 
-        {/* RIGHT: 앱 프리뷰 — Double-Bezel */}
-        <div
-          className="fade-in w-full"
-          style={{ animationDelay: "300ms" }}
-        >
-          {/* Outer Shell */}
-          <div
-            style={{
-              padding: "6px",
-              borderRadius: "22px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            {/* Inner Core */}
-            <div
-              style={{
-                borderRadius: "16px",
-                overflow: "hidden",
-                background: "var(--surface)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 32px 64px rgba(0,0,0,0.5)",
-              }}
-            >
-              {/* 브라우저 크롬 */}
-              <div
-                className="flex items-center gap-2 px-4 py-3"
-                style={{
-                  borderBottom: "1px solid var(--border)",
-                  background: "var(--surface-raised)",
-                }}
-              >
-                <span className="w-2.5 h-2.5 rounded-full bg-[#C04A3A]" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#C8895A]" />
-                <span className="w-2.5 h-2.5 rounded-full bg-[#2D9F6B]" />
-                <span
-                  className="ml-3 text-xs kvle-mono px-3 py-1 rounded"
-                  style={{ background: "var(--bg)", color: "var(--text-faint)" }}
-                >
-                  app.vexa.study
-                </span>
+      <main style={{ position: "relative", zIndex: 1 }}>
+
+        {/* ── 2. HERO ─────────────────────────────────────────────────────── */}
+        <section style={{ maxWidth: "1240px", margin: "0 auto", padding: "80px 32px 40px", position: "relative" }}>
+          <div className="hero-grid">
+
+            {/* LEFT: copy */}
+            <div>
+              {/* Eyebrow pill */}
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: "8px",
+                padding: "6px 12px 6px 10px", borderRadius: "999px",
+                background: "var(--teal-dim)", border: "1px solid var(--teal-border)",
+                color: "var(--teal)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.14em",
+                marginBottom: "28px",
+              }}>
+                <span className="pulse-dot" style={{ width: "6px", height: "6px", borderRadius: "999px", background: "var(--teal)", display: "block", flexShrink: 0 }} />
+                수의미래연구소 공식 학습 플랫폼
               </div>
 
-              {/* 대시보드 */}
-              <div className="p-5 space-y-3">
-                {/* 스탯 카드 */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { label: "총 시도", value: "312", accent: false },
-                    { label: "정답률", value: "74.3%", accent: true },
-                    { label: "복습 대기", value: "6", accent: false },
-                    { label: "최약 과목", value: "약리학", accent: false },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="rounded-lg p-3"
-                      style={{
-                        background: "var(--surface-raised)",
-                        border: "1px solid var(--border)",
-                        borderTop: item.accent
-                          ? "2px solid var(--teal)"
-                          : "1px solid var(--border)",
-                      }}
-                    >
-                      <span
-                        className="block text-[0.6rem] tracking-widest mb-1.5"
-                        style={{ color: "var(--text-faint)" }}
-                      >
-                        {item.label}
-                      </span>
-                      <p
-                        className="text-base font-bold kvle-mono"
-                        style={{ color: item.accent ? "var(--teal)" : "var(--text)" }}
-                      >
-                        {item.value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+              {/* Headline */}
+              <h1 style={{ fontSize: "clamp(40px, 6vw, 76px)", lineHeight: 1.02, letterSpacing: "-0.035em", fontWeight: 800, margin: "0 0 24px" }}>
+                막연한 공부는<br />
+                <em style={{ fontStyle: "normal", color: "var(--teal)", position: "relative", whiteSpace: "nowrap" }}>숫자로</em> 바꿉니다
+              </h1>
 
-                {/* 문제 카드 미리보기 */}
-                <div
-                  className="rounded-xl p-4"
-                  style={{
-                    background: "var(--bg)",
-                    border: "1px solid var(--border)",
-                    borderLeft: "3px solid var(--teal)",
-                  }}
-                >
-                  <span
-                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold mb-3"
-                    style={{
-                      background: "var(--surface-raised)",
-                      border: "1px solid var(--border)",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    약리학
+              {/* Sub-copy */}
+              <p style={{ fontSize: "17px", lineHeight: 1.65, color: "var(--text-muted)", maxWidth: "48ch", margin: "0 0 32px" }}>
+                Vexa는 수의사 국가고시 준비생이 어디에 시간을 써야 하는지 데이터로 알려드립니다.
+                망각 곡선에 맞춘 복습, 약점 과목 우선 출제, 실시간 정답률 추적.
+              </p>
+
+              {/* CTA row */}
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <Link href="/auth/login?mode=signup" className="btn-primary-pill" style={{
+                  display: "inline-flex", alignItems: "center", gap: "10px",
+                  padding: "12px 12px 12px 22px", borderRadius: "999px",
+                  background: "var(--teal)", color: "#061218",
+                  fontSize: "14px", fontWeight: 700,
+                  boxShadow: "0 8px 20px rgba(30,167,187,0.2), inset 0 1px 0 rgba(255,255,255,0.2)",
+                }}>
+                  무료로 시작하기
+                  <span style={{ width: "32px", height: "32px", borderRadius: "999px", background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center" }}>
+                    <ArrowSVG />
                   </span>
-                  <p
-                    className="text-sm font-semibold mb-3 leading-snug"
-                    style={{ color: "var(--text)" }}
-                  >
-                    다음 중 β₂ 수용체 작용제로 기관지 확장에 사용되는 약물은?
-                  </p>
-                  <div className="grid grid-cols-2 gap-1.5">
+                </Link>
+                <Link href="/auth/login" className="btn-ghost-pill" style={{
+                  display: "inline-flex", alignItems: "center", gap: "8px",
+                  padding: "12px 22px", borderRadius: "999px",
+                  border: "1px solid var(--border)", color: "var(--text-muted)",
+                  fontSize: "14px", fontWeight: 600, background: "transparent",
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M10 8l6 4-6 4z" fill="currentColor" /></svg>
+                  로그인
+                </Link>
+              </div>
+
+              {/* Stats strip */}
+              <div style={{ marginTop: "32px", display: "inline-flex", gap: "22px", fontSize: "12px", color: "var(--text-faint)", fontFamily: "var(--font-mono)" }}>
+                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>5</span> 과목</span>
+                <span style={{ color: "var(--border)" }}>·</span>
+                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>2,400+</span> 문제</span>
+                <span style={{ color: "var(--border)" }}>·</span>
+                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>SM-2</span> SRS 알고리즘</span>
+              </div>
+            </div>
+
+            {/* RIGHT: viz-card */}
+            <div style={{
+              background: "linear-gradient(180deg, rgba(26,37,64,0.5) 0%, rgba(15,23,41,0.6) 100%)",
+              border: "1px solid var(--border)", borderRadius: "16px",
+              padding: "22px", position: "relative", overflow: "hidden",
+            }}>
+              {/* Top shimmer line */}
+              <div aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, var(--teal-border), transparent)" }} />
+
+              {/* Card header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px", gap: "12px" }}>
+                <div>
+                  <div style={{ fontSize: "10px", letterSpacing: "0.14em", fontWeight: 700, color: "var(--teal)" }}>망각 곡선 · 14일 추적</div>
+                  <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "6px 0 2px", color: "var(--text)", letterSpacing: "-0.01em" }}>잊기 직전에 다시 보여드립니다</h3>
+                  <div style={{ marginTop: "10px", display: "flex", gap: "14px" }}>
                     {[
-                      { text: "A. 아트로핀", correct: false },
-                      { text: "B. 살부타몰", correct: true },
-                      { text: "C. 프로프라놀롤", correct: false },
-                      { text: "D. 디곡신", correct: false },
-                    ].map((c) => (
-                      <div
-                        key={c.text}
-                        className="rounded-md px-3 py-1.5 text-xs flex items-center gap-1.5"
-                        style={
-                          c.correct
-                            ? {
-                                background: "var(--correct-dim)",
-                                border: "1px solid rgba(45,159,107,0.35)",
-                                color: "var(--text)",
-                              }
-                            : {
-                                background: "var(--surface-raised)",
-                                border: "1px solid var(--border)",
-                                color: "var(--text-muted)",
-                                opacity: 0.5,
-                              }
-                        }
-                      >
-                        {c.correct && (
-                          <CheckCircle2 size={11} style={{ color: "var(--correct)", flexShrink: 0 }} />
-                        )}
-                        {c.text}
-                      </div>
+                      { bg: "var(--teal)", label: "KVLE 복습" },
+                      { bg: "var(--wrong)", label: "그냥 두면", opacity: 0.6 },
+                    ].map(({ bg, label, opacity }) => (
+                      <span key={label} style={{ display: "inline-flex", gap: "6px", alignItems: "center", fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>
+                        <span style={{ width: "10px", height: "10px", borderRadius: "2px", background: bg, opacity, display: "block", flexShrink: 0 }} />
+                        {label}
+                      </span>
                     ))}
                   </div>
                 </div>
+                <div style={{ textAlign: "right", fontFamily: "var(--font-mono)", flexShrink: 0 }}>
+                  <div style={{ fontSize: "34px", fontWeight: 800, color: "var(--teal)", lineHeight: 1 }}>84<span style={{ fontSize: "18px" }}>%</span></div>
+                  <div style={{ fontSize: "9px", color: "var(--text-faint)", letterSpacing: "0.14em", fontWeight: 600 }}>유지율</div>
+                </div>
+              </div>
+
+              {/* Forgetting-curve SVG — verbatim from KVLE Landing.html */}
+              <svg viewBox="0 0 560 220" width="100%" style={{ marginTop: "14px", display: "block" }}>
+                <defs>
+                  <linearGradient id="tealFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#1ea7bb" stopOpacity="0.22" />
+                    <stop offset="100%" stopColor="#1ea7bb" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <g stroke="rgba(255,255,255,0.04)">
+                  <line x1="50" x2="540" y1="30"  y2="30"  />
+                  <line x1="50" x2="540" y1="75"  y2="75"  />
+                  <line x1="50" x2="540" y1="120" y2="120" />
+                  <line x1="50" x2="540" y1="165" y2="165" />
+                </g>
+                <g fontFamily="IBM Plex Mono, monospace" fontSize="10" fill="#4A5568">
+                  <text x="42"  y="33"  textAnchor="end">100</text>
+                  <text x="42"  y="78"  textAnchor="end">75</text>
+                  <text x="42"  y="123" textAnchor="end">50</text>
+                  <text x="42"  y="168" textAnchor="end">25</text>
+                  <text x="50"  y="200" textAnchor="middle">D+0</text>
+                  <text x="120" y="200" textAnchor="middle">D+1</text>
+                  <text x="225" y="200" textAnchor="middle">D+3</text>
+                  <text x="365" y="200" textAnchor="middle">D+7</text>
+                  <text x="540" y="200" textAnchor="middle">D+14</text>
+                </g>
+                {/* Naked forgetting curve (dashed red) */}
+                <path d="M50,30 C80,90 100,130 130,148 C180,160 250,170 540,182"
+                  fill="none" stroke="#C04A3A" strokeWidth="1.5" strokeDasharray="3 4" opacity="0.55" />
+                {/* KVLE SRS fill areas */}
+                <path d="M50,30 C65,55 85,72 120,88 L120,165 L50,165 Z"   fill="url(#tealFill)" />
+                <path d="M120,30 C160,45 195,60 225,78 L225,165 L120,165 Z" fill="url(#tealFill)" />
+                <path d="M225,30 C270,40 320,50 365,65 L365,165 L225,165 Z" fill="url(#tealFill)" />
+                <path d="M365,30 C410,38 470,45 540,55 L540,165 L365,165 Z" fill="url(#tealFill)" />
+                {/* SRS curve lines */}
+                <path d="M50,30 C65,55 85,72 120,88"  fill="none" stroke="#1ea7bb" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M120,30 C160,45 195,60 225,78" fill="none" stroke="#1ea7bb" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M225,30 C270,40 320,50 365,65" fill="none" stroke="#1ea7bb" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M365,30 C410,38 470,45 540,55" fill="none" stroke="#1ea7bb" strokeWidth="2.2" strokeLinecap="round" />
+                {/* Review markers at D+1, D+3, D+7 */}
+                {([120, 225, 365] as const).map((x) => (
+                  <g key={x}>
+                    <line x1={x} x2={x} y1="30" y2="175" stroke="#1ea7bb" strokeWidth="1" strokeDasharray="2 3" opacity="0.4" />
+                    <circle cx={x} cy="30" r="6" fill="#080D1A" stroke="#1ea7bb" strokeWidth="2" />
+                    <circle cx={x} cy="30" r="2.5" fill="#1ea7bb" />
+                    <text x={x} y="20" textAnchor="middle" fontSize="9" fill="#1ea7bb"
+                      fontFamily="IBM Plex Mono, monospace" fontWeight="700" letterSpacing="0.1em">복습</text>
+                  </g>
+                ))}
+              </svg>
+
+              {/* 3-stat summary row */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", marginTop: "18px", borderTop: "1px solid var(--border)", paddingTop: "14px" }}>
+                <div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "20px", fontWeight: 800, color: "var(--text)" }}>84<span style={{ fontSize: "13px", color: "var(--text-muted)" }}>%</span></div>
+                  <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "0.12em", fontWeight: 600, marginTop: "2px" }}>KVLE 14일차</div>
+                </div>
+                <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: "16px" }}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "20px", fontWeight: 800, color: "var(--wrong)" }}>15<span style={{ fontSize: "13px", color: "var(--text-muted)" }}>%</span></div>
+                  <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "0.12em", fontWeight: 600, marginTop: "2px" }}>복습 없이 14일차</div>
+                </div>
+                <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: "16px" }}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "20px", fontWeight: 800, color: "var(--teal)" }}>5.6x</div>
+                  <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "0.12em", fontWeight: 600, marginTop: "2px" }}>기억 효율</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ━━━━ TRUST BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div
-        className="scroll-reveal"
-        style={{
-          borderTop: "1px solid var(--border)",
-          borderBottom: "1px solid var(--border)",
-          position: "relative",
-        }}
-      >
-        <div className="mx-auto max-w-7xl px-6 py-5 flex items-stretch justify-center flex-wrap gap-0">
-          {[
-            { value: "5개 과목", label: "수의사 국가시험 전 과목 커버" },
-            { value: "SRS", label: "간격 반복 알고리즘 내장" },
-            { value: "실시간", label: "약점 데이터 집계 및 분석" },
-          ].map((s, i) => (
-            <div
-              key={s.label}
-              className="flex flex-col items-center justify-center px-6 md:px-12 py-3"
-              style={i > 0 ? { borderLeft: "1px solid var(--border)" } : undefined}
-            >
-              <div
-                className="text-xl font-black kvle-mono mb-0.5"
-                style={{ color: "var(--text)" }}
-              >
-                {s.value}
-              </div>
-              <div className="text-xs text-center" style={{ color: "var(--text-faint)" }}>
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ━━━━ FEATURES ZIG-ZAG ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="scroll-reveal mx-auto max-w-7xl px-6 py-28" style={{ position: "relative" }}>
-        <div className="mb-16">
-          <span className="kvle-label mb-3 inline-block">왜 Vexa인가</span>
-          <h2
-            className="text-3xl lg:text-4xl font-bold tracking-tight"
-            style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
-          >
-            막연하게 공부하지 마세요.
-            <br />
-            <span style={{ color: "var(--teal)" }}>지금 내 취약점을 먼저</span>
-          </h2>
-        </div>
-
-        <div style={{ borderTop: "1px solid var(--border)" }}>
-          {features.map(({ icon: Icon, label, title, desc, highlight }, i) => (
-            <div
-              key={title}
-              className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-24 py-14"
-              style={{ borderBottom: "1px solid var(--border)" }}
-            >
-              {/* 아이콘 + 제목 — 짝수/홀수 교번 */}
-              <div className={`flex flex-col justify-center ${i % 2 === 1 ? "md:order-last" : ""}`}>
-                {/* Icon Double-Bezel */}
-                <div
-                  className="mb-5"
-                  style={{
-                    display: "inline-flex",
-                    padding: "4px",
-                    borderRadius: "14px",
-                    background: highlight ? "rgba(30,167,187,0.06)" : "rgba(255,255,255,0.02)",
-                    border: `1px solid ${highlight ? "rgba(30,167,187,0.16)" : "rgba(255,255,255,0.05)"}`,
-                    alignSelf: "flex-start",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      borderRadius: "10px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: highlight ? "var(--teal-dim)" : "var(--surface-raised)",
-                      color: highlight ? "var(--teal)" : "var(--text-muted)",
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07)",
-                    }}
-                  >
-                    <Icon size={18} />
-                  </div>
-                </div>
-
-                <span
-                  className="text-xs font-bold tracking-widest mb-2"
-                  style={{ color: highlight ? "var(--teal)" : "var(--text-faint)" }}
-                >
-                  {label}
+        {/* ── 3. MARQUEE RAIL ─────────────────────────────────────────────── */}
+        <div style={{
+          borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
+          padding: "24px 0", marginTop: "60px", overflow: "hidden", position: "relative",
+        }}>
+          <div className="rail-track">
+            {/* Items × 2 for seamless loop */}
+            {[0, 1].flatMap((set) =>
+              RAIL_ITEMS.map(({ bullet, mono, text }, i) => (
+                <span key={`${set}-${i}`} style={{
+                  color: "var(--text-faint)", fontSize: "14px", fontWeight: 500,
+                  display: "inline-flex", alignItems: "baseline", gap: "12px",
+                }}>
+                  {bullet
+                    ? <span style={{ color: "var(--teal)" }}>◆</span>
+                    : <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: "13px", fontWeight: 600 }}>{mono}</span>
+                  }
+                  <span>{text}</span>
                 </span>
-                <h3
-                  className="text-xl font-bold tracking-tight"
-                  style={{ color: "var(--text)" }}
-                >
-                  {title}
-                </h3>
-              </div>
+              ))
+            )}
+          </div>
+        </div>
 
-              {/* 설명 */}
-              <div className="flex items-center">
-                <p
-                  className="text-base leading-relaxed"
-                  style={{ color: "var(--text-muted)", maxWidth: "46ch" }}
-                >
-                  {desc}
-                </p>
+        {/* ── 4. PROBLEM SECTION ──────────────────────────────────────────── */}
+        <section id="problem" style={{
+          background: "var(--surface)",
+          borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
+          position: "relative",
+        }}>
+          <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "120px 32px 80px" }}>
+            <div style={{ fontSize: "11px", letterSpacing: "0.16em", fontWeight: 700, color: "var(--teal)" }}>왜 Vexa인가</div>
+            <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "14px 0 0", color: "var(--text)" }}>
+              같은 시간 공부해도<br />
+              <span style={{ color: "var(--text-muted)" }}>결과가 다른 이유가 있습니다</span>
+            </h2>
+
+            <div className="problem-grid" style={{ marginTop: "52px" }}>
+              {[
+                {
+                  num: "문제 01",
+                  head: "어느 단원이 약한지 감으로만 안다",
+                  body: "\"약리학이 약한 것 같다\"와 \"약리학 정답률 61.5%, 목표까지 7문제 부족\"은 다른 정보입니다. 숫자가 없으면 공부 방향도 막연합니다.",
+                },
+                {
+                  num: "문제 02",
+                  head: "틀린 문제는 대부분 다시 안 푼다",
+                  body: "오답 노트를 수기로 정리하는 순간부터 관리가 부담이 됩니다. 결국 한 번 틀린 문제는 시험장에서 또 틀립니다.",
+                },
+                {
+                  num: "문제 03",
+                  head: "복습 타이밍을 놓쳐 기억이 증발한다",
+                  body: "한 번 본 내용의 70%는 24시간 안에 잊힙니다. 적절한 간격으로 다시 만나지 못하면, 공부한 시간이 사라집니다.",
+                },
+              ].map(({ num, head, body }) => (
+                <div key={num} className="problem-cell">
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "13px", fontWeight: 700, color: "var(--wrong)", letterSpacing: "0.12em", marginBottom: "14px" }}>{num}</div>
+                  <h3 style={{ fontSize: "22px", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text)", lineHeight: 1.3, margin: "0 0 14px" }}>{head}</h3>
+                  <p style={{ fontSize: "14px", lineHeight: 1.7, color: "var(--text-muted)", margin: 0 }}>{body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 5. FEATURE DUO ──────────────────────────────────────────────── */}
+        <section id="features" style={{ maxWidth: "1240px", margin: "0 auto", padding: "120px 32px", position: "relative" }}>
+          <div style={{ fontSize: "11px", letterSpacing: "0.16em", fontWeight: 700, color: "var(--teal)" }}>핵심 기능</div>
+          <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "14px 0 0", color: "var(--text)" }}>
+            시간을 낭비하지 않는 두 가지 장치
+          </h2>
+          <p style={{ fontSize: "16px", color: "var(--text-muted)", lineHeight: 1.6, margin: "18px 0 0", maxWidth: "58ch" }}>
+            Vexa의 모든 기능은 결국 두 질문에 답합니다 —{" "}
+            <strong style={{ color: "var(--text)" }}>지금 뭘 풀어야 하지?</strong>,{" "}
+            <strong style={{ color: "var(--text)" }}>뭘 언제 다시 봐야 하지?</strong>
+          </p>
+
+          <div className="duo-grid">
+            {/* SRS card — featured, teal top border */}
+            <div style={{
+              background: "var(--surface)", border: "1px solid var(--border)",
+              borderTop: "3px solid var(--teal)", borderRadius: "20px",
+              padding: "40px", position: "relative", overflow: "hidden",
+              display: "flex", flexDirection: "column", minHeight: "440px",
+            }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", color: "var(--teal)", padding: "4px 9px", borderRadius: "4px", background: "var(--teal-dim)", border: "1px solid var(--teal-border)" }}>SRS</span>
+                <span style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "0.12em", fontWeight: 600 }}>SPACED REPETITION</span>
+              </div>
+              <h3 style={{ fontSize: "26px", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text)", margin: "14px 0 12px", lineHeight: 1.25 }}>
+                기억이 흐려지기 직전에<br />복습을 올려드립니다
+              </h3>
+              <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: 1.7, margin: "0 0 24px", maxWidth: "36ch" }}>
+                SM-2 기반 간격 반복 알고리즘이 문제마다 기억 곡선을 추적합니다.
+                맞힌 문제는 긴 간격으로, 틀린 문제는 짧은 간격으로. 잊기 전에 만나면 노력 대비 기억이 몇 배 길어집니다.
+              </p>
+              {/* 4-row mini queue viz */}
+              <div style={{ marginTop: "auto", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "12px", padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                {SRS_ROWS.map(({ day, w, tag, tagColor }) => (
+                  <div key={day} style={{ display: "grid", gridTemplateColumns: "40px 1fr 60px", alignItems: "center", gap: "12px" }}>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)" }}>{day}</span>
+                    <div style={{ height: "4px", background: "var(--surface-raised)", borderRadius: "999px", overflow: "hidden" }}>
+                      <span style={{ display: "block", height: "100%", width: w, background: "var(--teal)", borderRadius: "999px" }} />
+                    </div>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textAlign: "right", color: tagColor, fontWeight: 600 }}>{tag}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ━━━━ HOW IT WORKS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section
-        className="scroll-reveal py-28"
-        style={{
-          background: "var(--surface)",
-          borderTop: "1px solid var(--border)",
-          borderBottom: "1px solid var(--border)",
-          position: "relative",
-        }}
-      >
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-14">
-            <span className="kvle-label mb-3 inline-block">사용 흐름</span>
-            <h2
-              className="text-3xl lg:text-4xl font-bold tracking-tight"
-              style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
-            >
-              3단계면 됩니다
-            </h2>
+            {/* Weak-point targeting card */}
+            <div style={{
+              background: "var(--surface)", border: "1px solid var(--border)",
+              borderRadius: "20px", padding: "40px", position: "relative", overflow: "hidden",
+              display: "flex", flexDirection: "column", minHeight: "440px",
+            }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.14em", color: "var(--wrong)", padding: "4px 9px", borderRadius: "4px", background: "var(--wrong-dim)", border: "1px solid rgba(192,74,58,0.25)" }}>TARGETING</span>
+                <span style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "0.12em", fontWeight: 600 }}>WEAK-POINT FOCUS</span>
+              </div>
+              <h3 style={{ fontSize: "26px", fontWeight: 700, letterSpacing: "-0.02em", color: "var(--text)", margin: "14px 0 12px", lineHeight: 1.25 }}>
+                약점부터 좁혀<br />점수를 효율적으로 올립니다
+              </h3>
+              <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: 1.7, margin: "0 0 24px", maxWidth: "36ch" }}>
+                전 과목을 고르게 공부하는 건 가장 비효율적인 전략입니다.
+                Vexa는 정답률이 낮은 과목을 자동으로 상위에 배치하고, 약점 집중 세션에서 우선 출제합니다.
+              </p>
+              {/* 5-subject ranking bars */}
+              <div style={{ marginTop: "auto", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "12px", padding: "18px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                {WEAK_SUBJECTS.map(({ name, pct, bar, color }) => (
+                  <div key={name} style={{ display: "grid", gridTemplateColumns: "90px 1fr 44px", alignItems: "center", gap: "12px" }}>
+                    <span style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--text)" }}>{name}</span>
+                    <div style={{ height: "6px", background: "var(--surface-raised)", borderRadius: "999px", overflow: "hidden" }}>
+                      <span style={{ display: "block", height: "100%", width: `${pct}%`, background: bar, borderRadius: "999px" }} />
+                    </div>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", fontWeight: 700, textAlign: "right", color }}>{pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3">
-            {steps.map(({ num, icon: Icon, title, desc, active }, i) => (
-              <div
-                key={num}
-                className={[
-                  "py-10 md:py-0",
-                  i > 0 ? "border-t md:border-t-0 md:border-l md:pl-12" : "md:pr-12",
-                  i === 1 ? "md:px-12" : "",
-                ].join(" ")}
-                style={{ borderColor: "var(--border)" }}
-              >
-                <div
-                  className="text-7xl font-black kvle-mono leading-none mb-6 select-none"
-                  style={{
-                    color: active
-                      ? "rgba(30,167,187,0.13)"
-                      : "rgba(255,255,255,0.03)",
-                  }}
-                >
-                  {num}
-                </div>
-                {/* Step icon — Double-Bezel */}
-                <div
-                  className="mb-4"
-                  style={{
-                    display: "inline-flex",
-                    padding: "3px",
-                    borderRadius: "12px",
-                    background: active ? "rgba(30,167,187,0.06)" : "rgba(255,255,255,0.02)",
-                    border: `1px solid ${active ? "rgba(30,167,187,0.16)" : "rgba(255,255,255,0.05)"}`,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "34px",
-                      height: "34px",
-                      borderRadius: "8px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: active ? "var(--teal-dim)" : "var(--surface-raised)",
-                      color: active ? "var(--teal)" : "var(--text-faint)",
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-                    }}
-                  >
-                    <Icon size={16} />
+        {/* ── 6. HOW IT WORKS ─────────────────────────────────────────────── */}
+        <section id="how" style={{
+          borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
+          background: "linear-gradient(180deg, rgba(15,23,41,0.4) 0%, transparent 100%)",
+          position: "relative",
+        }}>
+          <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "120px 32px" }}>
+            <div style={{ fontSize: "11px", letterSpacing: "0.16em", fontWeight: 700, color: "var(--teal)" }}>사용 흐름</div>
+            <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "14px 0 0", color: "var(--text)" }}>
+              3단계로 충분합니다
+            </h2>
+
+            <div className="steps-grid">
+              {[
+                {
+                  num: "01", active: true,
+                  head: "문제를 풉니다",
+                  body: "과목을 고르거나 복습 큐에서 시작합니다. 틀린 문제는 자동으로 오답 노트와 SRS 큐에 들어갑니다. 별도 정리가 필요 없습니다.",
+                  preview: (
+                    <>
+                      <div style={{ color: "var(--teal)", fontWeight: 700, marginBottom: "4px", fontFamily: "var(--font-mono)", fontSize: "11.5px" }}>→ 약리학 · Q042</div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "11.5px" }}>β₂ 수용체 작용제로…</div>
+                    </>
+                  ),
+                },
+                {
+                  num: "02", active: false,
+                  head: "데이터가 쌓입니다",
+                  body: "과목별 정답률, 누적 시도 횟수, 약점 패턴이 실시간으로 집계됩니다. 어디에 시간을 써야 할지 숫자가 알려줍니다.",
+                  preview: (
+                    <>
+                      <div style={{ marginBottom: "4px", fontFamily: "var(--font-mono)", fontSize: "11.5px" }}>정답률 <span style={{ color: "var(--text)" }}>74.3%</span> <span style={{ color: "var(--correct)" }}>▲2.1</span></div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "11.5px" }}>최약점 <span style={{ color: "var(--wrong)" }}>약리학</span></div>
+                    </>
+                  ),
+                },
+                {
+                  num: "03", active: false,
+                  head: "잊기 전에 다시 만납니다",
+                  body: "간격 반복 알고리즘이 D+1, D+3, D+7 타이밍에 복습을 띄웁니다. 하루 10분으로도 장기 기억이 쌓입니다.",
+                  preview: (
+                    <>
+                      <div style={{ color: "var(--teal)", marginBottom: "4px", fontFamily: "var(--font-mono)", fontSize: "11.5px" }}>복습 대기 <span style={{ fontWeight: 700 }}>6문제</span></div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "11.5px" }}>약 6분 소요</div>
+                    </>
+                  ),
+                },
+              ].map(({ num, active, head, body, preview }) => (
+                <div key={num} className="step-item">
+                  {/* Giant monospace numeral */}
+                  <div style={{
+                    fontFamily: "var(--font-mono)", fontSize: "72px", fontWeight: 800,
+                    letterSpacing: "-0.04em", lineHeight: 1, marginBottom: "20px",
+                    color: active ? "var(--teal)" : "var(--text)",
+                    opacity: active ? 0.2 : 0.06,
+                  }}>{num}</div>
+                  <h3 style={{ fontSize: "20px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.015em", margin: "0 0 10px" }}>{head}</h3>
+                  <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.7, margin: 0 }}>{body}</p>
+                  <div style={{ marginTop: "24px", padding: "14px 16px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-muted)" }}>
+                    {preview}
                   </div>
                 </div>
-                <h3
-                  className="text-base font-bold mb-3 tracking-tight"
-                  style={{ color: "var(--text)" }}
-                >
-                  {title}
-                </h3>
-                <p
-                  className="text-sm leading-relaxed"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  {desc}
-                </p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ━━━━ FINAL CTA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="scroll-reveal mx-auto max-w-7xl px-6 py-28" style={{ position: "relative" }}>
-        {/* Double-Bezel CTA container */}
-        <div
-          style={{
-            padding: "8px",
-            borderRadius: "28px",
-            background: "rgba(30,167,187,0.025)",
-            border: "1px solid rgba(30,167,187,0.09)",
-          }}
-        >
-          <div
-            className="px-6 py-14 sm:px-12 sm:py-20 lg:px-16 lg:py-24"
-            style={{
-              borderRadius: "20px",
-              textAlign: "center",
-              background: "var(--surface)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {/* 내부 배경 bloom */}
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                inset: 0,
-                pointerEvents: "none",
-                background:
-                  "radial-gradient(ellipse 70% 60% at 50% 110%, rgba(30,167,187,0.07) 0%, transparent 70%)",
-              }}
-            />
+        {/* ── 7. PULL QUOTE ───────────────────────────────────────────────── */}
+        <section style={{ maxWidth: "900px", margin: "0 auto", padding: "100px 32px", textAlign: "center", position: "relative" }}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: "64px", color: "var(--teal)", opacity: 0.3, lineHeight: 0.8, marginBottom: "16px" }}>&ldquo;</div>
+          <p style={{ fontSize: "clamp(22px, 3vw, 32px)", fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.45, color: "var(--text)", margin: 0 }}>
+            막연히 책을 반복해서 읽던 때랑은 공부의 감각이 완전히 달라졌어요.
+            내가 뭘 모르는지 숫자로 보이니까, 뭘 해야 할지 매일 분명합니다.
+          </p>
+          <div style={{ marginTop: "28px", fontSize: "13px", color: "var(--text-muted)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "12px" }}>
+            <span style={{
+              width: "32px", height: "32px", borderRadius: "999px", flexShrink: 0,
+              background: "linear-gradient(135deg, #4A7FA8, #1ea7bb)",
+              color: "#fff", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "13px",
+            }}>김</span>
+            <span>
+              <strong style={{ color: "var(--text)", fontWeight: 600 }}>김수의</strong>
+              <span style={{ color: "var(--text-faint)" }}> · 수의예과 본4 · 국시 준비 중</span>
+            </span>
+          </div>
+        </section>
+
+        {/* ── 8. FINAL CTA ────────────────────────────────────────────────── */}
+        <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "32px", position: "relative" }}>
+          <div style={{
+            borderRadius: "24px",
+            background: "linear-gradient(135deg, #0F2A33 0%, #0F1729 100%)",
+            border: "1px solid var(--teal-border)",
+            padding: "72px 48px", textAlign: "center",
+            position: "relative", overflow: "hidden",
+          }}>
+            {/* Radial glow */}
+            <div aria-hidden="true" style={{
+              position: "absolute", inset: "-1px",
+              background: "radial-gradient(circle at 50% 100%, rgba(30,167,187,0.18) 0%, transparent 60%)",
+              pointerEvents: "none",
+            }} />
             <div style={{ position: "relative" }}>
-              <h2
-                className="text-4xl lg:text-5xl font-bold tracking-tight mb-4"
-                style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
-              >
-                지금 바로 시작하세요
+              <div style={{ fontSize: "11px", letterSpacing: "0.16em", fontWeight: 700, color: "var(--teal)" }}>D-41</div>
+              <h2 style={{ fontSize: "clamp(32px, 4vw, 44px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "0 0 14px" }}>
+                다음 시험까지<br />
+                <span style={{ color: "var(--teal)" }}>41일</span> 남았습니다
               </h2>
-              <p className="mb-10 text-base" style={{ color: "var(--text-muted)" }}>
-                회원가입은 무료입니다. 카드 정보가 필요 없습니다.
+              <p style={{ color: "var(--text-muted)", fontSize: "15px", margin: "0 0 32px" }}>
+                지금 계정을 만들면 오늘 밤 복습 큐부터 설계됩니다. 카드 없이 무료.
               </p>
-              {/* Button-in-Button */}
-              <Link
-                href="/auth/login?mode=signup"
-                className="inline-flex items-center gap-3 font-semibold active:scale-[0.98]"
-                style={{
-                  background: "var(--teal)",
-                  color: "#fff",
-                  borderRadius: "9999px",
-                  padding: "12px 12px 12px 26px",
-                  fontSize: "0.95rem",
-                  transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-                }}
-              >
+              <Link href="/auth/login?mode=signup" className="btn-primary-pill" style={{
+                display: "inline-flex", alignItems: "center", gap: "10px",
+                padding: "14px 14px 14px 26px", borderRadius: "999px",
+                background: "var(--teal)", color: "#061218",
+                fontSize: "15px", fontWeight: 700,
+                boxShadow: "0 8px 20px rgba(30,167,187,0.2), inset 0 1px 0 rgba(255,255,255,0.2)",
+              }}>
                 무료로 시작하기
-                <span
-                  style={{
-                    width: "34px",
-                    height: "34px",
-                    borderRadius: "50%",
-                    background: "rgba(0,0,0,0.18)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <ArrowRight size={15} />
+                <span style={{ width: "32px", height: "32px", borderRadius: "999px", background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center" }}>
+                  <ArrowSVG />
                 </span>
               </Link>
+              {/* Meta row with ✓ checks */}
+              <div style={{ marginTop: "28px", display: "inline-flex", gap: "24px", fontSize: "11px", color: "var(--text-faint)", fontFamily: "var(--font-mono)", fontWeight: 500 }}>
+                <span className="cta-check">회원가입 무료</span>
+                <span className="cta-check">카드 정보 불필요</span>
+                <span className="cta-check">60초 안에 시작</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ━━━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <footer
-        className="py-10"
-        style={{ borderTop: "1px solid var(--border)" }}
-      >
-        <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col items-center md:items-start">
-            <Image src="/logo.png" alt="Vexa 수의미래연구소" width={110} height={36} style={{ objectFit: "contain" }} />
+        {/* ── 9. FOOTER ───────────────────────────────────────────────────── */}
+        <footer style={{ borderTop: "1px solid var(--border)", padding: "32px", marginTop: "60px" }}>
+          <div style={{
+            maxWidth: "1240px", margin: "0 auto",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            gap: "20px", flexWrap: "wrap", fontSize: "12px", color: "var(--text-faint)",
+          }}>
+            <a href="#" style={{ display: "inline-flex", alignItems: "center", gap: "10px", color: "inherit", textDecoration: "none" }}>
+              <Image src="/logo.png" alt="Vexa 수의미래연구소" width={90} height={30} style={{ objectFit: "contain" }} />
+            </a>
+            <div>© 2026 수의미래연구소. 수록된 문제 및 해설의 저작권은 수의미래연구소에 있습니다.</div>
+            <div style={{ display: "flex", gap: "20px" }}>
+              <Link href="/auth/login" className="foot-link">로그인</Link>
+              <Link href="/auth/login?mode=signup" className="foot-link">회원가입</Link>
+            </div>
           </div>
-          <p className="text-xs text-center" style={{ color: "var(--text-faint)" }}>
-            © 2026 수의미래연구소. 수록된 문제 및 해설의 저작권은 수의미래연구소에 있습니다.
-          </p>
-          <div className="flex gap-5 text-sm">
-            <Link href="/auth/login" className="footer-link">
-              로그인
-            </Link>
-            <Link href="/auth/login?mode=signup" className="footer-link">
-              회원가입
-            </Link>
-          </div>
-        </div>
-      </footer>
-    </main>
+        </footer>
+      </main>
+    </>
   );
 }

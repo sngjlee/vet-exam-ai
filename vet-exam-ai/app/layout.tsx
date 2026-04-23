@@ -1,23 +1,8 @@
 import type { Metadata } from "next";
-import { Noto_Serif_KR, Noto_Sans_KR, IBM_Plex_Mono } from "next/font/google";
+import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "../components/NavBar";
 import { DueCountProvider } from "../lib/context/DueCountContext";
-
-// IMPORTANT: Korean fonts must include the "korean" subset or glyphs fall back to system fonts
-const notoSerifKR = Noto_Serif_KR({
-  subsets: ["latin", "korean"] as never,
-  weight: ["700"],
-  variable: "--font-noto-serif-kr",
-  display: "swap",
-});
-
-const notoSansKR = Noto_Sans_KR({
-  subsets: ["latin", "korean"] as never,
-  weight: ["400", "500", "700"],
-  variable: "--font-noto-sans-kr",
-  display: "swap",
-});
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -52,8 +37,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" dir="ltr">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+      </head>
       <body
-        className={`${notoSerifKR.variable} ${notoSansKR.variable} ${ibmPlexMono.variable} antialiased`}
+        className={`${ibmPlexMono.variable} antialiased`}
       >
         <DueCountProvider>
           <NavBar />
