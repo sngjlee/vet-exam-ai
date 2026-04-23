@@ -274,10 +274,10 @@ export default function DashboardPage() {
     const todayStr = new Date().toDateString();
     const yestStr = new Date(Date.now() - 86400000).toDateString();
     const todayCount = attempts.filter(
-      (a) => new Date(a.answered_at).toDateString() === todayStr
+      (a) => new Date(a.answered_at).toDateString() === todayStr && a.is_correct
     ).length;
     const yestCount = attempts.filter(
-      (a) => new Date(a.answered_at).toDateString() === yestStr
+      (a) => new Date(a.answered_at).toDateString() === yestStr && a.is_correct
     ).length;
 
     const activeDays = new Set(
@@ -292,7 +292,7 @@ export default function DashboardPage() {
 
     return {
       delta: todayCount - yestCount,
-      streak: Math.max(streakCount, 1),
+      streak: streakCount,
       byCategory: stats.byCategory.length > 0 ? stats.byCategory : FALLBACK_CATEGORIES,
       recentAttempts: attempts,
     };
@@ -323,8 +323,8 @@ export default function DashboardPage() {
     );
   }
 
-  const totalAttempts = stats?.totalAttempts ?? 312;
-  const accuracy = stats?.accuracy ?? 74;
+  const totalAttempts = stats?.totalAttempts ?? 0;
+  const accuracy = stats?.accuracy ?? 0;
   const weakestName = weakest?.category ?? "약리학";
   const weakestAcc = weakest?.accuracy ?? 62;
 
