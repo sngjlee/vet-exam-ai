@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import NavBar from "../components/NavBar";
+import ConditionalNavBar from "../components/ConditionalNavBar";
 import { DueCountProvider } from "../lib/context/DueCountContext";
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -47,7 +47,7 @@ export default function RootLayout({
         className={`${ibmPlexMono.variable} antialiased`}
       >
         <DueCountProvider>
-          <NavBar />
+          <ConditionalNavBar />
           {children}
         </DueCountProvider>
         {/* Scroll-reveal fallback for browsers without animation-timeline: view() */}
