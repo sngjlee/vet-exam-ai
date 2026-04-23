@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import AuthRedirect from "../components/AuthRedirect";
 
 // ── Rail items (duplicated for seamless marquee loop) ──────────────────────
 const RAIL_ITEMS = [
@@ -42,6 +43,7 @@ function ArrowSVG({ size = 14 }: { size?: number }) {
 export default function LandingPage() {
   return (
     <>
+      <AuthRedirect />
       {/* ── Background ambient orbs ─────────────────────────────────────── */}
       <div aria-hidden="true" style={{
         position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0,
