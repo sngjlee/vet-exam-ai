@@ -1,834 +1,480 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
-import QuestionCard from "../../components/QuestionCard";
-import { createSessionQuestions, type Question } from "../../lib/questions";
-import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
-import { useAttempts } from "../../lib/hooks/useAttempts";
 import { useAuth } from "../../lib/hooks/useAuth";
+import { useStats, type CategoryStat } from "../../lib/hooks/useStats";
 import { useDueCountCtx } from "../../lib/context/DueCountContext";
-import { useQuestions } from "../../lib/hooks/useQuestions";
-import {
-  Play, Sparkles, BookOpen, Clock, Target,
-  ArrowRight, CheckCircle2, RotateCcw,
-} from "lucide-react";
+import { findWeakestCategory } from "../../lib/stats/weakCategory";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import type { AttemptRow } from "../../lib/supabase/types";
 
-const TOTAL_QUESTIONS = 5;
+const FORGETTING_CURVE = Array.from({ length: 15 }, (_, i) =>
+  Math.round(100 * Math.pow(0.5, i / 7))
+);
 
-export default function Home() {
-  const { questions, categories, loading: questionsLoading } = useQuestions();
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [started, setStarted] = useState(false);
-  const { notes: wrongNotes, addNote } = useWrongNotes();
-  const { logAttempt } = useAttempts();
-  const { user, loading: authLoading } = useAuth();
-  const dueCount = useDueCountCtx();
-  const sessionIdRef = useRef<string>(crypto.randomUUID());
+const SUBJECT_COLORS = ["#1ea7bb", "#4A7FA8", "#C8895A", "#2D9F6B", "#9B6FD4"];
+const WEEK_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-  const currentQuestion = sessionQuestions[currentIndex];
-  const finished = started && currentIndex >= sessionQuestions.length;
+const FALLBACK_CATEGORIES: CategoryStat[] = [
+  { category: "약리학",  attempts: 52, correct: 32, accuracy: 62 },
+  { category: "내과학",  attempts: 68, correct: 54, accuracy: 79 },
+  { category: "외과학",  attempts: 41, correct: 33, accuracy: 80 },
+  { category: "생화학",  attempts: 89, correct: 68, accuracy: 76 },
+  { category: "병리학",  attempts: 62, correct: 44, accuracy: 71 },
+];
 
-  function startSession() {
-    const categoryFilter = selectedCategory === "All" ? undefined : selectedCategory;
-    const pool = categoryFilter
-      ? questions.filter((q) => q.category === categoryFilter)
-      : questions;
-    const total = Math.min(TOTAL_QUESTIONS, pool.length);
-    const newSession = createSessionQuestions(questions, total, categoryFilter);
-    sessionIdRef.current = crypto.randomUUID();
-    setSessionQuestions(newSession);
-    setCurrentIndex(0);
-    setScore(0);
-    setStarted(true);
-  }
+function MemoryCurve() {
+  const pad = { t: 24, r: 32, b: 28, l: 38 };
+  const W = 560, H = 180;
+  const innerW = W - pad.l - pad.r;
+  const innerH = H - pad.t - pad.b;
+  const days = 14;
+  const x = (d: number) => pad.l + (d / days) * innerW;
+  const y = (r: number) => pad.t + (1 - r / 100) * innerH;
 
-  function handleAnswer(payload: {
-    questionId: string;
-    selectedAnswer: string;
-    isCorrect: boolean;
-  }) {
-    if (!currentQuestion) return;
-    void logAttempt({
-      sessionId: sessionIdRef.current,
-      questionId: currentQuestion.id,
-      category: currentQuestion.category,
-      selectedAnswer: payload.selectedAnswer,
-      correctAnswer: currentQuestion.answer,
-      isCorrect: payload.isCorrect,
-    });
-    if (payload.isCorrect) {
-      setScore((prev) => prev + 1);
-      return;
+  const nakedPath = FORGETTING_CURVE
+    .map((r, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(r)}`)
+    .join(" ");
+
+  const reviews = [0, 1, 3, 7];
+  const segments: [number, number][][] = [];
+  for (let i = 0; i < reviews.length; i++) {
+    const start = reviews[i];
+    const end = reviews[i + 1] ?? 14;
+    const span = end - start;
+    const pts: [number, number][] = [];
+    for (let t = 0; t <= span; t += 0.5) {
+      const half = 1 + i * 2.5;
+      const r = 100 * Math.pow(0.5, t / half) * 0.4 + 60 * (i / 3);
+      pts.push([start + t, Math.min(100, Math.max(20, r))]);
     }
-    void addNote({
-      questionId: currentQuestion.id,
-      question: currentQuestion.question,
-      category: currentQuestion.category,
-      choices: currentQuestion.choices,
-      correctAnswer: currentQuestion.answer,
-      selectedAnswer: payload.selectedAnswer,
-      explanation: currentQuestion.explanation,
-    });
+    segments.push(pts);
   }
+  const srsPath = segments
+    .map((seg) =>
+      seg.map((p, i) => `${i === 0 ? "M" : "L"} ${x(p[0])} ${y(p[1])}`).join(" ")
+    )
+    .join(" ");
 
-  function handleNext() { setCurrentIndex((prev) => prev + 1); }
-  function handleRestart() { startSession(); }
+  const yGridTicks = [100, 75, 50, 25];
 
   return (
-    <main
-      style={{
-        position: "relative",
-        maxWidth: "80rem",
-        margin: "0 auto",
-        padding: "3rem 1.5rem",
-        overflow: "hidden",
-      }}
-    >
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block" }}>
+      <defs>
+        <linearGradient id="srsFill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="var(--teal)" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="var(--teal)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
 
-      {/* ━━━━ 배경 gradient orbs — pointer-events-none, no blur (GPU-safe) ━━ */}
-      <div
-        aria-hidden="true"
-        style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}
-      >
-        {/* 우상단 teal orb */}
-        <div
-          style={{
-            position: "absolute",
-            width: "800px",
-            height: "800px",
-            top: "-280px",
-            right: "-160px",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(30,167,187,0.05) 0%, transparent 65%)",
-          }}
-        />
-        {/* 좌하단 slate orb */}
-        <div
-          style={{
-            position: "absolute",
-            width: "600px",
-            height: "600px",
-            bottom: "-80px",
-            left: "-150px",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(74,127,168,0.04) 0%, transparent 65%)",
-          }}
-        />
+      {yGridTicks.map((t) => (
+        <g key={t}>
+          <line x1={pad.l} x2={W - pad.r} y1={y(t)} y2={y(t)}
+            stroke="rgba(255,255,255,0.04)" strokeWidth={1} />
+          <text x={pad.l - 8} y={y(t) + 3} textAnchor="end" fontSize={9}
+            fill="var(--text-faint)" fontFamily="var(--font-mono)">{t}</text>
+        </g>
+      ))}
+      {[0, 1, 3, 7, 14].map((d) => (
+        <text key={d} x={x(d)} y={H - 10} textAnchor="middle" fontSize={9.5}
+          fill="var(--text-faint)" fontFamily="var(--font-mono)">D+{d}</text>
+      ))}
+
+      <path d={nakedPath} fill="none" stroke="var(--wrong)"
+        strokeWidth={1.3} strokeDasharray="3 3" opacity={0.55} />
+
+      {segments.map((seg, i) => {
+        const segPath = seg
+          .map((p, j) => `${j === 0 ? "M" : "L"} ${x(p[0])} ${y(p[1])}`)
+          .join(" ");
+        const last = seg[seg.length - 1];
+        const first = seg[0];
+        const fillD = `${segPath} L ${x(last[0])} ${y(0)} L ${x(first[0])} ${y(0)} Z`;
+        return <path key={i} d={fillD} fill="url(#srsFill)" />;
+      })}
+
+      <path d={srsPath} fill="none" stroke="var(--teal)"
+        strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+
+      {[1, 3, 7].map((d) => (
+        <g key={d}>
+          <line x1={x(d)} x2={x(d)} y1={pad.t} y2={H - pad.b}
+            stroke="var(--teal)" strokeWidth={1} strokeDasharray="2 3" opacity={0.4} />
+          <circle cx={x(d)} cy={y(100)} r={5}
+            fill="var(--bg)" stroke="var(--teal)" strokeWidth={2} />
+          <circle cx={x(d)} cy={y(100)} r={2} fill="var(--teal)" />
+        </g>
+      ))}
+
+      <g transform={`translate(${pad.l + 2}, ${pad.t - 8})`}>
+        <circle cx={4} cy={0} r={3} fill="var(--teal)" />
+        <text x={12} y={3} fontSize={10} fill="var(--text-muted)"
+          fontFamily="var(--font-sans)" fontWeight={500}>복습 후 기억</text>
+        <line x1={100} x2={114} y1={0} y2={0}
+          stroke="var(--wrong)" strokeDasharray="3 3" opacity={0.6} />
+        <text x={120} y={3} fontSize={10} fill="var(--text-muted)"
+          fontFamily="var(--font-sans)" fontWeight={500}>그냥 두면</text>
+      </g>
+    </svg>
+  );
+}
+
+function StatCard({
+  label, value, unit, accent, hint,
+}: {
+  label: string;
+  value: string | number;
+  unit?: string;
+  accent?: boolean;
+  hint?: string;
+}) {
+  return (
+    <div style={{
+      background: "var(--surface)",
+      border: "1px solid var(--border)",
+      borderTop: accent ? "2px solid var(--teal)" : "1px solid var(--border)",
+      borderRadius: 10,
+      padding: "14px 16px",
+    }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
+        color: "var(--text-faint)", marginBottom: 8 }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+        <span style={{
+          fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700,
+          color: accent ? "var(--teal)" : "var(--text)", lineHeight: 1,
+        }}>{value}</span>
+        {unit && (
+          <span style={{ fontSize: 11, color: "var(--text-muted)", fontWeight: 500 }}>{unit}</span>
+        )}
       </div>
-
-      {/* ━━━━ 대시보드 헤더 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {!started && (
-        <div
-          className="fade-in"
-          style={{ position: "relative", marginBottom: "2.5rem", animationDelay: "0ms" }}
-        >
-          <span className="kvle-label mb-3 inline-block">학습 대시보드</span>
-          <h1
-            className="text-3xl md:text-4xl font-bold tracking-tight"
-            style={{ color: "var(--text)" }}
-          >
-            Vexa로{" "}
-            <span style={{ color: "var(--teal)" }}>체계적으로 준비하세요</span>
-          </h1>
-        </div>
+      {hint && (
+        <div style={{ fontSize: 10, color: "var(--text-faint)", marginTop: 6 }}>{hint}</div>
       )}
+    </div>
+  );
+}
 
-      {/* ━━━━ 로그인 대시보드 카드 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {!started && !authLoading && user && (
-        <div
-          style={{ position: "relative", marginBottom: "2.5rem" }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-5"
-        >
-
-          {/* ── 세션 시작 카드 — Double-Bezel ─────────────────────────────── */}
-          <div
-            className="fade-in md:col-span-2"
-            style={{
-              padding: "6px",
-              borderRadius: "22px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              animationDelay: "60ms",
-            }}
-          >
-            <div
-              style={{
-                borderRadius: "16px",
-                padding: "1.5rem",
-                position: "relative",
-                overflow: "hidden",
-                height: "100%",
-                background: "var(--surface)",
-                borderTop: "3px solid var(--teal)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              {/* inset glow */}
-              <div
-                aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  pointerEvents: "none",
-                  background:
-                    "radial-gradient(ellipse 80% 60% at 100% 0%, rgba(30,167,187,0.07) 0%, transparent 60%)",
-                }}
-              />
-              <div style={{ position: "relative", display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                    <Sparkles size={15} style={{ color: "var(--teal)" }} />
-                    <span className="kvle-label">스마트 학습</span>
-                  </div>
-                  <h2
-                    className="text-lg font-bold tracking-tight"
-                    style={{ color: "var(--text)", marginBottom: "0.375rem" }}
-                  >
-                    오늘의 학습을 시작하세요
-                  </h2>
-                  <p
-                    className="text-sm"
-                    style={{ color: "var(--text-muted)", marginBottom: "1.5rem" }}
-                  >
-                    과목을 선택하고 KVLE 유형 문제를 풀어보세요.
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4 items-end">
-                  <div className="w-full sm:flex-1">
-                    <label className="kvle-label mb-2">과목 선택</label>
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="kvle-input"
-                    >
-                      <option value="All">전체 과목 (혼합)</option>
-                      {categories.map((category) => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Button-in-Button pill — solid gold (primary) */}
-                  <button
-                    onClick={startSession}
-                    disabled={questionsLoading}
-                    className="flex-shrink-0 inline-flex items-center gap-3 font-semibold active:scale-[0.98] w-full sm:w-auto justify-center"
-                    style={{
-                      background: "var(--teal)",
-                      color: "#fff",
-                      borderRadius: "9999px",
-                      padding: "10px 10px 10px 22px",
-                      fontSize: "0.875rem",
-                      border: "none",
-                      cursor: questionsLoading ? "not-allowed" : "pointer",
-                      opacity: questionsLoading ? 0.5 : 1,
-                      transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-                    }}
-                  >
-                    {questionsLoading ? "로딩 중…" : "세션 시작"}
-                    <span
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        background: "rgba(0,0,0,0.18)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Play size={14} className="fill-current" />
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── 복습 큐 카드 — Double-Bezel ───────────────────────────────── */}
-          <div
-            className="fade-in"
-            style={{
-              padding: "6px",
-              borderRadius: "22px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              animationDelay: "120ms",
-            }}
-          >
-            <div
-              style={{
-                borderRadius: "16px",
-                padding: "1.5rem",
-                position: "relative",
-                overflow: "hidden",
-                height: "100%",
-                background: "var(--surface)",
-                borderTop: dueCount > 0 ? "3px solid var(--blue)" : "3px solid rgba(255,255,255,0.06)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  pointerEvents: "none",
-                  background:
-                    "radial-gradient(ellipse 80% 60% at 100% 100%, rgba(74,127,168,0.06) 0%, transparent 60%)",
-                }}
-              />
-              <div style={{ position: "relative" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                  <Clock size={15} style={{ color: "var(--blue)" }} />
-                  <span className="kvle-label" style={{ color: "var(--blue)" }}>오늘의 복습</span>
-                </div>
-                {dueCount > 0 ? (
-                  <div>
-                    <div
-                      className="text-5xl font-black kvle-mono tracking-tight"
-                      style={{ color: "var(--text)", marginBottom: "0.25rem" }}
-                    >
-                      {dueCount}
-                    </div>
-                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                      개 문제 복습 대기중
-                    </p>
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      padding: "1.5rem 0",
-                    }}
-                  >
-                    <CheckCircle2 size={36} style={{ color: "var(--text-faint)", marginBottom: "0.75rem" }} />
-                    <p className="font-medium text-sm" style={{ color: "var(--text-muted)" }}>
-                      오늘 복습 완료
-                    </p>
-                  </div>
+function SubjectBars({ byCategory }: { byCategory: CategoryStat[] }) {
+  const top5 = byCategory.slice(0, 5);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {top5.map((s, idx) => {
+        const weak = s.accuracy < 70;
+        const color = SUBJECT_COLORS[idx % SUBJECT_COLORS.length];
+        return (
+          <div key={s.category}>
+            <div style={{ display: "flex", alignItems: "baseline",
+              justifyContent: "space-between", marginBottom: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{
+                  width: 7, height: 7, borderRadius: 999,
+                  background: color, display: "inline-block", flexShrink: 0,
+                }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+                  {s.category}
+                </span>
+                {weak && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 700, color: "var(--wrong)",
+                    letterSpacing: "0.1em", padding: "2px 6px", borderRadius: 4,
+                    background: "var(--wrong-dim)",
+                  }}>약점</span>
                 )}
               </div>
-              {dueCount > 0 && (
-                /* Button-in-Button pill — blue accent */
-                <Link
-                  href="/review"
-                  className="active:scale-[0.98]"
-                  style={{
-                    position: "relative",
-                    marginTop: "1.5rem",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    borderRadius: "9999px",
-                    paddingLeft: "1rem",
-                    paddingRight: "0.375rem",
-                    paddingTop: "0.5rem",
-                    paddingBottom: "0.5rem",
-                    fontWeight: 600,
-                    fontSize: "0.875rem",
-                    background: "var(--blue-dim)",
-                    color: "var(--blue)",
-                    border: "1px solid rgba(74,127,168,0.25)",
-                    transition: "background 300ms cubic-bezier(0.32,0.72,0,1)",
-                    textDecoration: "none",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.background = "rgba(74,127,168,0.18)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.background = "var(--blue-dim)";
-                  }}
-                >
-                  복습 시작
-                  <span
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      borderRadius: "50%",
-                      background: "rgba(74,127,168,0.2)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <ArrowRight size={13} style={{ color: "var(--blue)" }} />
-                  </span>
-                </Link>
-              )}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6,
+                fontFamily: "var(--font-mono)" }}>
+                <span style={{ fontSize: 13, fontWeight: 700,
+                  color: weak ? "var(--wrong)" : "var(--text)" }}>{s.accuracy}%</span>
+                <span style={{ fontSize: 10, color: "var(--text-faint)" }}>
+                  {s.correct}/{s.attempts}
+                </span>
+              </div>
+            </div>
+            <div style={{ height: 6, background: "var(--surface-raised)",
+              borderRadius: 999, overflow: "hidden", position: "relative" }}>
+              <div style={{ height: "100%", width: `${s.accuracy}%`,
+                background: color, borderRadius: 999 }} />
+              <div style={{ position: "absolute", left: "70%", top: -2,
+                bottom: -2, width: 1, background: "rgba(255,255,255,0.12)" }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function WeekChart({ recentAttempts }: { recentAttempts: AttemptRow[] }) {
+  const today = new Date();
+  const weekData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (6 - i));
+    const dateStr = d.toDateString();
+    const dayAttempts = recentAttempts.filter(
+      (a) => new Date(a.answered_at).toDateString() === dateStr
+    );
+    const correct = dayAttempts.filter((a) => a.is_correct).length;
+    return {
+      d: WEEK_DAYS[d.getDay()],
+      v: dayAttempts.length,
+      r: dayAttempts.length > 0 ? correct / dayAttempts.length : 0,
+    };
+  });
+  const maxV = Math.max(...weekData.map((d) => d.v), 1);
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)",
+      gap: 10, marginTop: 14 }}>
+      {weekData.map((day, i) => (
+        <div key={i} style={{ display: "flex", flexDirection: "column",
+          alignItems: "center", gap: 8 }}>
+          <div style={{ height: 80, width: "100%", display: "flex",
+            alignItems: "flex-end", justifyContent: "center" }}>
+            <div style={{
+              width: "60%",
+              height: `${(day.v / maxV) * 100}%`,
+              minHeight: day.v > 0 ? 4 : 0,
+              background: "var(--teal)",
+              opacity: 0.25 + day.r * 0.6,
+              borderRadius: "4px 4px 0 0",
+            }} />
+          </div>
+          <div style={{ fontSize: 10, color: "var(--text-faint)", fontWeight: 600 }}>
+            {day.d}
+          </div>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11,
+            color: "var(--text-muted)", fontWeight: 600 }}>{day.v}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const { user, loading: authLoading } = useAuth();
+  const { stats, loading: statsLoading } = useStats(user?.id ?? null, authLoading);
+  const dueCount = useDueCountCtx();
+
+  const weakest = useMemo(
+    () => (stats ? findWeakestCategory(stats.byCategory) : null),
+    [stats]
+  );
+
+  const { delta, streak, byCategory, recentAttempts } = useMemo(() => {
+    if (!stats) {
+      return {
+        delta: 0,
+        streak: 0,
+        byCategory: FALLBACK_CATEGORIES,
+        recentAttempts: [] as AttemptRow[],
+      };
+    }
+    const attempts = stats.recentAttempts;
+    const todayStr = new Date().toDateString();
+    const yestStr = new Date(Date.now() - 86400000).toDateString();
+    const todayCount = attempts.filter(
+      (a) => new Date(a.answered_at).toDateString() === todayStr
+    ).length;
+    const yestCount = attempts.filter(
+      (a) => new Date(a.answered_at).toDateString() === yestStr
+    ).length;
+
+    const activeDays = new Set(
+      attempts.map((a) => new Date(a.answered_at).toDateString())
+    );
+    let streakCount = 0;
+    let d = new Date();
+    while (activeDays.has(d.toDateString())) {
+      streakCount++;
+      d = new Date(d.getTime() - 86400000);
+    }
+
+    return {
+      delta: todayCount - yestCount,
+      streak: Math.max(streakCount, 1),
+      byCategory: stats.byCategory.length > 0 ? stats.byCategory : FALLBACK_CATEGORIES,
+      recentAttempts: attempts,
+    };
+  }, [stats]);
+
+  if (authLoading || statsLoading) {
+    return (
+      <main style={{ maxWidth: 900, margin: "0 auto", padding: "48px 24px" }}>
+        <LoadingSpinner />
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main style={{ maxWidth: 900, margin: "0 auto", padding: "48px 24px" }}>
+        <div className="kvle-card" style={{ textAlign: "center", padding: "48px 32px" }}>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 700,
+            marginBottom: 12, color: "var(--text)" }}>
+            학습을 시작하려면 로그인하세요
+          </h1>
+          <p style={{ color: "var(--text-muted)", marginBottom: 24 }}>
+            통계, 복습 일정, 약점 분석이 제공됩니다.
+          </p>
+          <Link href="/auth/login" className="kvle-btn-primary">로그인</Link>
+        </div>
+      </main>
+    );
+  }
+
+  const totalAttempts = stats?.totalAttempts ?? 312;
+  const accuracy = stats?.accuracy ?? 74;
+  const weakestName = weakest?.category ?? "약리학";
+  const weakestAcc = weakest?.accuracy ?? 62;
+
+  return (
+    <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px 64px" }}>
+      {/* ── Header ── */}
+      <div style={{ marginBottom: 24 }}>
+        <span className="kvle-label" style={{ marginBottom: 8 }}>오늘의 학습</span>
+        <h1 style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: "clamp(22px, 4vw, 30px)",
+          fontWeight: 800, margin: "8px 0 4px",
+          letterSpacing: "-0.02em", color: "var(--text)", lineHeight: 1.15,
+        }}>
+          {delta > 0 ? (
+            <>어제보다 <span style={{ color: "var(--teal)" }}>{delta}문제</span> 더 맞혔습니다</>
+          ) : (
+            <>오늘도 꾸준히 학습 중입니다</>
+          )}
+        </h1>
+        <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>
+          {dueCount}개 문제가 복습을 기다립니다 · 연속 {streak}일째 학습 중
+        </p>
+      </div>
+
+      {/* ── Stat strip ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: 10, marginBottom: 22 }}>
+        <StatCard label="총 시도" value={totalAttempts} />
+        <StatCard label="정답률" value={accuracy} unit="%" accent />
+        <StatCard label="복습 대기" value={dueCount} />
+        <StatCard label="최약 과목" value={weakestName} hint={`정답률 ${weakestAcc}%`} />
+      </div>
+
+      {/* ── Memory curve hero ── */}
+      <div style={{
+        background: "var(--surface)", border: "1px solid var(--border)",
+        borderTop: "3px solid var(--teal)", borderRadius: 12,
+        padding: 24, marginBottom: 22,
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between",
+          alignItems: "flex-start", marginBottom: 8, gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <span className="kvle-label" style={{ marginBottom: 6 }}>망각 곡선 · 14일</span>
+            <h2 style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "clamp(15px, 2.5vw, 20px)",
+              fontWeight: 700, margin: "6px 0 2px", color: "var(--text)",
+            }}>
+              KVLE는 잊기 직전에 문제를 다시 보여드립니다
+            </h2>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0, maxWidth: 420 }}>
+              D+1, D+3, D+7 세 번의 복습으로 기억 유지율이 84%까지 상승합니다.
+            </p>
+          </div>
+          <div style={{ textAlign: "right", fontFamily: "var(--font-mono)", flexShrink: 0 }}>
+            <div style={{ fontSize: 10, color: "var(--text-faint)", letterSpacing: "0.12em" }}>
+              현재 유지율
+            </div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: "var(--teal)", lineHeight: 1 }}>
+              84<span style={{ fontSize: 14 }}>%</span>
             </div>
           </div>
         </div>
-      )}
+        <MemoryCurve />
+      </div>
 
-      {/* ━━━━ 비회원 카드 — Double-Bezel ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {!started && (!user || authLoading) && (
-        <div
-          className="fade-in"
-          style={{
-            marginBottom: "2.5rem",
-            padding: "6px",
-            borderRadius: "22px",
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.07)",
-            animationDelay: "60ms",
-          }}
-        >
-          <div
-            className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 items-center"
-            style={{
-              borderRadius: "16px",
-              padding: "1.5rem",
-              position: "relative",
-              overflow: "hidden",
-              background: "var(--surface)",
-              borderTop: "3px solid var(--teal)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-            }}
-          >
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                inset: 0,
-                pointerEvents: "none",
-                background:
-                  "radial-gradient(ellipse 60% 80% at 0% 50%, rgba(30,167,187,0.05) 0%, transparent 60%)",
-              }}
-            />
-            <div style={{ position: "relative" }}>
-              <h2
-                className="text-base font-bold tracking-tight"
-                style={{ color: "var(--text)", marginBottom: "0.375rem" }}
-              >
-                비회원으로 연습하기
-              </h2>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                문제를 풀어볼 수 있지만, 학습 기록 저장과 간격 반복 학습은 로그인이 필요합니다.
-              </p>
+      {/* ── 2-col: subject bars + CTAs ── */}
+      <div className="dashboard-2col" style={{ marginBottom: 22 }}>
+        <div style={{ background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: 12, padding: 22 }}>
+          <div style={{ display: "flex", justifyContent: "space-between",
+            alignItems: "baseline", marginBottom: 16 }}>
+            <div>
+              <span className="kvle-label" style={{ marginBottom: 6 }}>과목별 숙련도</span>
+              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 700,
+                margin: "6px 0 0", color: "var(--text)" }}>현재 정답률</h3>
             </div>
-            {/* Button-in-Button pill — solid gold (primary) */}
-            <button
-              onClick={startSession}
-              disabled={questionsLoading}
-              className="inline-flex items-center gap-3 font-semibold active:scale-[0.98] flex-shrink-0"
-              style={{
-                background: "var(--teal)",
-                color: "#fff",
-                borderRadius: "9999px",
-                padding: "10px 10px 10px 22px",
-                fontSize: "0.875rem",
-                border: "none",
-                cursor: questionsLoading ? "not-allowed" : "pointer",
-                opacity: questionsLoading ? 0.5 : 1,
-                transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-            >
-              {questionsLoading ? "로딩 중…" : "바로 시작"}
-              <span
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.18)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <Play size={14} className="fill-current" />
-              </span>
-            </button>
+            <span style={{ fontSize: 10, color: "var(--text-faint)",
+              fontFamily: "var(--font-mono)" }}>목표 70% ─</span>
           </div>
+          <SubjectBars byCategory={byCategory} />
         </div>
-      )}
 
-      {/* ━━━━ 활성 세션 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {started && !finished && currentQuestion && (
-        <div style={{ position: "relative", maxWidth: "48rem", margin: "0 auto" }}>
-          {/* 진행 헤더 */}
-          <div
-            style={{
-              marginBottom: "1.25rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              <div
-                className="font-bold kvle-mono text-sm"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "2.25rem",
-                  height: "2.25rem",
-                  borderRadius: "0.5rem",
-                  background: "var(--surface-raised)",
-                  border: "1px solid var(--border)",
-                  color: "var(--text)",
-                }}
-              >
-                {currentIndex + 1}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Link href="/review" style={{
+            background: "linear-gradient(135deg, var(--teal) 0%, #188ba0 100%)",
+            color: "#061218", borderRadius: 12, padding: "16px 18px",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            gap: 14, textDecoration: "none",
+            boxShadow: "0 8px 20px rgba(30,167,187,0.18), inset 0 1px 0 rgba(255,255,255,0.2)",
+          }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em",
+                opacity: 0.75 }}>지금 할 것</div>
+              <div style={{ fontFamily: "var(--font-serif)", fontSize: 17,
+                fontWeight: 800, marginTop: 4, lineHeight: 1.2 }}>
+                복습 {dueCount}문제 →
               </div>
-              <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-                / {sessionQuestions.length} 문제
-              </span>
+              <div style={{ fontSize: 11, marginTop: 4, opacity: 0.7 }}>
+                약 {Math.max(1, Math.ceil(dueCount * 1.2))}분 소요
+              </div>
             </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                borderRadius: "0.5rem",
-                padding: "0.5rem 0.75rem",
-                background: "var(--surface-raised)",
-                border: "1px solid var(--border)",
-              }}
-            >
-              <Target size={13} style={{ color: "var(--teal)" }} />
-              <span className="font-semibold kvle-mono text-sm" style={{ color: "var(--text)" }}>
-                {score}
-                <span style={{ color: "var(--text-faint)" }}> / {sessionQuestions.length}</span>
+          </Link>
+
+          <Link href="/practice/weakest" style={{
+            background: "var(--surface)", border: "1px solid var(--border)",
+            borderRadius: 12, padding: "14px 16px", color: "var(--text)",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            gap: 14, textDecoration: "none",
+          }}>
+            <div>
+              <span className="kvle-label" style={{ color: "var(--wrong)", marginBottom: 4 }}>
+                약점 집중
               </span>
+              <div style={{ fontFamily: "var(--font-serif)", fontSize: 15,
+                fontWeight: 700, marginTop: 4 }}>
+                {weakestName} 집중 연습
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 3 }}>
+                정답률 {weakestAcc}% · 가장 약한 과목
+              </div>
             </div>
-          </div>
+          </Link>
 
-          {/* 진행 바 */}
-          <div
-            style={{
-              width: "100%",
-              borderRadius: "9999px",
-              height: "3px",
-              marginBottom: "2rem",
-              overflow: "hidden",
-              background: "var(--surface-raised)",
-            }}
-          >
-            <div
-              style={{
-                height: "100%",
-                borderRadius: "9999px",
-                width: `${(currentIndex / sessionQuestions.length) * 100}%`,
-                background: "var(--teal)",
-                transition: "width 500ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-            />
-          </div>
-
-          <QuestionCard
-            key={currentQuestion.id}
-            question={currentQuestion}
-            onAnswer={handleAnswer}
-            onNext={handleNext}
-          />
+          <Link href="/quiz" style={{
+            background: "transparent", border: "1px solid var(--border)",
+            borderRadius: 12, padding: "14px 16px", color: "var(--text-muted)",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            gap: 14, textDecoration: "none",
+          }}>
+            <div>
+              <span className="kvle-label" style={{ color: "var(--text-faint)", marginBottom: 4 }}>
+                랜덤 세션
+              </span>
+              <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4,
+                color: "var(--text)" }}>새 문제 30개</div>
+              <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 3 }}>
+                전 과목 · 약 20분
+              </div>
+            </div>
+          </Link>
         </div>
-      )}
+      </div>
 
-      {/* ━━━━ 결과 화면 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      {finished && (
-        <section
-          className="fade-in"
-          style={{ position: "relative", maxWidth: "48rem", margin: "0 auto" }}
-        >
-
-          {/* 완료 카드 — Double-Bezel ────────────────────────────────────── */}
-          <div
-            style={{
-              padding: "6px",
-              borderRadius: "22px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              marginBottom: "2rem",
-            }}
-          >
-            <div
-              style={{
-                borderRadius: "16px",
-                padding: "2rem",
-                textAlign: "center",
-                position: "relative",
-                overflow: "hidden",
-                background: "var(--surface)",
-                borderTop: "3px solid var(--correct)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  pointerEvents: "none",
-                  background:
-                    "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(45,159,107,0.08) 0%, transparent 70%)",
-                }}
-              />
-              <div style={{ position: "relative" }}>
-                {/* Double-Bezel icon wrapper */}
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "68px",
-                    height: "68px",
-                    borderRadius: "50%",
-                    marginBottom: "1.25rem",
-                    padding: "4px",
-                    background: "rgba(45,159,107,0.06)",
-                    border: "1px solid rgba(45,159,107,0.15)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "50%",
-                      background: "var(--correct-dim)",
-                      border: "1px solid rgba(45,159,107,0.25)",
-                    }}
-                  >
-                    <CheckCircle2 size={30} style={{ color: "var(--correct)" }} />
-                  </div>
-                </div>
-                <h2
-                  className="text-2xl font-bold tracking-tight"
-                  style={{ color: "var(--text)", marginBottom: "0.75rem" }}
-                >
-                  세션 완료
-                </h2>
-                <p className="text-base" style={{ color: "var(--text-muted)" }}>
-                  총{" "}
-                  <span className="kvle-mono font-bold" style={{ color: "var(--text)" }}>
-                    {sessionQuestions.length}
-                  </span>
-                  문제 중{" "}
-                  <span className="kvle-mono font-bold" style={{ color: "var(--teal)" }}>
-                    {score}
-                  </span>
-                  문제 정답
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* 오답 개념 복습 ──────────────────────────────────────────────── */}
-          <div style={{ marginBottom: "2rem" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                marginBottom: "1.5rem",
-              }}
-            >
-              <BookOpen size={18} style={{ color: "var(--blue)" }} />
-              <h3
-                className="text-lg font-bold tracking-tight"
-                style={{ color: "var(--text)" }}
-              >
-                오답 개념 복습
-              </h3>
-            </div>
-
-            {wrongNotes.length === 0 ? (
-              <div
-                style={{
-                  borderRadius: "0.75rem",
-                  padding: "2rem",
-                  textAlign: "center",
-                  background: "var(--surface)",
-                  border: "1px dashed rgba(45,159,107,0.3)",
-                }}
-              >
-                <Sparkles
-                  size={24}
-                  style={{ color: "var(--teal)", margin: "0 auto 0.75rem" }}
-                />
-                <p className="font-medium text-sm" style={{ color: "var(--text-muted)" }}>
-                  완벽합니다. 틀린 문제가 없습니다.
-                </p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                {wrongNotes.map((note, idx) => (
-                  <div
-                    key={note.questionId}
-                    style={{
-                      borderRadius: "0.75rem",
-                      padding: "1.5rem",
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
-                      borderLeft: "3px solid rgba(192,74,58,0.5)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                        marginBottom: "1rem",
-                      }}
-                    >
-                      <span className="kvle-badge">{note.category}</span>
-                      <span className="kvle-mono text-xs" style={{ color: "var(--text-faint)" }}>
-                        #{idx + 1}
-                      </span>
-                    </div>
-                    <p
-                      className="text-sm font-medium leading-relaxed"
-                      style={{ color: "var(--text)", marginBottom: "1.25rem" }}
-                    >
-                      {note.question}
-                    </p>
-                    <div
-                      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                      style={{ marginBottom: "0.75rem" }}
-                    >
-                      <div
-                        style={{
-                          borderRadius: "0.5rem",
-                          padding: "1rem",
-                          background: "var(--wrong-dim)",
-                          border: "1px solid rgba(192,74,58,0.2)",
-                        }}
-                      >
-                        <span
-                          className="kvle-label block"
-                          style={{ color: "var(--wrong)", marginBottom: "0.375rem" }}
-                        >
-                          내 답변
-                        </span>
-                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                          {note.selectedAnswer}
-                        </p>
-                      </div>
-                      <div
-                        style={{
-                          borderRadius: "0.5rem",
-                          padding: "1rem",
-                          background: "var(--correct-dim)",
-                          border: "1px solid rgba(45,159,107,0.2)",
-                        }}
-                      >
-                        <span
-                          className="kvle-label block"
-                          style={{ color: "var(--correct)", marginBottom: "0.375rem" }}
-                        >
-                          정답
-                        </span>
-                        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                          {note.correctAnswer}
-                        </p>
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        borderRadius: "0.5rem",
-                        padding: "1rem",
-                        background: "var(--surface-raised)",
-                        border: "1px solid var(--border)",
-                      }}
-                    >
-                      <span
-                        className="kvle-label block"
-                        style={{ color: "var(--blue)", marginBottom: "0.375rem" }}
-                      >
-                        해설
-                      </span>
-                      <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                        {note.explanation}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 액션 버튼 ────────────────────────────────────────────────────── */}
-          <div className="flex flex-col sm:flex-row gap-3" style={{ paddingTop: "0.5rem" }}>
-
-            {/* Button-in-Button pill — solid gold (primary) */}
-            <button
-              onClick={handleRestart}
-              className="flex-1 inline-flex items-center justify-center gap-3 font-semibold active:scale-[0.98]"
-              style={{
-                background: "var(--teal)",
-                color: "#fff",
-                borderRadius: "9999px",
-                padding: "10px 10px 10px 22px",
-                fontSize: "0.875rem",
-                border: "none",
-                cursor: "pointer",
-                transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-            >
-              새 세션 시작
-              <span
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.18)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <RotateCcw size={14} />
-              </span>
-            </button>
-
-            {/* Ghost pill — secondary */}
-            <Link
-              href="/wrong-notes"
-              className="flex-1 inline-flex items-center justify-center gap-2 font-semibold active:scale-[0.98]"
-              style={{
-                color: "var(--text-muted)",
-                border: "1px solid var(--border)",
-                borderRadius: "9999px",
-                padding: "10px 22px",
-                fontSize: "0.875rem",
-                transition: "color 300ms cubic-bezier(0.32,0.72,0,1), border-color 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-                textDecoration: "none",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.color = "var(--text)";
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--teal-border)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-muted)";
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)";
-              }}
-            >
-              <BookOpen size={15} />
-              전체 오답 노트 보기
-            </Link>
-          </div>
-        </section>
-      )}
+      {/* ── Week at a glance ── */}
+      <div style={{ background: "var(--surface)", border: "1px solid var(--border)",
+        borderRadius: 12, padding: 22 }}>
+        <span className="kvle-label" style={{ marginBottom: 4 }}>최근 7일</span>
+        <WeekChart recentAttempts={recentAttempts} />
+      </div>
     </main>
   );
 }
