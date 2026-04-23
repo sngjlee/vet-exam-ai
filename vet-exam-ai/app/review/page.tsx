@@ -4,7 +4,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../../components/QuestionCard";
-import SessionProgress from "../../components/SessionProgress";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { ChevronRight } from "lucide-react";
 import { useReview } from "../../lib/hooks/useReview";
@@ -336,15 +335,15 @@ export default function ReviewPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
       {!finished && currentQuestion && (
-        <>
-          <SessionProgress current={currentIndex} total={sessionQuestions.length} score={score} />
-          <QuestionCard
-            key={currentQuestion.id}
-            question={currentQuestion}
-            onAnswer={handleAnswer}
-            onNext={handleNext}
-          />
-        </>
+        <QuestionCard
+          key={currentQuestion.id}
+          question={currentQuestion}
+          questionNumber={currentIndex + 1}
+          total={sessionQuestions.length}
+          onAnswer={handleAnswer}
+          onNext={handleNext}
+          onQuit={() => setStarted(false)}
+        />
       )}
 
       {finished && (

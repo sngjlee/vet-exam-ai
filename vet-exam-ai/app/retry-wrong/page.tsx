@@ -8,7 +8,6 @@ import type { Question } from "../../lib/questions";
 import { RETRY_SESSION_KEY } from "../../lib/storage";
 import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 import { useAttempts } from "../../lib/hooks/useAttempts";
-import SessionProgress from "../../components/SessionProgress";
 import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function RetryWrongPage() {
@@ -115,14 +114,13 @@ export default function RetryWrongPage() {
       </div>
 
       {!finished && currentQuestion && (
-        <>
-          <SessionProgress current={currentIndex} total={sessionQuestions.length} score={score} />
-          <QuestionCard
-            question={currentQuestion}
-            onAnswer={handleAnswer}
-            onNext={handleNext}
-          />
-        </>
+        <QuestionCard
+          question={currentQuestion}
+          questionNumber={currentIndex + 1}
+          total={sessionQuestions.length}
+          onAnswer={handleAnswer}
+          onNext={handleNext}
+        />
       )}
 
       {finished && (
