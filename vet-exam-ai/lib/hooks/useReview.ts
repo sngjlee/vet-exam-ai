@@ -8,6 +8,7 @@ import { resolveWrongNotesRepository } from "../wrongNotes/resolver";
 export function useReview() {
   const { user, loading: authLoading } = useAuth();
   const [dueNotes, setDueNotes] = useState<WrongAnswerNote[]>([]);
+  const [allNotes, setAllNotes] = useState<WrongAnswerNote[]>([]);
   const [loading, setLoading] = useState(true);
 
   const repo = useMemo(() => resolveWrongNotesRepository(user), [user]);
@@ -19,8 +20,9 @@ export function useReview() {
   useEffect(() => {
     if (authLoading) return;
     setLoading(true);
-    void repo.getDue().then((notes) => {
-      setDueNotes(notes);
+    void Promise.all([repo.getDue(), repo.getAll()]).then(([due, all]) => {
+      setDueNotes(due);
+      setAllNotes(all);
       setLoading(false);
     });
   }, [repo, authLoading]);
@@ -39,5 +41,5 @@ export function useReview() {
     [repo],
   );
 
-  return { dueNotes, loading, authLoading, user, submitReview, refreshDue };
+  return { dueNotes, allNotes, loading, authLoading, user, submitReview, refreshDue };
 }
