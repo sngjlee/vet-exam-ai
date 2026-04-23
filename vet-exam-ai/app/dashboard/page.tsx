@@ -381,7 +381,7 @@ export default function DashboardPage() {
           </div>
           <div style={{ textAlign: "right", fontFamily: "var(--font-mono)", flexShrink: 0 }}>
             <div style={{ fontSize: 10, color: "var(--text-faint)", letterSpacing: "0.12em" }}>
-              현재 유지율
+              모델 기준 유지율
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: "var(--teal)", lineHeight: 1 }}>
               84<span style={{ fontSize: 14 }}>%</span>
@@ -405,7 +405,13 @@ export default function DashboardPage() {
             <span style={{ fontSize: 10, color: "var(--text-faint)",
               fontFamily: "var(--font-mono)" }}>목표 70% ─</span>
           </div>
-          <SubjectBars byCategory={byCategory} />
+          {stats && stats.byCategory.length === 0 ? (
+            <p style={{ fontSize: 13, color: "var(--text-faint)", marginTop: 8 }}>
+              아직 풀이 내역이 없습니다. 퀴즈를 시작해 보세요.
+            </p>
+          ) : (
+            <SubjectBars byCategory={byCategory} />
+          )}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -460,9 +466,9 @@ export default function DashboardPage() {
                 랜덤 세션
               </span>
               <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4,
-                color: "var(--text)" }}>새 문제 30개</div>
+                color: "var(--text)" }}>랜덤 5문제</div>
               <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 3 }}>
-                전 과목 · 약 20분
+                전 과목 · 약 5분
               </div>
             </div>
           </Link>

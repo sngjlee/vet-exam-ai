@@ -126,7 +126,7 @@ export default function QuizPage() {
           className="fade-in"
           style={{ position: "relative", marginBottom: "2.5rem", animationDelay: "0ms" }}
         >
-          <span className="kvle-label mb-3 inline-block">학습 대시보드</span>
+          <span className="kvle-label mb-3 inline-block">퀴즈 세션</span>
           <h1
             className="text-3xl md:text-4xl font-bold tracking-tight"
             style={{ color: "var(--text)" }}
