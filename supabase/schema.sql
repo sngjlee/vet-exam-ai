@@ -10,6 +10,8 @@
 --   20260314000002  attempts_add_columns
 --   20260314000004  wrong_notes_add_review
 --   20260317000005  questions_allow_anon_read
+--   20260317000010  seed_demo_questions
+--   20260424000000  questions_add_session_round_community_notes
 --
 -- Conventions:
 --   • All primary keys: uuid (gen_random_uuid()) except questions (text)
@@ -67,20 +69,29 @@ create type public.difficulty_level as enum ('easy', 'medium', 'hard');
 create type public.question_source  as enum ('manual', 'past_exam', 'ai_generated');
 
 create table public.questions (
-  id          text        primary key,
-  question    text        not null,
-  choices     text[]      not null,
-  answer      text        not null,
-  explanation text        not null,
-  category    text        not null,
-  subject     text,
-  topic       text,
-  difficulty  public.difficulty_level,
-  source      public.question_source,
-  year        smallint,
-  tags        text[],
-  is_active   boolean     not null default true,
-  created_at  timestamptz not null default now()
+  id              text        primary key,
+  question        text        not null,
+  choices         text[]      not null,
+  answer          text        not null,
+  explanation     text        not null,
+  category        text        not null,
+  subject         text,
+  topic           text,
+  difficulty      public.difficulty_level,
+  source          public.question_source,
+  year            smallint,
+  session         smallint,    -- 국시 교시 (1~4)
+  round           smallint,    -- 국시 회차. year = round + 1956
+  community_notes text,        -- vet40 댓글 (수험생 정정/암기팁)
+  tags            text[],
+  is_active       boolean     not null default true,
+  created_at      timestamptz not null default now(),
+  constraint questions_session_range
+    check (session is null or session between 1 and 4),
+  constraint questions_round_positive
+    check (round is null or round > 0),
+  constraint questions_round_year_consistent
+    check (round is null or year is null or year = round + 1956)
 );
 
 comment on table public.questions is
@@ -89,6 +100,17 @@ comment on column public.questions.answer is
   'Must be one of the values in choices[]. Enforced at the application layer.';
 comment on column public.questions.is_active is
   'Set to false to hide a question without deleting it (soft-delete).';
+comment on column public.questions.session is
+  '국시 교시 (1=기초, 2=예방, 3=임상, 4=법규). 4.1 법규는 실제 3교시와 동시 시행.';
+comment on column public.questions.round is
+  '국시 회차. year = round + 1956 규칙으로 파생되지만 쿼리 편의상 양쪽 저장.';
+comment on column public.questions.community_notes is
+  'vet40 원본 댓글. 수험생 정정/암기팁 자료. 향후 "수험생 팁" UI에서 노출.';
+
+create index questions_subject_round on public.questions (subject, round)
+  where is_active = true;
+create index questions_session       on public.questions (session)
+  where is_active = true;
 
 alter table public.questions enable row level security;
 

@@ -41,6 +41,9 @@ export interface Database {
           difficulty: "easy" | "medium" | "hard" | null;
           source: "manual" | "past_exam" | "ai_generated" | null;
           year: number | null;
+          session: number | null;          // 1~4 교시
+          round: number | null;            // 국시 회차 (year = round + 1956)
+          community_notes: string | null;  // vet40 댓글 — 수험생 팁
           tags: string[] | null;
           is_active: boolean;
           created_at: string;
@@ -57,6 +60,9 @@ export interface Database {
           difficulty?: "easy" | "medium" | "hard" | null;
           source?: "manual" | "past_exam" | "ai_generated" | null;
           year?: number | null;
+          session?: number | null;
+          round?: number | null;
+          community_notes?: string | null;
           tags?: string[] | null;
           is_active?: boolean;
           created_at?: string;
@@ -72,6 +78,9 @@ export interface Database {
           difficulty?: "easy" | "medium" | "hard" | null;
           source?: "manual" | "past_exam" | "ai_generated" | null;
           year?: number | null;
+          session?: number | null;
+          round?: number | null;
+          community_notes?: string | null;
           tags?: string[] | null;
           is_active?: boolean;
         };
