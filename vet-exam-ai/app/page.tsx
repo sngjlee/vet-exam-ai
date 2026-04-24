@@ -69,9 +69,9 @@ export default function LandingPage() {
               background: "linear-gradient(135deg, var(--teal) 0%, #1689a0 100%)",
               display: "grid", placeItems: "center", color: "#fff", fontWeight: 800, fontSize: "15px",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 8px rgba(30,167,187,0.28)",
-            }}>V</span>
+            }}>K</span>
             <span style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-              <span style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "-0.01em" }}>Vexa</span>
+              <span style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "-0.01em" }}>KVLE</span>
               <span style={{ fontSize: "9px", color: "var(--text-faint)", letterSpacing: "0.14em", marginTop: "3px", fontWeight: 600 }}>수의미래연구소</span>
             </span>
           </a>
@@ -80,7 +80,7 @@ export default function LandingPage() {
           <div style={{ display: "flex", gap: "28px", fontSize: "13px", fontWeight: 500 }}>
             <a href="#how" className="landing-nav-link">사용 흐름</a>
             <a href="#features" className="landing-nav-link">기능</a>
-            <a href="#problem" className="landing-nav-link">왜 Vexa?</a>
+            <a href="#problem" className="landing-nav-link">왜 KVLE?</a>
           </div>
 
           {/* CTA buttons */}
@@ -135,7 +135,7 @@ export default function LandingPage() {
 
               {/* Sub-copy */}
               <p style={{ fontSize: "17px", lineHeight: 1.65, color: "var(--text-muted)", maxWidth: "48ch", margin: "0 0 32px" }}>
-                Vexa는 수의사 국가고시 준비생이 어디에 시간을 써야 하는지 데이터로 알려드립니다.
+                KVLE는 수의사 국가고시 준비생이 어디에 시간을 써야 하는지 데이터로 알려드립니다.
                 망각 곡선에 맞춘 복습, 약점 과목 우선 출제, 실시간 정답률 추적.
               </p>
 
@@ -306,7 +306,7 @@ export default function LandingPage() {
           position: "relative",
         }}>
           <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "120px 32px 80px" }}>
-            <div style={{ fontSize: "11px", letterSpacing: "0.16em", fontWeight: 700, color: "var(--teal)" }}>왜 Vexa인가</div>
+            <div style={{ fontSize: "11px", letterSpacing: "0.16em", fontWeight: 700, color: "var(--teal)" }}>왜 KVLE인가</div>
             <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "14px 0 0", color: "var(--text)" }}>
               같은 시간 공부해도<br />
               <span style={{ color: "var(--text-muted)" }}>결과가 다른 이유가 있습니다</span>
@@ -347,7 +347,7 @@ export default function LandingPage() {
             시간을 낭비하지 않는 두 가지 장치
           </h2>
           <p style={{ fontSize: "16px", color: "var(--text-muted)", lineHeight: 1.6, margin: "18px 0 0", maxWidth: "58ch" }}>
-            Vexa의 모든 기능은 결국 두 질문에 답합니다 —{" "}
+            KVLE의 모든 기능은 결국 두 질문에 답합니다 —{" "}
             <strong style={{ color: "var(--text)" }}>지금 뭘 풀어야 하지?</strong>,{" "}
             <strong style={{ color: "var(--text)" }}>뭘 언제 다시 봐야 하지?</strong>
           </p>
@@ -400,7 +400,7 @@ export default function LandingPage() {
               </h3>
               <p style={{ color: "var(--text-muted)", fontSize: "14px", lineHeight: 1.7, margin: "0 0 24px", maxWidth: "36ch" }}>
                 전 과목을 고르게 공부하는 건 가장 비효율적인 전략입니다.
-                Vexa는 정답률이 낮은 과목을 자동으로 상위에 배치하고, 약점 집중 세션에서 우선 출제합니다.
+                KVLE는 정답률이 낮은 과목을 자동으로 상위에 배치하고, 약점 집중 세션에서 우선 출제합니다.
               </p>
               {/* 5-subject ranking bars */}
               <div style={{ marginTop: "auto", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "12px", padding: "18px", display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -559,7 +559,7 @@ export default function LandingPage() {
             gap: "20px", flexWrap: "wrap", fontSize: "12px", color: "var(--text-faint)",
           }}>
             <a href="#" style={{ display: "inline-flex", alignItems: "center", gap: "10px", color: "inherit", textDecoration: "none" }}>
-              <Image src="/logo.png" alt="Vexa 수의미래연구소" width={90} height={30} style={{ objectFit: "contain" }} />
+              <Image src="/logo.png" alt="KVLE 수의미래연구소" width={90} height={30} style={{ objectFit: "contain" }} />
             </a>
             <div>© 2026 수의미래연구소. 수록된 문제 및 해설의 저작권은 수의미래연구소에 있습니다.</div>
             <div style={{ display: "flex", gap: "20px" }}>

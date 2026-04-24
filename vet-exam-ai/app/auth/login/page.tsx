@@ -162,7 +162,7 @@ function LoginForm() {
                 className="font-bold text-lg tracking-tight"
                 style={{ fontFamily: "var(--font-serif)", color: "var(--teal)" }}
               >
-                Vexa
+                KVLE
               </span>
             </div>
 

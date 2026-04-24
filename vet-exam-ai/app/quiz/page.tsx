@@ -131,7 +131,7 @@ export default function QuizPage() {
             className="text-3xl md:text-4xl font-bold tracking-tight"
             style={{ color: "var(--text)" }}
           >
-            Vexa로{" "}
+            KVLE로{" "}
             <span style={{ color: "var(--teal)" }}>체계적으로 준비하세요</span>
           </h1>
         </div>

@@ -12,20 +12,20 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vexa — 수의사 국가시험 학습 플랫폼",
+  title: "KVLE — 수의사 국가시험 학습 플랫폼",
   description: "수의사 국가시험 대비 스마트 학습 플랫폼. 약점 데이터 분석으로 합격을 설계합니다.",
   icons: { icon: "/favicon.ico" },
   openGraph: {
-    title: "Vexa — 수의사 국가시험 학습 플랫폼",
+    title: "KVLE — 수의사 국가시험 학습 플랫폼",
     description: "수의사 국가시험 대비 스마트 학습 플랫폼. 약점 데이터 분석으로 합격을 설계합니다.",
     url: "https://vet-exam-ai.vercel.app",
-    siteName: "Vexa",
+    siteName: "KVLE",
     locale: "ko_KR",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vexa — 수의사 국가시험 학습 플랫폼",
+    title: "KVLE — 수의사 국가시험 학습 플랫폼",
     description: "수의사 국가시험 대비 스마트 학습 플랫폼. 약점 데이터 분석으로 합격을 설계합니다.",
   },
 };
