@@ -257,6 +257,20 @@ p, h1, h2, h3, h4, button, label, span, td, th {
 
 /* ── Landing page ─────────────────────────────────────────────────────────── */
 
+.brand-logo-wrap,
+.landing-logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(15, 23, 41, 0.72));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(30, 167, 187, 0.08);
+  color: inherit;
+  text-decoration: none;
+}
+
 /* Marquee */
 @keyframes marquee-scroll {
   from { transform: translateX(0); }
@@ -351,6 +365,67 @@ p, h1, h2, h3, h4, button, label, span, td, th {
   color: var(--correct);
   margin-right: 6px;
   font-family: var(--font-sans);
+}
+
+.final-cta-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.exam-date-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(8, 13, 26, 0.46);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.exam-date-control input {
+  min-width: 148px;
+  border: 1px solid var(--teal-border);
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--text);
+  color-scheme: dark;
+  padding: 8px 12px;
+  font: inherit;
+}
+
+.final-cta-button {
+  min-height: 60px;
+}
+
+.final-cta-checks {
+  margin-top: 28px;
+  display: inline-flex;
+  gap: 22px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .exam-date-control,
+  .final-cta-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .exam-date-control {
+    border-radius: 18px;
+  }
 }
 
 /* Dashboard 2-col grid */

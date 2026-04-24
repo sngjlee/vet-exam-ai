@@ -1,16 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import AuthRedirect from "../components/AuthRedirect";
+import LandingFinalCta from "../components/LandingFinalCta";
 
 // ── Rail items (duplicated for seamless marquee loop) ──────────────────────
 const RAIL_ITEMS = [
-  { bullet: true,  mono: null,     text: "수의사 국가고시 대비" },
-  { bullet: false, mono: "5과목",  text: "전과목 커버" },
-  { bullet: true,  mono: null,     text: "간격 반복 학습" },
-  { bullet: false, mono: "SM-2",   text: "알고리즘 기반" },
-  { bullet: true,  mono: null,     text: "실시간 약점 분석" },
-  { bullet: false, mono: "2,400+", text: "검증된 문제" },
-  { bullet: true,  mono: null,     text: "자동 오답노트" },
+  { markerColor: "#1ea7bb", mono: null,     text: "수의사 국가시험 대비" },
+  { markerColor: "#C8895A", mono: "20과목", text: "전과목 커버" },
+  { markerColor: "#2D9F6B", mono: null,     text: "간격 반복 학습" },
+  { markerColor: "#9B6FD4", mono: "SM-2",   text: "알고리즘 기반" },
+  { markerColor: "#4A7FA8", mono: null,     text: "실시간 약점 분석" },
+  { markerColor: "#F0EDD8", mono: "2,400+", text: "검증된 문제" },
+  { markerColor: "#C04A3A", mono: null,     text: "자동 오답노트" },
 ];
 
 // ── Weak-subject ranking data ──────────────────────────────────────────────
@@ -63,17 +64,15 @@ export default function LandingPage() {
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px",
         }}>
           {/* Logo */}
-          <a href="#" style={{ display: "inline-flex", alignItems: "center", gap: "10px", color: "inherit", textDecoration: "none" }}>
-            <span style={{
-              width: "28px", height: "28px", borderRadius: "8px", flexShrink: 0,
-              background: "linear-gradient(135deg, var(--teal) 0%, #1689a0 100%)",
-              display: "grid", placeItems: "center", color: "#fff", fontWeight: 800, fontSize: "15px",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 8px rgba(30,167,187,0.28)",
-            }}>K</span>
-            <span style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-              <span style={{ fontWeight: 800, fontSize: "16px", letterSpacing: "-0.01em" }}>KVLE</span>
-              <span style={{ fontSize: "9px", color: "var(--text-faint)", letterSpacing: "0.14em", marginTop: "3px", fontWeight: 600 }}>수의미래연구소</span>
-            </span>
+          <a href="#" className="landing-logo-wrap" aria-label="KVLE 수의미래연구소 홈">
+            <Image
+              src="/logo.png"
+              alt="KVLE 수의미래연구소"
+              width={120}
+              height={40}
+              style={{ display: "block", height: "40px", width: "120px", objectFit: "contain" }}
+              priority
+            />
           </a>
 
           {/* Section links */}
@@ -135,7 +134,7 @@ export default function LandingPage() {
 
               {/* Sub-copy */}
               <p style={{ fontSize: "17px", lineHeight: 1.65, color: "var(--text-muted)", maxWidth: "48ch", margin: "0 0 32px" }}>
-                KVLE는 수의사 국가고시 준비생이 어디에 시간을 써야 하는지 데이터로 알려드립니다.
+                KVLE는 수의사 국가시험 준비생이 어디에 시간을 써야 하는지 데이터로 알려드립니다.
                 망각 곡선에 맞춘 복습, 약점 과목 우선 출제, 실시간 정답률 추적.
               </p>
 
@@ -166,7 +165,7 @@ export default function LandingPage() {
 
               {/* Stats strip */}
               <div style={{ marginTop: "32px", display: "inline-flex", gap: "22px", fontSize: "12px", color: "var(--text-faint)", fontFamily: "var(--font-mono)" }}>
-                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>5</span> 과목</span>
+                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>20</span> 과목</span>
                 <span style={{ color: "var(--border)" }}>·</span>
                 <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>2,400+</span> 문제</span>
                 <span style={{ color: "var(--border)" }}>·</span>
@@ -283,15 +282,15 @@ export default function LandingPage() {
           <div className="rail-track">
             {/* Items × 2 for seamless loop */}
             {[0, 1].flatMap((set) =>
-              RAIL_ITEMS.map(({ bullet, mono, text }, i) => (
+              RAIL_ITEMS.map(({ markerColor, mono, text }, i) => (
                 <span key={`${set}-${i}`} style={{
                   color: "var(--text-faint)", fontSize: "14px", fontWeight: 500,
                   display: "inline-flex", alignItems: "baseline", gap: "12px",
                 }}>
-                  {bullet
-                    ? <span style={{ color: "var(--teal)" }}>◆</span>
-                    : <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: "13px", fontWeight: 600 }}>{mono}</span>
-                  }
+                  <span style={{ color: markerColor, textShadow: `0 0 12px ${markerColor}66` }}>◆</span>
+                  {mono && (
+                    <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontSize: "13px", fontWeight: 600 }}>{mono}</span>
+                  )}
                   <span>{text}</span>
                 </span>
               ))
@@ -500,56 +499,13 @@ export default function LandingPage() {
             }}>김</span>
             <span>
               <strong style={{ color: "var(--text)", fontWeight: 600 }}>김수의</strong>
-              <span style={{ color: "var(--text-faint)" }}> · 수의예과 본4 · 국시 준비 중</span>
+              <span style={{ color: "var(--text-faint)" }}> · 수의학과 본4 · 국가시험 준비 중</span>
             </span>
           </div>
         </section>
 
         {/* ── 8. FINAL CTA ────────────────────────────────────────────────── */}
-        <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "32px", position: "relative" }}>
-          <div style={{
-            borderRadius: "24px",
-            background: "linear-gradient(135deg, #0F2A33 0%, #0F1729 100%)",
-            border: "1px solid var(--teal-border)",
-            padding: "72px 48px", textAlign: "center",
-            position: "relative", overflow: "hidden",
-          }}>
-            {/* Radial glow */}
-            <div aria-hidden="true" style={{
-              position: "absolute", inset: "-1px",
-              background: "radial-gradient(circle at 50% 100%, rgba(30,167,187,0.18) 0%, transparent 60%)",
-              pointerEvents: "none",
-            }} />
-            <div style={{ position: "relative" }}>
-              <div style={{ fontSize: "11px", letterSpacing: "0.16em", fontWeight: 700, color: "var(--teal)" }}>D-41</div>
-              <h2 style={{ fontSize: "clamp(32px, 4vw, 44px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "0 0 14px" }}>
-                다음 시험까지<br />
-                <span style={{ color: "var(--teal)" }}>41일</span> 남았습니다
-              </h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "15px", margin: "0 0 32px" }}>
-                지금 계정을 만들면 오늘 밤 복습 큐부터 설계됩니다. 카드 없이 무료.
-              </p>
-              <Link href="/auth/login?mode=signup" className="btn-primary-pill" style={{
-                display: "inline-flex", alignItems: "center", gap: "10px",
-                padding: "14px 14px 14px 26px", borderRadius: "999px",
-                background: "var(--teal)", color: "#061218",
-                fontSize: "15px", fontWeight: 700,
-                boxShadow: "0 8px 20px rgba(30,167,187,0.2), inset 0 1px 0 rgba(255,255,255,0.2)",
-              }}>
-                무료로 시작하기
-                <span style={{ width: "32px", height: "32px", borderRadius: "999px", background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center" }}>
-                  <ArrowSVG />
-                </span>
-              </Link>
-              {/* Meta row with ✓ checks */}
-              <div style={{ marginTop: "28px", display: "inline-flex", gap: "24px", fontSize: "11px", color: "var(--text-faint)", fontFamily: "var(--font-mono)", fontWeight: 500 }}>
-                <span className="cta-check">회원가입 무료</span>
-                <span className="cta-check">카드 정보 불필요</span>
-                <span className="cta-check">60초 안에 시작</span>
-              </div>
-            </div>
-          </div>
-        </section>
+        <LandingFinalCta />
 
         {/* ── 9. FOOTER ───────────────────────────────────────────────────── */}
         <footer style={{ borderTop: "1px solid var(--border)", padding: "32px", marginTop: "60px" }}>

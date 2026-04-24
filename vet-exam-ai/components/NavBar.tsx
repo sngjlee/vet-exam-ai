@@ -37,7 +37,7 @@ export default function NavBar() {
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center">
+        <Link href="/dashboard" className="brand-logo-wrap">
           <Image src="/logo.png" alt="KVLE 수의미래연구소" width={120} height={40} style={{ objectFit: "contain" }} priority />
         </Link>
 
