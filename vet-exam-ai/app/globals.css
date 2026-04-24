@@ -47,6 +47,7 @@ body {
   color: var(--text);
   font-family: var(--font-sans);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Korean text — prevent mid-syllable line breaks */
@@ -346,6 +347,85 @@ p, h1, h2, h3, h4, button, label, span, td, th {
 /* Nav links hover */
 .landing-nav-link { color: var(--text-muted); transition: color 200ms; }
 .landing-nav-link:hover { color: var(--text); }
+
+@media (max-width: 760px) {
+  .landing-nav-inner {
+    padding: 12px 14px !important;
+    gap: 10px !important;
+  }
+
+  .landing-logo-wrap {
+    padding: 3px 6px 3px 3px;
+    border-radius: 10px;
+  }
+
+  .landing-logo-wrap img {
+    width: 94px !important;
+    height: 32px !important;
+  }
+
+  .landing-section-links {
+    display: none !important;
+  }
+
+  .landing-nav-actions {
+    gap: 0 !important;
+    flex-shrink: 0;
+  }
+
+  .landing-nav-actions .btn-ghost-pill {
+    display: none !important;
+  }
+
+  .landing-nav-primary {
+    min-height: 42px;
+    padding: 8px 8px 8px 14px !important;
+    white-space: nowrap;
+    font-size: 13px !important;
+  }
+
+  .landing-nav-primary span {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .landing-hero-section {
+    padding: 52px 20px 32px !important;
+  }
+
+  .landing-hero-title {
+    font-size: clamp(38px, 13vw, 54px) !important;
+    line-height: 1.08 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .landing-hero-copy {
+    font-size: 16px !important;
+    max-width: 100% !important;
+  }
+
+  .landing-hero-actions {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 12px !important;
+  }
+
+  .landing-hero-actions a {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .landing-stats-strip {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 10px !important;
+    width: 100%;
+  }
+
+  .landing-stats-strip > span[style*="var(--border)"] {
+    display: none;
+  }
+}
 
 /* Primary pill button hover */
 .btn-primary-pill { transition: transform 200ms; }

@@ -59,7 +59,7 @@ export default function LandingPage() {
         background: "rgba(8,13,26,0.7)", backdropFilter: "blur(20px)",
         borderBottom: "1px solid var(--border)",
       }}>
-        <div style={{
+        <div className="landing-nav-inner" style={{
           maxWidth: "1240px", margin: "0 auto", padding: "16px 32px",
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px",
         }}>
@@ -76,21 +76,21 @@ export default function LandingPage() {
           </a>
 
           {/* Section links */}
-          <div style={{ display: "flex", gap: "28px", fontSize: "13px", fontWeight: 500 }}>
+          <div className="landing-section-links" style={{ display: "flex", gap: "28px", fontSize: "13px", fontWeight: 500 }}>
             <a href="#how" className="landing-nav-link">사용 흐름</a>
             <a href="#features" className="landing-nav-link">기능</a>
             <a href="#problem" className="landing-nav-link">왜 KVLE?</a>
           </div>
 
           {/* CTA buttons */}
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <div className="landing-nav-actions" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             <Link href="/auth/login" className="btn-ghost-pill" style={{
               display: "inline-flex", alignItems: "center",
               padding: "8px 16px", borderRadius: "999px",
               border: "1px solid var(--border)", color: "var(--text-muted)",
               fontSize: "13px", fontWeight: 600, background: "transparent",
             }}>로그인</Link>
-            <Link href="/auth/login?mode=signup" className="btn-primary-pill" style={{
+            <Link href="/auth/login?mode=signup" className="btn-primary-pill landing-nav-primary" style={{
               display: "inline-flex", alignItems: "center", gap: "8px",
               padding: "8px 8px 8px 16px", borderRadius: "999px",
               background: "var(--teal)", color: "#061218",
@@ -109,7 +109,7 @@ export default function LandingPage() {
       <main style={{ position: "relative", zIndex: 1 }}>
 
         {/* ── 2. HERO ─────────────────────────────────────────────────────── */}
-        <section style={{ maxWidth: "1240px", margin: "0 auto", padding: "80px 32px 40px", position: "relative" }}>
+        <section className="landing-hero-section" style={{ maxWidth: "1240px", margin: "0 auto", padding: "80px 32px 40px", position: "relative" }}>
           <div className="hero-grid">
 
             {/* LEFT: copy */}
@@ -127,19 +127,19 @@ export default function LandingPage() {
               </div>
 
               {/* Headline */}
-              <h1 style={{ fontSize: "clamp(40px, 6vw, 76px)", lineHeight: 1.02, letterSpacing: "-0.035em", fontWeight: 800, margin: "0 0 24px" }}>
+              <h1 className="landing-hero-title" style={{ fontSize: "clamp(40px, 6vw, 76px)", lineHeight: 1.02, letterSpacing: "-0.035em", fontWeight: 800, margin: "0 0 24px" }}>
                 막연한 공부는<br />
                 <em style={{ fontStyle: "normal", color: "var(--teal)", position: "relative", whiteSpace: "nowrap" }}>숫자로</em> 바꿉니다
               </h1>
 
               {/* Sub-copy */}
-              <p style={{ fontSize: "17px", lineHeight: 1.65, color: "var(--text-muted)", maxWidth: "48ch", margin: "0 0 32px" }}>
+              <p className="landing-hero-copy" style={{ fontSize: "17px", lineHeight: 1.65, color: "var(--text-muted)", maxWidth: "48ch", margin: "0 0 32px" }}>
                 KVLE는 수의사 국가시험 준비생이 어디에 시간을 써야 하는지 데이터로 알려드립니다.
                 망각 곡선에 맞춘 복습, 약점 과목 우선 출제, 실시간 정답률 추적.
               </p>
 
               {/* CTA row */}
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <div className="landing-hero-actions" style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                 <Link href="/auth/login?mode=signup" className="btn-primary-pill" style={{
                   display: "inline-flex", alignItems: "center", gap: "10px",
                   padding: "12px 12px 12px 22px", borderRadius: "999px",
@@ -164,7 +164,7 @@ export default function LandingPage() {
               </div>
 
               {/* Stats strip */}
-              <div style={{ marginTop: "32px", display: "inline-flex", gap: "22px", fontSize: "12px", color: "var(--text-faint)", fontFamily: "var(--font-mono)" }}>
+              <div className="landing-stats-strip" style={{ marginTop: "32px", display: "inline-flex", gap: "22px", fontSize: "12px", color: "var(--text-faint)", fontFamily: "var(--font-mono)" }}>
                 <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>20</span> 과목</span>
                 <span style={{ color: "var(--border)" }}>·</span>
                 <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>2,400+</span> 문제</span>
