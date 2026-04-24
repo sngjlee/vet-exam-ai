@@ -305,7 +305,7 @@ export default function LandingPage() {
           position: "relative",
         }}>
           <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "120px 32px 80px" }}>
-            <div style={{ fontSize: "11px", letterSpacing: "0.16em", fontWeight: 700, color: "var(--teal)" }}>왜 KVLE인가</div>
+            <div className="landing-section-label">왜 KVLE인가</div>
             <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "14px 0 0", color: "var(--text)" }}>
               같은 시간 공부해도<br />
               <span style={{ color: "var(--text-muted)" }}>결과가 다른 이유가 있습니다</span>
@@ -341,14 +341,15 @@ export default function LandingPage() {
 
         {/* ── 5. FEATURE DUO ──────────────────────────────────────────────── */}
         <section id="features" style={{ maxWidth: "1240px", margin: "0 auto", padding: "120px 32px", position: "relative" }}>
-          <div style={{ fontSize: "11px", letterSpacing: "0.16em", fontWeight: 700, color: "var(--teal)" }}>핵심 기능</div>
+          <div className="landing-section-label">핵심 기능</div>
           <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "14px 0 0", color: "var(--text)" }}>
             시간을 낭비하지 않는 두 가지 장치
           </h2>
-          <p style={{ fontSize: "16px", color: "var(--text-muted)", lineHeight: 1.6, margin: "18px 0 0", maxWidth: "58ch" }}>
-            KVLE의 모든 기능은 결국 두 질문에 답합니다 —{" "}
-            <strong style={{ color: "var(--text)" }}>지금 뭘 풀어야 하지?</strong>,{" "}
-            <strong style={{ color: "var(--text)" }}>뭘 언제 다시 봐야 하지?</strong>
+          <p style={{ fontSize: "16px", color: "var(--text-muted)", lineHeight: 1.75, margin: "18px 0 0", maxWidth: "58ch" }}>
+            <span style={{ display: "block" }}>KVLE의 모든 기능은 결국 두 질문에 답합니다.</span>
+            <strong style={{ color: "var(--text)", display: "block", marginTop: "6px" }}>
+              지금 뭘 풀어야 하지? 뭘 언제 다시 봐야 하지?
+            </strong>
           </p>
 
           <div className="duo-grid">
@@ -424,7 +425,7 @@ export default function LandingPage() {
           position: "relative",
         }}>
           <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "120px 32px" }}>
-            <div style={{ fontSize: "11px", letterSpacing: "0.16em", fontWeight: 700, color: "var(--teal)" }}>사용 흐름</div>
+            <div className="landing-section-label">사용 흐름</div>
             <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "14px 0 0", color: "var(--text)" }}>
               3단계로 충분합니다
             </h2>
@@ -488,8 +489,8 @@ export default function LandingPage() {
         <section style={{ maxWidth: "900px", margin: "0 auto", padding: "100px 32px", textAlign: "center", position: "relative" }}>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: "64px", color: "var(--teal)", opacity: 0.3, lineHeight: 0.8, marginBottom: "16px" }}>&ldquo;</div>
           <p style={{ fontSize: "clamp(22px, 3vw, 32px)", fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.45, color: "var(--text)", margin: 0 }}>
-            막연히 책을 반복해서 읽던 때랑은 공부의 감각이 완전히 달라졌어요.
-            내가 뭘 모르는지 숫자로 보이니까, 뭘 해야 할지 매일 분명합니다.
+            <span style={{ display: "block" }}>막연히 책을 반복해서 읽던 때랑은 공부의 감각이 완전히 달라졌어요.</span>
+            <span style={{ display: "block", marginTop: "10px" }}>내가 뭘 모르는지 숫자로 보이니까, 뭘 해야 할지 매일 분명합니다.</span>
           </p>
           <div style={{ marginTop: "28px", fontSize: "13px", color: "var(--text-muted)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "12px" }}>
             <span style={{

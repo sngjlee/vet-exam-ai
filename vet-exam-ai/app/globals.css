@@ -263,11 +263,7 @@ p, h1, h2, h3, h4, button, label, span, td, th {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  padding: 4px 8px 4px 4px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(15, 23, 41, 0.72));
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(30, 167, 187, 0.08);
+  padding: 2px 0;
   color: inherit;
   text-decoration: none;
 }
@@ -348,6 +344,14 @@ p, h1, h2, h3, h4, button, label, span, td, th {
 .landing-nav-link { color: var(--text-muted); transition: color 200ms; }
 .landing-nav-link:hover { color: var(--text); }
 
+.landing-section-label {
+  color: var(--teal);
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+}
+
 @media (max-width: 760px) {
   .landing-nav-inner {
     padding: 12px 14px !important;
@@ -355,8 +359,7 @@ p, h1, h2, h3, h4, button, label, span, td, th {
   }
 
   .landing-logo-wrap {
-    padding: 3px 6px 3px 3px;
-    border-radius: 10px;
+    padding: 2px 0;
   }
 
   .landing-logo-wrap img {
@@ -402,6 +405,11 @@ p, h1, h2, h3, h4, button, label, span, td, th {
   .landing-hero-copy {
     font-size: 16px !important;
     max-width: 100% !important;
+  }
+
+  .landing-section-label {
+    font-size: 0.86rem;
+    letter-spacing: 0.1em;
   }
 
   .landing-hero-actions {
