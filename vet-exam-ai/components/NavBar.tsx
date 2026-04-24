@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../lib/hooks/useAuth";
 import { useDueCountCtx } from "../lib/context/DueCountContext";
-import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User } from "lucide-react";
+import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User, CirclePlay } from "lucide-react";
 
 export default function NavBar() {
   const { user, loading, signOut } = useAuth();
@@ -50,6 +50,10 @@ export default function NavBar() {
 
           {!loading && user && (
             <>
+              <Link href="/quiz" className={linkClass("/quiz")} aria-label="문제 풀기">
+                <CirclePlay size={16} />
+                <span className="hidden sm:inline">문제 풀기</span>
+              </Link>
               <Link href="/my-stats" className={linkClass("/my-stats")} aria-label="나의 통계">
                 <BarChart3 size={16} />
                 <span className="hidden sm:inline">나의 통계</span>
