@@ -7,6 +7,13 @@ import { findWeakestCategory } from "../../lib/stats/weakCategory";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { CheckCircle2, XCircle, TrendingDown } from "lucide-react";
 
+function getAccuracyTone(accuracy: number) {
+  if (accuracy >= 80) return { color: "var(--correct)", dim: "var(--correct-dim)", label: "안정권" };
+  if (accuracy >= 60) return { color: "var(--teal)", dim: "var(--teal-dim)", label: "보완 중" };
+  if (accuracy >= 40) return { color: "var(--amber)", dim: "var(--amber-dim)", label: "주의" };
+  return { color: "var(--wrong)", dim: "var(--wrong-dim)", label: "집중 필요" };
+}
+
 export default function MyStatsPage() {
   const { user, loading: authLoading } = useAuth();
   const { stats, loading: statsLoading } = useStats(user?.id ?? null, authLoading);
@@ -62,24 +69,33 @@ export default function MyStatsPage() {
   }
 
   const weakest = findWeakestCategory(stats.byCategory);
+  const accuracyTone = getAccuracyTone(stats.accuracy);
+  const weakestTone = weakest ? getAccuracyTone(weakest.accuracy) : null;
 
   return (
-    <main className="mx-auto max-w-3xl space-y-8 px-6 py-12">
-      <div className="flex items-start justify-between">
+    <main className="mx-auto max-w-5xl space-y-8 px-6 py-12">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <span className="kvle-label mb-2 inline-block">학습 분석</span>
+          <span className="kvle-label mb-3 inline-block" style={{ fontSize: 13 }}>
+            학습 분석
+          </span>
           <h1
-            className="text-3xl font-bold"
-            style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
+            className="font-bold"
+            style={{
+              fontFamily: "var(--font-serif)",
+              color: "var(--text)",
+              fontSize: 34,
+              lineHeight: 1.15,
+            }}
           >
             나의 통계
           </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+          <p className="mt-2" style={{ color: "var(--text-muted)", fontSize: 15 }}>
             {user.email}
           </p>
         </div>
         {weakest && (
-          <Link href="/practice/weakest" className="kvle-btn-primary text-sm">
+          <Link href="/practice/weakest" className="kvle-btn-primary text-sm self-start">
             약점 집중 연습
           </Link>
         )}
@@ -89,15 +105,83 @@ export default function MyStatsPage() {
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard label="총 시도" value={stats.totalAttempts} featured={false} />
         <StatCard label="총 정답" value={stats.totalCorrect} featured={false} />
-        <StatCard label="정답률" value={`${stats.accuracy}%`} featured={true} />
+        <StatCard
+          label="정답률"
+          value={`${stats.accuracy}%`}
+          featured={true}
+          valueColor={accuracyTone.color}
+          toneLabel={accuracyTone.label}
+        />
         <StatCard label="최근 7일" value={stats.last7DaysAttempts} featured={false} />
       </section>
+
+      {weakest && weakestTone && (
+        <section
+          className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]"
+          style={{
+            border: "1px solid var(--border)",
+            borderLeft: `3px solid ${weakestTone.color}`,
+            borderRadius: 12,
+            background: "var(--surface)",
+            padding: 22,
+          }}
+        >
+          <div>
+            <span
+              className="kvle-label mb-2 inline-block"
+              style={{ color: weakestTone.color, fontSize: 12 }}
+            >
+              우선 보완 과목
+            </span>
+            <h2
+              style={{
+                fontFamily: "var(--font-serif)",
+                color: "var(--text)",
+                fontSize: 22,
+                fontWeight: 800,
+                margin: 0,
+              }}
+            >
+              {weakest.category}
+            </h2>
+            <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "8px 0 0" }}>
+              정답률 {weakest.accuracy}% · {weakestTone.label}
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div
+              style={{
+                flex: 1,
+                height: 10,
+                borderRadius: 999,
+                background: "var(--surface-raised)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${weakest.accuracy}%`,
+                  height: "100%",
+                  background: weakestTone.color,
+                  borderRadius: 999,
+                }}
+              />
+            </div>
+            <span
+              className="kvle-mono"
+              style={{ color: weakestTone.color, fontSize: 22, fontWeight: 800 }}
+            >
+              {weakest.accuracy}%
+            </span>
+          </div>
+        </section>
+      )}
 
       {/* Category breakdown with progress bars */}
       <section>
         <h2
-          className="mb-3 text-xl font-bold"
-          style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
+          className="mb-4 font-bold"
+          style={{ fontFamily: "var(--font-serif)", color: "var(--text)", fontSize: 24 }}
         >
           과목별 통계
         </h2>
@@ -105,7 +189,7 @@ export default function MyStatsPage() {
           className="overflow-hidden rounded-xl"
           style={{ border: "1px solid var(--border)" }}
         >
-          <table className="w-full text-sm">
+          <table className="w-full" style={{ fontSize: 15 }}>
             <thead>
               <tr
                 style={{
@@ -114,25 +198,25 @@ export default function MyStatsPage() {
                 }}
               >
                 <th
-                  className="px-4 py-3 text-left font-medium"
+                  className="px-5 py-4 text-left font-bold"
                   style={{ color: "var(--text-muted)" }}
                 >
                   과목
                 </th>
                 <th
-                  className="px-4 py-3 text-right font-medium"
+                  className="px-5 py-4 text-right font-bold"
                   style={{ color: "var(--text-muted)" }}
                 >
                   시도
                 </th>
                 <th
-                  className="px-4 py-3 text-right font-medium"
+                  className="px-5 py-4 text-right font-bold"
                   style={{ color: "var(--text-muted)" }}
                 >
                   정답
                 </th>
                 <th
-                  className="px-4 py-3 text-left font-medium pl-6"
+                  className="px-5 py-4 text-left font-bold pl-6"
                   style={{ color: "var(--text-muted)" }}
                 >
                   정답률
@@ -142,12 +226,8 @@ export default function MyStatsPage() {
             <tbody>
               {stats.byCategory.map((row) => {
                 const isWeakest = weakest?.category === row.category;
-                const accuracyColor =
-                  row.accuracy >= 75
-                    ? "var(--correct)"
-                    : row.accuracy >= 50
-                    ? "var(--teal)"
-                    : "var(--wrong)";
+                const rowTone = getAccuracyTone(row.accuracy);
+                const accuracyColor = rowTone.color;
 
                 return (
                   <tr
@@ -168,7 +248,7 @@ export default function MyStatsPage() {
                         : "transparent";
                     }}
                   >
-                    <td className="px-4 py-3" style={{ color: "var(--text)" }}>
+                    <td className="px-5 py-4" style={{ color: "var(--text)", fontWeight: 700 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         {isWeakest && (
                           <TrendingDown
@@ -180,23 +260,23 @@ export default function MyStatsPage() {
                       </div>
                     </td>
                     <td
-                      className="px-4 py-3 text-right kvle-mono"
+                      className="px-5 py-4 text-right kvle-mono"
                       style={{ color: "var(--text-muted)" }}
                     >
                       {row.attempts}
                     </td>
                     <td
-                      className="px-4 py-3 text-right kvle-mono"
+                      className="px-5 py-4 text-right kvle-mono"
                       style={{ color: "var(--text-muted)" }}
                     >
                       {row.correct}
                     </td>
-                    <td className="px-4 py-3 pl-6">
+                    <td className="px-5 py-4 pl-6">
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                         <div
                           style={{
                             flex: 1,
-                            height: "4px",
+                            height: "5px",
                             borderRadius: "9999px",
                             background: "var(--surface-raised)",
                             overflow: "hidden",
@@ -216,8 +296,9 @@ export default function MyStatsPage() {
                           className="kvle-mono text-xs font-semibold"
                           style={{
                             color: accuracyColor,
-                            minWidth: "3.5ch",
+                            minWidth: "4.5ch",
                             textAlign: "right",
+                            fontSize: 13,
                           }}
                         >
                           {row.accuracy}%
@@ -235,8 +316,8 @@ export default function MyStatsPage() {
       {/* Recent attempts — fixed: no UUID, show answer comparison */}
       <section>
         <h2
-          className="mb-3 text-xl font-bold"
-          style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
+          className="mb-4 font-bold"
+          style={{ fontFamily: "var(--font-serif)", color: "var(--text)", fontSize: 24 }}
         >
           최근 시도
         </h2>
@@ -307,10 +388,14 @@ function StatCard({
   label,
   value,
   featured,
+  valueColor,
+  toneLabel,
 }: {
   label: string;
   value: string | number;
   featured: boolean;
+  valueColor?: string;
+  toneLabel?: string;
 }) {
   return (
     <div
@@ -319,21 +404,26 @@ function StatCard({
         border: "1px solid var(--border)",
         borderTop: featured ? "3px solid var(--teal)" : "3px solid var(--border)",
         borderRadius: "12px",
-        padding: "1.25rem",
+        padding: "1.35rem",
       }}
     >
       <span
         className="kvle-label mb-2"
-        style={{ color: featured ? "var(--teal)" : undefined }}
+        style={{ color: featured ? "var(--teal)" : undefined, fontSize: 12 }}
       >
         {label}
       </span>
       <p
-        className="mt-1 text-2xl font-bold kvle-mono"
-        style={{ color: featured ? "var(--teal)" : "var(--text)" }}
+        className="mt-2 font-bold kvle-mono"
+        style={{ color: valueColor ?? (featured ? "var(--teal)" : "var(--text)"), fontSize: 28, lineHeight: 1 }}
       >
         {value}
       </p>
+      {toneLabel && (
+        <p style={{ color: valueColor, fontSize: 12, fontWeight: 800, marginTop: 8 }}>
+          {toneLabel}
+        </p>
+      )}
     </div>
   );
 }
