@@ -217,21 +217,26 @@ begin
         returning vote_score, user_id into new_score, comment_owner;
     end if;
   elsif TG_OP = 'DELETE' then
+    -- Capture new_score so the auto-hide check at the bottom runs (e.g. removing
+    -- the only upvote from a -4 comment pushes it to -5). comment_owner stays
+    -- null because deletions can only lower the score, never trip a milestone.
     if old.value = 1 then
       update public.comments
         set upvote_count = upvote_count - 1,
             vote_score   = vote_score - 1
-        where id = old.comment_id;
+        where id = old.comment_id
+        returning vote_score into new_score;
     else
       update public.comments
         set downvote_count = downvote_count - 1,
             vote_score     = vote_score + 1
-        where id = old.comment_id;
+        where id = old.comment_id
+        returning vote_score into new_score;
     end if;
-    return old;
   end if;
 
-  -- Milestone notification (10/50/100 score reached, idempotent via unique index)
+  -- Milestone notification (10/50/100 score reached, idempotent via unique index).
+  -- Only fires for INSERT/UPDATE — DELETE leaves comment_owner null.
   if new_score in (10, 50, 100) and comment_owner is not null then
     insert into public.notifications (user_id, type, related_comment_id, payload)
     values (
@@ -250,13 +255,17 @@ begin
     end if;
   end if;
 
-  -- Auto-hide at -5
+  -- Auto-hide at -5. Uses coalesce so DELETE (which has no `new`) still resolves
+  -- the comment id from `old`.
   if new_score is not null and new_score <= -5 then
     update public.comments
       set status = 'hidden_by_votes'
-      where id = new.comment_id and status = 'visible';
+      where id = coalesce(new.comment_id, old.comment_id) and status = 'visible';
   end if;
 
+  if TG_OP = 'DELETE' then
+    return old;
+  end if;
   return new;
 end;
 $$;
