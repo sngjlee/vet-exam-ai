@@ -7,10 +7,10 @@ import LandingFinalCta from "../components/LandingFinalCta";
 const RAIL_ITEMS = [
   { markerColor: "#1ea7bb", mono: null,     text: "수의사 국가시험 대비" },
   { markerColor: "#C8895A", mono: "20과목", text: "전과목 커버" },
-  { markerColor: "#2D9F6B", mono: null,     text: "간격 반복 학습" },
-  { markerColor: "#9B6FD4", mono: "SM-2",   text: "알고리즘 기반" },
+  { markerColor: "#F0EDD8", mono: "1,500+", text: "검수된 문제" },
+  { markerColor: "#2D9F6B", mono: null,     text: "수험생 토론 + 암기법" },
+  { markerColor: "#9B6FD4", mono: "SM-2",   text: "간격 반복 학습" },
   { markerColor: "#4A7FA8", mono: null,     text: "실시간 약점 분석" },
-  { markerColor: "#F0EDD8", mono: "2,400+", text: "검증된 문제" },
   { markerColor: "#C04A3A", mono: null,     text: "자동 오답노트" },
 ];
 
@@ -128,14 +128,14 @@ export default function LandingPage() {
 
               {/* Headline */}
               <h1 className="landing-hero-title" style={{ fontSize: "clamp(40px, 6vw, 76px)", lineHeight: 1.02, letterSpacing: "-0.035em", fontWeight: 800, margin: "0 0 24px" }}>
-                막연한 공부는<br />
-                <em style={{ fontStyle: "normal", color: "var(--teal)", position: "relative", whiteSpace: "nowrap" }}>숫자로</em> 바꿉니다
+                검수된 문제 +<br />
+                <em style={{ fontStyle: "normal", color: "var(--teal)", position: "relative", whiteSpace: "nowrap" }}>수험생이 외우는 방식</em>
               </h1>
 
               {/* Sub-copy */}
               <p className="landing-hero-copy" style={{ fontSize: "17px", lineHeight: 1.65, color: "var(--text-muted)", maxWidth: "48ch", margin: "0 0 32px" }}>
-                KVLE는 수의사 국가시험 준비생이 어디에 시간을 써야 하는지 데이터로 알려드립니다.
-                망각 곡선에 맞춘 복습, 약점 과목 우선 출제, 실시간 정답률 추적.
+                수의미래연구소가 직접 검수한 1,500+ 문제와 수험생들의 실제 암기법·토론을 함께 학습합니다.
+                공식 해설로 부족할 때, 다른 수험생이 어떻게 외웠는지 바로 확인하세요.
               </p>
 
               {/* CTA row */}
@@ -167,9 +167,9 @@ export default function LandingPage() {
               <div className="landing-stats-strip" style={{ marginTop: "32px", display: "inline-flex", gap: "22px", fontSize: "12px", color: "var(--text-faint)", fontFamily: "var(--font-mono)" }}>
                 <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>20</span> 과목</span>
                 <span style={{ color: "var(--border)" }}>·</span>
-                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>2,400+</span> 문제</span>
+                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>1,500+</span> 검수 문제</span>
                 <span style={{ color: "var(--border)" }}>·</span>
-                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>SM-2</span> SRS 알고리즘</span>
+                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>수험생</span> 토론 + 암기법</span>
               </div>
             </div>
 
@@ -325,8 +325,8 @@ export default function LandingPage() {
                 },
                 {
                   num: "문제 03",
-                  head: "복습 타이밍을 놓쳐 기억이 증발한다",
-                  body: "한 번 본 내용의 70%는 24시간 안에 잊힙니다. 적절한 간격으로 다시 만나지 못하면, 공부한 시간이 사라집니다.",
+                  head: "혼자 외우면 한 줄에서 막힌다",
+                  body: "공식 해설만으론 이해가 안 되는 문제, 다른 수험생은 어떻게 외웠는지 알 길이 없습니다. 결국 같은 문제에서 매번 막힙니다.",
                 },
               ].map(({ num, head, body }) => (
                 <div key={num} className="problem-cell">
@@ -346,9 +346,9 @@ export default function LandingPage() {
             시간을 낭비하지 않는 두 가지 장치
           </h2>
           <p style={{ fontSize: "16px", color: "var(--text-muted)", lineHeight: 1.75, margin: "18px 0 0", maxWidth: "58ch" }}>
-            <span style={{ display: "block" }}>KVLE의 모든 기능은 결국 두 질문에 답합니다.</span>
+            <span style={{ display: "block" }}>KVLE의 모든 기능은 결국 세 질문에 답합니다.</span>
             <strong style={{ color: "var(--text)", display: "block", marginTop: "6px" }}>
-              지금 뭘 풀어야 하지? 뭘 언제 다시 봐야 하지?
+              지금 뭘 풀어야 하지? 뭘 언제 다시 봐야 하지? 막힐 때 어디서 답을 찾지?
             </strong>
           </p>
 
