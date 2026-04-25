@@ -325,8 +325,8 @@ export default function LandingPage() {
                 },
                 {
                   num: "문제 03",
-                  head: "복습 타이밍을 놓쳐 기억이 증발한다",
-                  body: "한 번 본 내용의 70%는 24시간 안에 잊힙니다. 적절한 간격으로 다시 만나지 못하면, 공부한 시간이 사라집니다.",
+                  head: "혼자 외우면 한 줄에서 막힌다",
+                  body: "공식 해설만으론 이해가 안 되는 문제, 다른 수험생은 어떻게 외웠는지 알 길이 없습니다. 결국 같은 문제에서 매번 막힙니다.",
                 },
               ].map(({ num, head, body }) => (
                 <div key={num} className="problem-cell">
@@ -346,9 +346,9 @@ export default function LandingPage() {
             시간을 낭비하지 않는 두 가지 장치
           </h2>
           <p style={{ fontSize: "16px", color: "var(--text-muted)", lineHeight: 1.75, margin: "18px 0 0", maxWidth: "58ch" }}>
-            <span style={{ display: "block" }}>KVLE의 모든 기능은 결국 두 질문에 답합니다.</span>
+            <span style={{ display: "block" }}>KVLE의 모든 기능은 결국 세 질문에 답합니다.</span>
             <strong style={{ color: "var(--text)", display: "block", marginTop: "6px" }}>
-              지금 뭘 풀어야 하지? 뭘 언제 다시 봐야 하지?
+              지금 뭘 풀어야 하지? 뭘 언제 다시 봐야 하지? 막힐 때 어디서 답을 찾지?
             </strong>
           </p>
 
