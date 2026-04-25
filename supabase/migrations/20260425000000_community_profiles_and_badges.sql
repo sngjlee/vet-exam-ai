@@ -40,12 +40,19 @@ comment on column public.profiles.is_active is
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();
   return new;
 end;
 $$;
+
+-- Attach to profiles immediately (other tables in this and later files attach
+-- their own triggers individually — the function is reused).
+create trigger profiles_set_updated_at
+  before update on public.profiles
+  for each row execute function public.set_updated_at();
 
 
 -- -----------------------------------------------------------------------------
@@ -142,7 +149,8 @@ comment on table public.badges is
 comment on column public.badges.awarded_by is
   'Admin who manually granted this badge. NULL for auto-granted badges.';
 
-create index badges_user on public.badges (user_id);
+-- (No standalone index on user_id — the unique (user_id, badge_type) constraint
+--  already provides a btree on user_id via the leftmost-prefix rule.)
 
 alter table public.badges enable row level security;
 
