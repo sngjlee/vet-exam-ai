@@ -7,10 +7,10 @@ import LandingFinalCta from "../components/LandingFinalCta";
 const RAIL_ITEMS = [
   { markerColor: "#1ea7bb", mono: null,     text: "수의사 국가시험 대비" },
   { markerColor: "#C8895A", mono: "20과목", text: "전과목 커버" },
-  { markerColor: "#2D9F6B", mono: null,     text: "간격 반복 학습" },
-  { markerColor: "#9B6FD4", mono: "SM-2",   text: "알고리즘 기반" },
+  { markerColor: "#F0EDD8", mono: "1,500+", text: "검수된 문제" },
+  { markerColor: "#2D9F6B", mono: null,     text: "수험생 토론 + 암기법" },
+  { markerColor: "#9B6FD4", mono: "SM-2",   text: "간격 반복 학습" },
   { markerColor: "#4A7FA8", mono: null,     text: "실시간 약점 분석" },
-  { markerColor: "#F0EDD8", mono: "2,400+", text: "검증된 문제" },
   { markerColor: "#C04A3A", mono: null,     text: "자동 오답노트" },
 ];
 
@@ -128,14 +128,14 @@ export default function LandingPage() {
 
               {/* Headline */}
               <h1 className="landing-hero-title" style={{ fontSize: "clamp(40px, 6vw, 76px)", lineHeight: 1.02, letterSpacing: "-0.035em", fontWeight: 800, margin: "0 0 24px" }}>
-                막연한 공부는<br />
-                <em style={{ fontStyle: "normal", color: "var(--teal)", position: "relative", whiteSpace: "nowrap" }}>숫자로</em> 바꿉니다
+                검수된 문제 +<br />
+                <em style={{ fontStyle: "normal", color: "var(--teal)", position: "relative", whiteSpace: "nowrap" }}>수험생이 외우는 방식</em>
               </h1>
 
               {/* Sub-copy */}
               <p className="landing-hero-copy" style={{ fontSize: "17px", lineHeight: 1.65, color: "var(--text-muted)", maxWidth: "48ch", margin: "0 0 32px" }}>
-                KVLE는 수의사 국가시험 준비생이 어디에 시간을 써야 하는지 데이터로 알려드립니다.
-                망각 곡선에 맞춘 복습, 약점 과목 우선 출제, 실시간 정답률 추적.
+                수의미래연구소가 직접 검수한 1,500+ 문제와 수험생들의 실제 암기법·토론을 함께 학습합니다.
+                공식 해설로 부족할 때, 다른 수험생이 어떻게 외웠는지 바로 확인하세요.
               </p>
 
               {/* CTA row */}
@@ -167,9 +167,9 @@ export default function LandingPage() {
               <div className="landing-stats-strip" style={{ marginTop: "32px", display: "inline-flex", gap: "22px", fontSize: "12px", color: "var(--text-faint)", fontFamily: "var(--font-mono)" }}>
                 <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>20</span> 과목</span>
                 <span style={{ color: "var(--border)" }}>·</span>
-                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>2,400+</span> 문제</span>
+                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>1,500+</span> 검수 문제</span>
                 <span style={{ color: "var(--border)" }}>·</span>
-                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>SM-2</span> SRS 알고리즘</span>
+                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>수험생</span> 토론 + 암기법</span>
               </div>
             </div>
 
