@@ -18,6 +18,7 @@ type Props = {
   onNext: () => void;
   onAnswer: (payload: AnswerPayload) => void;
   onQuit?: () => void;
+  commentCount?: number;
 };
 
 // ── Subject chip ────────────────────────────────────────────────────────────
@@ -60,10 +61,12 @@ export default function QuestionCard({
   onNext,
   onAnswer,
   onQuit,
+  commentCount,
 }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [activeTab, setActiveTab] = useState<"official" | "community">("official");
 
   // Per-question elapsed timer (decorative, resets when component remounts)
   useEffect(() => {
@@ -351,37 +354,112 @@ export default function QuestionCard({
                   </span>
                 </div>
 
-                {/* Explanation box */}
+                {/* Tab header */}
                 <div
+                  role="tablist"
+                  aria-label="해설 / 커뮤니티 탭"
                   style={{
-                    background: "var(--bg)",
-                    border: "1px solid var(--border)",
-                    padding: "14px 16px",
-                    borderRadius: 10,
+                    display: "flex",
+                    gap: 4,
+                    borderBottom: "1px solid var(--border)",
+                    marginBottom: 12,
                   }}
                 >
-                  <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                    <HelpCircle
-                      size={16}
-                      style={{ color: "var(--blue)", marginTop: 2, flexShrink: 0 }}
-                    />
-                    <div>
-                      <span className="kvle-label" style={{ color: "var(--blue)" }}>
-                        해설
+                  <button
+                    role="tab"
+                    aria-selected={activeTab === "official"}
+                    onClick={() => setActiveTab("official")}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      borderBottom: activeTab === "official" ? "2px solid var(--text)" : "2px solid transparent",
+                      padding: "8px 12px",
+                      fontSize: 13,
+                      fontWeight: activeTab === "official" ? 700 : 500,
+                      color: activeTab === "official" ? "var(--text)" : "var(--text-faint)",
+                      cursor: "pointer",
+                      marginBottom: -1,
+                    }}
+                  >
+                    공식 해설
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={activeTab === "community"}
+                    onClick={() => setActiveTab("community")}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      borderBottom: activeTab === "community" ? "2px solid var(--text)" : "2px solid transparent",
+                      padding: "8px 12px",
+                      fontSize: 13,
+                      fontWeight: activeTab === "community" ? 700 : 500,
+                      color: activeTab === "community" ? "var(--text)" : "var(--text-faint)",
+                      cursor: "pointer",
+                      marginBottom: -1,
+                    }}
+                  >
+                    커뮤니티 토론
+                    {commentCount !== undefined && ` (${commentCount})`}
+                    {commentCount !== undefined && commentCount >= 5 && (
+                      <span aria-hidden="true" style={{ marginLeft: 4, color: "var(--teal)" }}>
+                        •
                       </span>
-                      <p
-                        style={{
-                          fontSize: 13,
-                          color: "var(--text-muted)",
-                          lineHeight: 1.7,
-                          margin: "6px 0 0",
-                        }}
-                      >
-                        {question.explanation}
-                      </p>
+                    )}
+                  </button>
+                </div>
+
+                {/* Tab panel */}
+                {activeTab === "official" ? (
+                  <div
+                    role="tabpanel"
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      padding: "14px 16px",
+                      borderRadius: 10,
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                      <HelpCircle
+                        size={16}
+                        style={{ color: "var(--blue)", marginTop: 2, flexShrink: 0 }}
+                      />
+                      <div>
+                        <span className="kvle-label" style={{ color: "var(--blue)" }}>
+                          해설
+                        </span>
+                        <p
+                          style={{
+                            fontSize: 13,
+                            color: "var(--text-muted)",
+                            lineHeight: 1.7,
+                            margin: "6px 0 0",
+                          }}
+                        >
+                          {question.explanation}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div
+                    role="tabpanel"
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      padding: "14px 16px",
+                      borderRadius: 10,
+                      fontSize: 13,
+                      color: "var(--text-faint)",
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {commentCount && commentCount > 0
+                      ? `${commentCount}개의 의견이 있습니다 — 댓글 보기 기능은 곧 열립니다.`
+                      : "아직 의견이 없습니다 — 곧 댓글 기능이 열립니다."}
+                  </div>
+                )}
               </div>
 
               {/* Action row */}
