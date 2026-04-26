@@ -13,14 +13,19 @@ export function shuffleArray<T>(array: T[]): T[] {
   return copied;
 }
 
+/**
+ * Active 풀에서 categoryFilters에 해당하는 questions만 골라 무작위 N개 반환.
+ * categoryFilters undefined 또는 빈 배열이면 active 전체에서 추출.
+ */
 export function createSessionQuestions(
   pool: Question[],
   total: number,
-  category?: string,
+  categoryFilters?: string[],
 ): Question[] {
   const active = pool.filter((q) => q.isActive !== false);
-  const filtered = category
-    ? active.filter((q) => q.category === category)
+  const hasFilter = categoryFilters && categoryFilters.length > 0;
+  const filtered = hasFilter
+    ? active.filter((q) => categoryFilters!.includes(q.category))
     : active;
 
   const shuffled = shuffleArray(filtered);

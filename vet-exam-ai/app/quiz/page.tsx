@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../../components/QuestionCard";
+import SessionSetup from "../../components/SessionSetup";
 import { createSessionQuestions, type Question } from "../../lib/questions";
 import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 import { useAttempts } from "../../lib/hooks/useAttempts";
@@ -10,7 +11,7 @@ import { useAuth } from "../../lib/hooks/useAuth";
 import { useDueCountCtx } from "../../lib/context/DueCountContext";
 import { useQuestions } from "../../lib/hooks/useQuestions";
 import {
-  Play, Sparkles, BookOpen, Clock,
+  Sparkles, BookOpen, Clock,
   ArrowRight, CheckCircle2, RotateCcw,
 } from "lucide-react";
 
@@ -18,7 +19,6 @@ const TOTAL_QUESTIONS = 5;
 
 export default function QuizPage() {
   const { questions, categories, loading: questionsLoading, error: questionsError } = useQuestions();
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -31,22 +31,15 @@ export default function QuizPage() {
 
   const currentQuestion = sessionQuestions[currentIndex];
   const finished = started && currentIndex >= sessionQuestions.length;
-  const activeQuestions = questions.filter((q) => q.isActive !== false);
-  const selectedQuestionCount =
-    selectedCategory === "All"
-      ? activeQuestions.length
-      : activeQuestions.filter((q) => q.category === selectedCategory).length;
-  const canStartSession = !questionsLoading && selectedQuestionCount > 0;
 
-  function startSession() {
-    if (!canStartSession) return;
+  function startSession(payload?: { subjects: string[]; count: number }) {
+    const subjects = payload?.subjects ?? [];
+    const count = payload?.count ?? TOTAL_QUESTIONS;
 
-    const categoryFilter = selectedCategory === "All" ? undefined : selectedCategory;
-    const pool = categoryFilter
-      ? activeQuestions.filter((q) => q.category === categoryFilter)
-      : activeQuestions;
-    const total = Math.min(TOTAL_QUESTIONS, pool.length);
-    const newSession = createSessionQuestions(questions, total, categoryFilter);
+    const categoryFilters = subjects.length > 0 ? subjects : undefined;
+    const newSession = createSessionQuestions(questions, count, categoryFilters);
+    if (newSession.length === 0) return;
+
     sessionIdRef.current = crypto.randomUUID();
     setSessionQuestions(newSession);
     setCurrentIndex(0);
@@ -204,67 +197,16 @@ export default function QuizPage() {
                     className="text-sm"
                     style={{ color: "var(--text-muted)", marginBottom: "1.5rem" }}
                   >
-                    과목을 선택하고 KVLE 유형 문제를 풀어보세요.
+                    과목과 문제 수를 골라 KVLE 유형 문제를 풀어보세요.
                   </p>
-                  {questionsError && (
-                    <p className="text-sm" style={{ color: "var(--wrong)", marginBottom: "1rem" }}>
-                      문제를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-                    </p>
-                  )}
-                  {!questionsLoading && !questionsError && selectedQuestionCount === 0 && (
-                    <p className="text-sm" style={{ color: "var(--wrong)", marginBottom: "1rem" }}>
-                      선택한 범위에 출제 가능한 문제가 없습니다.
-                    </p>
-                  )}
                 </div>
-                <div className="flex flex-col sm:flex-row gap-4 items-end">
-                  <div className="w-full sm:flex-1">
-                    <label className="kvle-label mb-2">과목 선택</label>
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="kvle-input"
-                    >
-                      <option value="All">전체 과목 (혼합)</option>
-                      {categories.map((category) => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Button-in-Button pill — solid gold (primary) */}
-                  <button
-                    onClick={startSession}
-                    disabled={!canStartSession}
-                    className="flex-shrink-0 inline-flex items-center gap-3 font-semibold active:scale-[0.98] w-full sm:w-auto justify-center"
-                    style={{
-                      background: "var(--teal)",
-                      color: "#fff",
-                      borderRadius: "9999px",
-                      padding: "10px 10px 10px 22px",
-                      fontSize: "0.875rem",
-                      border: "none",
-                      cursor: !canStartSession ? "not-allowed" : "pointer",
-                      opacity: !canStartSession ? 0.5 : 1,
-                      transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-                    }}
-                  >
-                    {questionsLoading ? "로딩 중…" : "세션 시작"}
-                    <span
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        background: "rgba(0,0,0,0.18)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Play size={14} className="fill-current" />
-                    </span>
-                  </button>
-                </div>
+                <SessionSetup
+                  questions={questions}
+                  categories={categories}
+                  loading={questionsLoading}
+                  error={questionsError ? "문제를 불러오지 못했습니다" : null}
+                  onStart={startSession}
+                />
               </div>
             </div>
           </div>
@@ -407,7 +349,7 @@ export default function QuizPage() {
           }}
         >
           <div
-            className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 items-center"
+            className="grid grid-cols-1 gap-6"
             style={{
               borderRadius: "16px",
               padding: "1.5rem",
@@ -438,45 +380,14 @@ export default function QuizPage() {
               <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
                 문제를 풀어볼 수 있지만, 학습 기록 저장과 간격 반복 학습은 로그인이 필요합니다.
               </p>
-              {questionsError && (
-                <p className="mt-3 text-sm" style={{ color: "var(--wrong)" }}>
-                  문제를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-                </p>
-              )}
             </div>
-            {/* Button-in-Button pill — solid gold (primary) */}
-            <button
-              onClick={startSession}
-              disabled={!canStartSession}
-              className="inline-flex items-center gap-3 font-semibold active:scale-[0.98] flex-shrink-0"
-              style={{
-                background: "var(--teal)",
-                color: "#fff",
-                borderRadius: "9999px",
-                padding: "10px 10px 10px 22px",
-                fontSize: "0.875rem",
-                border: "none",
-                cursor: !canStartSession ? "not-allowed" : "pointer",
-                opacity: !canStartSession ? 0.5 : 1,
-                transition: "opacity 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
-              }}
-            >
-              {questionsLoading ? "로딩 중…" : "바로 시작"}
-              <span
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  background: "rgba(0,0,0,0.18)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <Play size={14} className="fill-current" />
-              </span>
-            </button>
+            <SessionSetup
+              questions={questions}
+              categories={categories}
+              loading={questionsLoading}
+              error={questionsError ? "문제를 불러오지 못했습니다" : null}
+              onStart={startSession}
+            />
           </div>
         </div>
       )}
