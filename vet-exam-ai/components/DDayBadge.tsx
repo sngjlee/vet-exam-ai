@@ -1,17 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const EXAM_DATE = new Date("2027-01-15T00:00:00+09:00");
+import { EXAM_DATE_LABEL, IS_TENTATIVE, daysUntilExam } from "../lib/examDate";
 
 export default function DDayBadge() {
   const [days, setDays] = useState<number | null>(null);
 
   useEffect(() => {
-    const compute = () =>
-      Math.ceil((EXAM_DATE.getTime() - Date.now()) / 86_400_000);
-    setDays(compute());
-    const id = setInterval(() => setDays(compute()), 60 * 60 * 1000);
+    setDays(daysUntilExam());
+    const id = setInterval(() => setDays(daysUntilExam()), 60 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -31,9 +28,14 @@ export default function DDayBadge() {
       <span style={{ fontSize: "14px", color: "var(--text)", fontWeight: 800 }}>
         D-{days ?? "···"}
       </span>
+      {IS_TENTATIVE && (
+        <span style={{ fontSize: "10px", color: "var(--text-faint)", fontWeight: 600 }}>
+          (예상)
+        </span>
+      )}
       <span aria-hidden="true" style={{ color: "var(--border)" }}>·</span>
       <span style={{ fontSize: "11px", color: "var(--text-faint)", fontWeight: 600 }}>
-        2027.01.15
+        {EXAM_DATE_LABEL}
       </span>
     </div>
   );
