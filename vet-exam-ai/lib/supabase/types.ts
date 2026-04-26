@@ -156,6 +156,64 @@ export interface Database {
         };
         Relationships: [];
       };
+
+      // ─────────────────────────────────────────────────────────────────────
+      // Community tables (M2 §13 + M3 진입 발판). 현재 comments 1개만 typed.
+      // 나머지 10개 테이블 (comment_votes / comment_reports / comment_edit_history /
+      // notifications / 등) 은 M3 댓글 코어 진입 시 함께 추가 예정.
+      // ─────────────────────────────────────────────────────────────────────
+      comments: {
+        Row: {
+          id: string;
+          question_id: string;
+          user_id: string | null;
+          parent_id: string | null;
+          type: Database["public"]["Enums"]["comment_type"];
+          body_text: string;
+          body_html: string;
+          image_urls: string[];
+          status: Database["public"]["Enums"]["comment_status"];
+          vote_score: number;
+          upvote_count: number;
+          downvote_count: number;
+          report_count: number;
+          reply_count: number;
+          blinded_until: string | null;
+          is_anonymized: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          question_id: string;
+          user_id?: string | null;
+          parent_id?: string | null;
+          type: Database["public"]["Enums"]["comment_type"];
+          body_text: string;
+          body_html: string;
+          image_urls?: string[];
+          status?: Database["public"]["Enums"]["comment_status"];
+          vote_score?: number;
+          upvote_count?: number;
+          downvote_count?: number;
+          report_count?: number;
+          reply_count?: number;
+          blinded_until?: string | null;
+          is_anonymized?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          body_text?: string;
+          body_html?: string;
+          image_urls?: string[];
+          status?: Database["public"]["Enums"]["comment_status"];
+          blinded_until?: string | null;
+          is_anonymized?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
 
     Views: Record<string, never>;
@@ -163,6 +221,18 @@ export interface Database {
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
       question_source: "manual" | "past_exam" | "ai_generated";
+      comment_type:
+        | "memorization"
+        | "correction"
+        | "explanation"
+        | "question"
+        | "discussion";
+      comment_status:
+        | "visible"
+        | "hidden_by_author"
+        | "hidden_by_votes"
+        | "blinded_by_report"
+        | "removed_by_admin";
     };
   };
 }
@@ -172,3 +242,4 @@ export type ProfileRow    = Database["public"]["Tables"]["profiles"]["Row"];
 export type QuestionRow   = Database["public"]["Tables"]["questions"]["Row"];
 export type AttemptRow    = Database["public"]["Tables"]["attempts"]["Row"];
 export type WrongNoteRow  = Database["public"]["Tables"]["wrong_notes"]["Row"];
+export type CommentRow    = Database["public"]["Tables"]["comments"]["Row"];
