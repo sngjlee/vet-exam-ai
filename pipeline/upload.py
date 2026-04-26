@@ -158,6 +158,8 @@ def main() -> None:
                    help="output/rewritten/ 안의 모든 JSON 처리")
     p.add_argument("--filter",
                    help="--all 과 함께 사용. 파일명에 이 문자열이 포함된 것만 처리")
+    p.add_argument("--exclude", action="append", default=[],
+                   help="--all 과 함께 사용. 파일명에 이 문자열이 포함된 건 제외 (여러 번 지정 가능)")
     p.add_argument("--limit", type=int,
                    help="파일당 문제 수 제한 (테스트용)")
     p.add_argument("--dry-run", action="store_true",
@@ -174,6 +176,8 @@ def main() -> None:
         inputs = sorted(REWRITTEN_ROOT.glob("*.json"))
         if args.filter:
             inputs = [f for f in inputs if args.filter in f.name]
+        if args.exclude:
+            inputs = [f for f in inputs if not any(ex in f.name for ex in args.exclude)]
     elif args.input:
         p_in = Path(args.input)
         if not p_in.is_absolute():
