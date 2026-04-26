@@ -41,12 +41,12 @@ export default function QuizPage() {
   function startSession() {
     if (!canStartSession) return;
 
-    const categoryFilter = selectedCategory === "All" ? undefined : selectedCategory;
-    const pool = categoryFilter
-      ? activeQuestions.filter((q) => q.category === categoryFilter)
+    const categoryFilters = selectedCategory === "All" ? undefined : [selectedCategory];
+    const pool = categoryFilters
+      ? activeQuestions.filter((q) => categoryFilters.includes(q.category))
       : activeQuestions;
     const total = Math.min(TOTAL_QUESTIONS, pool.length);
-    const newSession = createSessionQuestions(questions, total, categoryFilter);
+    const newSession = createSessionQuestions(questions, total, categoryFilters);
     sessionIdRef.current = crypto.randomUUID();
     setSessionQuestions(newSession);
     setCurrentIndex(0);

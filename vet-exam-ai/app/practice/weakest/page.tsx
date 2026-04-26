@@ -42,7 +42,7 @@ export default function PracticeWeakestPage() {
 
   function startPractice() {
     if (!weakest) return;
-    const qs = createSessionQuestions(questions, PRACTICE_COUNT, weakest.category);
+    const qs = createSessionQuestions(questions, PRACTICE_COUNT, [weakest.category]);
     sessionIdRef.current = crypto.randomUUID();
     setSessionQuestions(qs);
     setCurrentIndex(0);
