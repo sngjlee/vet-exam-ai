@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { EXAM_DATE_LABEL, IS_TENTATIVE, daysUntilExam } from "../../lib/examDate";
 import type { Question } from "../../lib/questions";
 
@@ -152,9 +153,9 @@ export default function DDayPlanWidget() {
                 <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 6 }}>
                   선택한 풀에 문제가 없습니다.
                 </div>
-                <a href="/quiz" style={{ fontSize: 12, color: "var(--teal)", fontWeight: 700, textDecoration: "underline" }}>
+                <Link href="/quiz" style={{ fontSize: 12, color: "var(--teal)", fontWeight: 700, textDecoration: "underline" }}>
                   과목 다시 선택
-                </a>
+                </Link>
               </div>
             );
           }
