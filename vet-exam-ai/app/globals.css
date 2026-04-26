@@ -328,7 +328,7 @@ p, h1, h2, h3, h4, button, label, span, td, th {
 .steps-grid { display: grid; grid-template-columns: 1fr; margin-top: 52px; }
 .step-item { padding: 36px 0; border-top: 1px solid var(--border); }
 @media (min-width: 900px) {
-  .steps-grid { grid-template-columns: repeat(3, 1fr); }
+  .steps-grid { grid-template-columns: repeat(2, 1fr); }
   .step-item {
     border-top: none;
     border-left: 1px solid var(--border);
@@ -337,7 +337,14 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     display: flex;
     flex-direction: column;
   }
-  .step-item:first-child { border-left: none; padding-left: 0; }
+  .step-item:nth-child(2n+1) { border-left: none; padding-left: 0; }
+  .step-item:nth-child(n+3) { border-top: 1px solid var(--border); padding-top: 36px; margin-top: 36px; }
+}
+@media (min-width: 1200px) {
+  .steps-grid { grid-template-columns: repeat(4, 1fr); }
+  .step-item:nth-child(2n+1) { border-left: 1px solid var(--border); padding-left: 32px; }
+  .step-item:nth-child(4n+1) { border-left: none; padding-left: 0; }
+  .step-item:nth-child(n+3) { border-top: none; padding-top: 0; margin-top: 0; }
 }
 
 /* Nav links hover */

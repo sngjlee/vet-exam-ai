@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import AuthRedirect from "../components/AuthRedirect";
 import LandingFinalCta from "../components/LandingFinalCta";
+import DDayBadge from "../components/DDayBadge";
 
 // ── Rail items (duplicated for seamless marquee loop) ──────────────────────
 const RAIL_ITEMS = [
@@ -79,6 +80,7 @@ export default function LandingPage() {
           <div className="landing-section-links" style={{ display: "flex", gap: "28px", fontSize: "13px", fontWeight: 500 }}>
             <a href="#how" className="landing-nav-link">사용 흐름</a>
             <a href="#features" className="landing-nav-link">기능</a>
+            <a href="#community" className="landing-nav-link">수험생 토론</a>
             <a href="#problem" className="landing-nav-link">왜 KVLE?</a>
           </div>
 
@@ -173,7 +175,9 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* RIGHT: viz-card */}
+            {/* RIGHT: D-day badge + viz-card */}
+            <div>
+            <DDayBadge />
             <div style={{
               background: "linear-gradient(180deg, rgba(26,37,64,0.5) 0%, rgba(15,23,41,0.6) 100%)",
               border: "1px solid var(--border)", borderRadius: "16px",
@@ -270,6 +274,7 @@ export default function LandingPage() {
                   <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "0.12em", fontWeight: 600, marginTop: "2px" }}>기억 효율</div>
                 </div>
               </div>
+            </div>
             </div>
           </div>
         </section>
@@ -418,7 +423,110 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── 6. HOW IT WORKS ─────────────────────────────────────────────── */}
+        {/* ── 6. COMMUNITY EXAMPLES ───────────────────────────────────────── */}
+        <section id="community" style={{
+          background: "var(--surface)",
+          borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
+          position: "relative",
+        }}>
+          <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "120px 32px" }}>
+            <div className="landing-section-label">수험생 토론</div>
+            <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "14px 0 0", color: "var(--text)" }}>
+              한 문제, 여러 수험생의 시야
+            </h2>
+            <p style={{ fontSize: "16px", color: "var(--text-muted)", lineHeight: 1.75, margin: "18px 0 0", maxWidth: "58ch" }}>
+              모든 문제 페이지에 공식 해설 + 수험생 토론 탭이 함께 있습니다. 암기법·정정·질문이 추천 순으로 정렬되어 학습 흐름을 끊지 않습니다.
+            </p>
+
+            <div style={{ marginTop: "52px", display: "grid", gap: "20px", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+              {[
+                {
+                  type: "암기법",
+                  typeColor: "var(--teal)",
+                  typeBg: "var(--teal-dim)",
+                  typeBorder: "var(--teal-border)",
+                  nickname: "수의2025",
+                  badge: "인기 댓글",
+                  badgeColor: "var(--amber, #C8895A)",
+                  body: "베타 작용제 외울 때 'BAR' (Beta-Adrenergic-Receptor) → 'BAR에서 한 잔 = 기관지 확장'으로 외우면 한 번 보고 안 잊혀요.",
+                  votes: 47,
+                  replies: 3,
+                  ago: "2일 전",
+                },
+                {
+                  type: "정정 제안",
+                  typeColor: "var(--wrong)",
+                  typeBg: "var(--wrong-dim)",
+                  typeBorder: "rgba(192,74,58,0.25)",
+                  nickname: "도와줄게요",
+                  badge: "검수자",
+                  badgeColor: "var(--correct)",
+                  body: "해설에 \"아드레날린은 항상 알파 우선\"이라고 적혀 있는데, 실제로는 농도 의존적입니다. 저용량은 베타-2 우선이라 혈관 확장이 먼저 나타납니다.",
+                  votes: 32,
+                  replies: 5,
+                  ago: "5일 전",
+                },
+                {
+                  type: "질문",
+                  typeColor: "var(--blue, #4A7FA8)",
+                  typeBg: "rgba(74,127,168,0.1)",
+                  typeBorder: "rgba(74,127,168,0.3)",
+                  nickname: "본3당해",
+                  badge: "새내기",
+                  badgeColor: "var(--text-faint)",
+                  body: "5번 선택지가 왜 답이 아닌가요? 알파-2 작용 부분이 헷갈려서 다시 정리하고 싶어요. 작용 기전이 잘 정리된 자료 있으신 분?",
+                  votes: 18,
+                  replies: 8,
+                  ago: "1주 전",
+                },
+              ].map(({ type, typeColor, typeBg, typeBorder, nickname, badge, badgeColor, body, votes, replies, ago }) => (
+                <div key={nickname} style={{
+                  background: "var(--bg)", border: "1px solid var(--border)",
+                  borderRadius: "14px", padding: "22px",
+                  display: "flex", flexDirection: "column", gap: "14px",
+                  minHeight: "240px",
+                }}>
+                  {/* Header: type label + nickname + badge */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <span style={{
+                      fontSize: "10px", fontWeight: 800, letterSpacing: "0.1em",
+                      color: typeColor, padding: "3px 8px", borderRadius: "4px",
+                      background: typeBg, border: `1px solid ${typeBorder}`,
+                    }}>{type}</span>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>{nickname}</span>
+                    <span style={{
+                      fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px",
+                      color: badgeColor, border: `1px solid ${badgeColor}`,
+                      opacity: 0.85,
+                    }}>{badge}</span>
+                  </div>
+
+                  {/* Body */}
+                  <p style={{ fontSize: "13.5px", lineHeight: 1.65, color: "var(--text-muted)", margin: 0, flex: 1 }}>
+                    {body}
+                  </p>
+
+                  {/* Footer: votes + replies + time */}
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: "16px",
+                    fontFamily: "var(--font-mono)", fontSize: "11.5px",
+                    color: "var(--text-faint)", borderTop: "1px solid var(--border)", paddingTop: "12px",
+                  }}>
+                    <span style={{ color: "var(--correct)", fontWeight: 700 }}>▲ {votes}</span>
+                    <span>답글 {replies}</span>
+                    <span style={{ marginLeft: "auto" }}>{ago}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: "32px", fontSize: "11px", color: "var(--text-faint)", letterSpacing: "0.08em", fontFamily: "var(--font-mono)" }}>
+              ※ 위 댓글은 베타 런칭 시점 시안입니다. 실제 콘텐츠는 운영 시작 후 수험생들이 작성합니다.
+            </div>
+          </div>
+        </section>
+
+        {/* ── 7. HOW IT WORKS ─────────────────────────────────────────────── */}
         <section id="how" style={{
           borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
           background: "linear-gradient(180deg, rgba(15,23,41,0.4) 0%, transparent 100%)",
@@ -427,7 +535,7 @@ export default function LandingPage() {
           <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "120px 32px" }}>
             <div className="landing-section-label">사용 흐름</div>
             <h2 style={{ fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "14px 0 0", color: "var(--text)" }}>
-              3단계로 충분합니다
+              네 단계로 충분합니다
             </h2>
 
             <div className="steps-grid">
@@ -465,6 +573,17 @@ export default function LandingPage() {
                     </>
                   ),
                 },
+                {
+                  num: "04", active: false,
+                  head: "막힐 때 커뮤니티에서 답을 찾습니다",
+                  body: "공식 해설로 부족한 문제는 커뮤니티 토론 탭에서 다른 수험생의 암기법·정정·질문을 바로 봅니다. 좋은 댓글에 추천을 누르면 다음 회독 시에도 함께 보입니다.",
+                  preview: (
+                    <>
+                      <div style={{ color: "var(--teal)", marginBottom: "4px", fontFamily: "var(--font-mono)", fontSize: "11.5px" }}>커뮤니티 토론 <span style={{ fontWeight: 700 }}>12개</span></div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "11.5px" }}>인기 댓글 <span style={{ color: "var(--correct)" }}>+47</span></div>
+                    </>
+                  ),
+                },
               ].map(({ num, active, head, body, preview }) => (
                 <div key={num} className="step-item">
                   {/* Giant monospace numeral */}
@@ -489,17 +608,17 @@ export default function LandingPage() {
         <section style={{ maxWidth: "900px", margin: "0 auto", padding: "100px 32px", textAlign: "center", position: "relative" }}>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: "64px", color: "var(--teal)", opacity: 0.3, lineHeight: 0.8, marginBottom: "16px" }}>&ldquo;</div>
           <p style={{ fontSize: "clamp(22px, 3vw, 32px)", fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.45, color: "var(--text)", margin: 0 }}>
-            <span style={{ display: "block" }}>막연히 책을 반복해서 읽던 때랑은 공부의 감각이 완전히 달라졌어요.</span>
-            <span style={{ display: "block", marginTop: "10px" }}>내가 뭘 모르는지 숫자로 보이니까, 뭘 해야 할지 매일 분명합니다.</span>
+            <span style={{ display: "block" }}>혼자 외울 때는 그 한 줄에서 매번 막혔어요.</span>
+            <span style={{ display: "block", marginTop: "10px" }}>다른 수험생이 같은 문제를 어떻게 외웠는지 보면서 비로소 풀리는 게 많아요.</span>
           </p>
           <div style={{ marginTop: "28px", fontSize: "13px", color: "var(--text-muted)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "12px" }}>
             <span style={{
               width: "32px", height: "32px", borderRadius: "999px", flexShrink: 0,
               background: "linear-gradient(135deg, #4A7FA8, #1ea7bb)",
               color: "#fff", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "13px",
-            }}>김</span>
+            }}>박</span>
             <span>
-              <strong style={{ color: "var(--text)", fontWeight: 600 }}>김수의</strong>
+              <strong style={{ color: "var(--text)", fontWeight: 600 }}>박수의</strong>
               <span style={{ color: "var(--text-faint)" }}> · 수의학과 본4 · 국가시험 준비 중</span>
             </span>
           </div>
