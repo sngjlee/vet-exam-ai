@@ -139,24 +139,42 @@ QuizPage
 export type SubjectGroup = {
   key: 'basic' | 'preventive' | 'clinical' | 'law';
   label: string;          // 화면 표기 ("기초", "예방", ...)
-  prefix: string;         // 카테고리 코드 prefix (e.g., "1.")
+  subjects: string[];     // 이 그룹에 속하는 카테고리 풀네임 list
 };
 
 export const SUBJECT_GROUPS: SubjectGroup[] = [
-  { key: 'basic',      label: '기초', prefix: '1.' },
-  { key: 'preventive', label: '예방', prefix: '2.' },
-  { key: 'clinical',   label: '임상', prefix: '3.' },
-  { key: 'law',        label: '법규', prefix: '4.' },
+  {
+    key: 'basic',
+    label: '기초',
+    subjects: ['해부학', '조직학', '생리학', '생화학', '약리학', '독성학'],
+  },
+  {
+    key: 'preventive',
+    label: '예방',
+    subjects: ['미생물학', '전염병학', '병리학', '공중보건학', '조류질병학', '수생생물의학', '기생충학', '실험동물학'],
+  },
+  {
+    key: 'clinical',
+    label: '임상',
+    subjects: ['내과학', '임상병리학', '외과학', '영상진단의학', '산과학'],
+  },
+  {
+    key: 'law',
+    label: '법규',
+    subjects: ['수의법규'],
+  },
 ];
 
-// useQuestions에서 가져온 categories를 그룹별로 분류
+// useQuestions에서 가져온 categories를 그룹별로 분류 (현재 데이터에 존재하는 카테고리만)
 export function groupCategories(categories: string[]): Record<SubjectGroup['key'], string[]>;
 
 // 단일 카테고리 → 어떤 그룹에 속하는지
 export function getCategoryGroup(category: string): SubjectGroup | undefined;
 ```
 
-**왜 prefix 매핑?** 데이터에서 카테고리 이름이 `1.1_해부` / `2.3_병리` 형태로 prefix를 가짐 (rewritten 파일명에서 확인). 새 과목 추가/이름 변경 시 자동 분류. prefix 규칙이 깨지면 fallback: prefix와 매칭되지 않는 카테고리는 어떤 그룹에도 속하지 않으며, 화면에는 표시되지 않는다 (현재 데이터는 모두 1.~4.이라 발생하지 않음).
+**왜 명시적 list?** 실제 데이터의 카테고리는 한국어 풀네임("해부학", "조직학" 등)으로 들어감 (`pipeline/extract.py`의 `SUBJECTS` 테이블 → `subject_full` → `upload.py`에서 `category`로 적재). prefix 형태가 아니라 자동 매핑 불가능하므로 명시적 list로 정의한다. 20과목 list는 위 코드 + `pipeline/extract.py:SUBJECTS`를 source of truth로 한다.
+
+**fallback:** 4개 그룹의 `subjects` 배열에 없는 카테고리(예: 데모 시드의 "번식학")는 어떤 그룹에도 속하지 않으며, SessionSetup에 표시되지 않는다. "선택 가능한 풀"에서도 자연스럽게 빠진다 — 사용자가 그 카테고리를 명시적으로 고르려 해도 chip 자체가 없기 때문이다. 새 과목 추가 시 본 list 갱신 필요.
 
 ### 4.2 `lib/questions.ts` — `createSessionQuestions` 시그니처 변경
 
