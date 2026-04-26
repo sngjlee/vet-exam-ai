@@ -1,7 +1,7 @@
 // vet-exam-ai/lib/hooks/useQuizConfig.ts
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export type QuizConfig = {
   subjects: string[];
@@ -18,7 +18,7 @@ function isValidStored(parsed: unknown): parsed is QuizConfig {
   if (!Array.isArray(p.subjects)) return false;
   if (!p.subjects.every((s): s is string => typeof s === "string")) return false;
   if (typeof p.count !== "number") return false;
-  if (!VALID_COUNTS.includes(p.count as (typeof VALID_COUNTS)[number])) return false;
+  if (!(VALID_COUNTS as readonly number[]).includes(p.count)) return false;
   return true;
 }
 
@@ -40,12 +40,17 @@ export function useQuizConfig() {
     }
   }, []);
 
-  const setSubjects = (subjects: string[]) =>
-    setConfig((prev) => ({ ...prev, subjects }));
-  const setCount = (count: number) => setConfig((prev) => ({ ...prev, count }));
+  const setSubjects = useCallback(
+    (subjects: string[]) => setConfig((prev) => ({ ...prev, subjects })),
+    [],
+  );
+  const setCount = useCallback(
+    (count: number) => setConfig((prev) => ({ ...prev, count })),
+    [],
+  );
 
   /** 세션 시작 직전 호출. config를 localStorage에 저장. 실패는 무음. */
-  const saveConfig = () => {
+  const saveConfig = useCallback(() => {
     if (typeof window === "undefined") return;
     try {
       localStorage.setItem(
@@ -55,7 +60,7 @@ export function useQuizConfig() {
     } catch {
       // quota exceeded / private mode — silent
     }
-  };
+  }, [config]);
 
   return { config, setSubjects, setCount, saveConfig };
 }
