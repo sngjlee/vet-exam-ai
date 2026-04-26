@@ -23,6 +23,7 @@ export default function QuizPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [started, setStarted] = useState(false);
+  const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
   const { notes: wrongNotes, addNote } = useWrongNotes();
   const { logAttempt } = useAttempts();
   const { user, loading: authLoading } = useAuth();
@@ -45,6 +46,13 @@ export default function QuizPage() {
     setCurrentIndex(0);
     setScore(0);
     setStarted(true);
+
+    // 세션 시작 시 댓글 수 batch fetch (1회). 실패 시 빈 Map → undefined commentCount → 카운트 미표시.
+    const ids = newSession.map((q) => q.id).join(",");
+    fetch(`/api/comments/counts?ids=${encodeURIComponent(ids)}`)
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data: Record<string, number>) => setCommentCounts(new Map(Object.entries(data))))
+      .catch(() => setCommentCounts(new Map()));
   }
 
   function handleAnswer(payload: {
@@ -403,6 +411,7 @@ export default function QuizPage() {
             onAnswer={handleAnswer}
             onNext={handleNext}
             onQuit={() => setStarted(false)}
+            commentCount={commentCounts.get(currentQuestion.id)}
           />
         </div>
       )}
