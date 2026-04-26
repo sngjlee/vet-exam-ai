@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import type { Question } from "../lib/questions";
 import { CheckCircle2, XCircle, ArrowRight, HelpCircle, Clock } from "lucide-react";
+import CommentThread from "./comments/CommentThread";
 
 type AnswerPayload = {
   questionId: string;
@@ -443,21 +444,8 @@ export default function QuestionCard({
                     </div>
                   </div>
                 ) : (
-                  <div
-                    role="tabpanel"
-                    style={{
-                      background: "var(--bg)",
-                      border: "1px solid var(--border)",
-                      padding: "14px 16px",
-                      borderRadius: 10,
-                      fontSize: 13,
-                      color: "var(--text-faint)",
-                      lineHeight: 1.7,
-                    }}
-                  >
-                    {commentCount && commentCount > 0
-                      ? `${commentCount}개의 의견이 있습니다 — 댓글 보기 기능은 곧 열립니다.`
-                      : "아직 의견이 없습니다 — 곧 댓글 기능이 열립니다."}
+                  <div role="tabpanel">
+                    <CommentThread questionId={question.id} />
                   </div>
                 )}
               </div>
