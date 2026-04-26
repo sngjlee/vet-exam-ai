@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import AuthRedirect from "../components/AuthRedirect";
 import LandingFinalCta from "../components/LandingFinalCta";
-import DDayBadge from "../components/DDayBadge";
 
 // ── Rail items (duplicated for seamless marquee loop) ──────────────────────
 const RAIL_ITEMS = [
@@ -175,9 +174,8 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* RIGHT: D-day badge + viz-card */}
+            {/* RIGHT: viz-card */}
             <div>
-            <DDayBadge />
             <div style={{
               background: "linear-gradient(180deg, rgba(26,37,64,0.5) 0%, rgba(15,23,41,0.6) 100%)",
               border: "1px solid var(--border)", borderRadius: "16px",
