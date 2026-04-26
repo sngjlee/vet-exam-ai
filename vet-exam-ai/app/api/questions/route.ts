@@ -41,6 +41,7 @@ function toQuestion(row: QuestionApiRow): Question {
 export async function GET() {
   const supabase = await createClient();
 
+  // Supabase 기본 limit은 1000행 — questions 풀 전체(현재 ~2k, 추후 증가)를 받기 위해 명시적으로 상한 확장.
   const { data, error } = await supabase
     .from("questions")
     .select(
@@ -48,7 +49,8 @@ export async function GET() {
     )
     .eq("is_active", true)
     .order("category", { ascending: true })
-    .order("id", { ascending: true });
+    .order("id", { ascending: true })
+    .range(0, 49999);
 
   if (error) {
     return NextResponse.json(
