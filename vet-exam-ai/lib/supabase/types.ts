@@ -15,15 +15,24 @@ export interface Database {
         Row: {
           id: string;           // uuid — mirrors auth.users.id
           display_name: string | null;
+          role: Database["public"]["Enums"]["user_role"];
+          is_active: boolean;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id: string;
           display_name?: string | null;
+          role?: Database["public"]["Enums"]["user_role"];
+          is_active?: boolean;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           display_name?: string | null;
+          role?: Database["public"]["Enums"]["user_role"];
+          is_active?: boolean;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -158,10 +167,69 @@ export interface Database {
       };
 
       // ─────────────────────────────────────────────────────────────────────
-      // Community tables (M2 §13 + M3 진입 발판). 현재 comments 1개만 typed.
-      // 나머지 10개 테이블 (comment_votes / comment_reports / comment_edit_history /
-      // notifications / 등) 은 M3 댓글 코어 진입 시 함께 추가 예정.
+      // Community tables — mirrors supabase/migrations/20260425000000-3.
+      // Counter columns (vote_score, upvote_count, etc.) are maintained by
+      // database triggers; treat them as read-only from the app layer.
       // ─────────────────────────────────────────────────────────────────────
+
+      user_profiles_public: {
+        Row: {
+          user_id: string;
+          nickname: string;
+          bio: string | null;
+          target_round: number | null;
+          university: string | null;
+          target_round_visible: boolean;
+          university_visible: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          nickname: string;
+          bio?: string | null;
+          target_round?: number | null;
+          university?: string | null;
+          target_round_visible?: boolean;
+          university_visible?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          nickname?: string;
+          bio?: string | null;
+          target_round?: number | null;
+          university?: string | null;
+          target_round_visible?: boolean;
+          university_visible?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      badges: {
+        Row: {
+          id: string;
+          user_id: string;
+          badge_type: Database["public"]["Enums"]["badge_type"];
+          awarded_at: string;
+          reason: string | null;
+          awarded_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          badge_type: Database["public"]["Enums"]["badge_type"];
+          awarded_at?: string;
+          reason?: string | null;
+          awarded_by?: string | null;
+        };
+        Update: {
+          // badges are append-only; no Update fields exposed
+        };
+        Relationships: [];
+      };
+
       comments: {
         Row: {
           id: string;
@@ -214,6 +282,171 @@ export interface Database {
         };
         Relationships: [];
       };
+
+      comment_votes: {
+        Row: {
+          comment_id: string;
+          user_id: string;
+          value: 1 | -1;
+          created_at: string;
+        };
+        Insert: {
+          comment_id: string;
+          user_id: string;
+          value: 1 | -1;
+          created_at?: string;
+        };
+        Update: {
+          value?: 1 | -1;
+        };
+        Relationships: [];
+      };
+
+      comment_reports: {
+        Row: {
+          id: string;
+          comment_id: string;
+          reporter_id: string | null;
+          reason: Database["public"]["Enums"]["report_reason"];
+          description: string | null;
+          status: Database["public"]["Enums"]["report_status"];
+          resolved_by: string | null;
+          resolved_at: string | null;
+          resolution_note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          comment_id: string;
+          reporter_id?: string | null;
+          reason: Database["public"]["Enums"]["report_reason"];
+          description?: string | null;
+          status?: Database["public"]["Enums"]["report_status"];
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          resolution_note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          status?: Database["public"]["Enums"]["report_status"];
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          resolution_note?: string | null;
+        };
+        Relationships: [];
+      };
+
+      comment_edit_history: {
+        Row: {
+          id: string;
+          comment_id: string;
+          body_text: string;
+          body_html: string;
+          edited_at: string;
+        };
+        Insert: {
+          id?: string;
+          comment_id: string;
+          body_text: string;
+          body_html: string;
+          edited_at?: string;
+        };
+        Update: {
+          // edit history is immutable
+        };
+        Relationships: [];
+      };
+
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: Database["public"]["Enums"]["notification_type"];
+          payload: Record<string, unknown>;
+          actor_id: string | null;
+          related_comment_id: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: Database["public"]["Enums"]["notification_type"];
+          payload?: Record<string, unknown>;
+          actor_id?: string | null;
+          related_comment_id?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      question_corrections: {
+        Row: {
+          id: string;
+          question_id: string;
+          proposed_by: string | null;
+          proposed_change: Record<string, unknown>;
+          status: Database["public"]["Enums"]["correction_status"];
+          resolved_by: string | null;
+          resolved_at: string | null;
+          resolution_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          question_id: string;
+          proposed_by?: string | null;
+          proposed_change: Record<string, unknown>;
+          status?: Database["public"]["Enums"]["correction_status"];
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          resolution_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          status?: Database["public"]["Enums"]["correction_status"];
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          resolution_note?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      admin_audit_logs: {
+        Row: {
+          id: string;
+          admin_id: string | null;
+          action: Database["public"]["Enums"]["audit_action"];
+          target_type: string;
+          target_id: string;
+          before_state: Record<string, unknown> | null;
+          after_state: Record<string, unknown> | null;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_id?: string | null;
+          action: Database["public"]["Enums"]["audit_action"];
+          target_type: string;
+          target_id: string;
+          before_state?: Record<string, unknown> | null;
+          after_state?: Record<string, unknown> | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          // audit rows are insert-only
+        };
+        Relationships: [];
+      };
     };
 
     Views: Record<string, never>;
@@ -221,6 +454,13 @@ export interface Database {
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
       question_source: "manual" | "past_exam" | "ai_generated";
+      user_role: "user" | "reviewer" | "admin";
+      badge_type:
+        | "operator"
+        | "reviewer"
+        | "newbie"
+        | "first_contrib"
+        | "popular_comment";
       comment_type:
         | "memorization"
         | "correction"
@@ -233,13 +473,50 @@ export interface Database {
         | "hidden_by_votes"
         | "blinded_by_report"
         | "removed_by_admin";
+      report_reason:
+        | "spam"
+        | "misinformation"
+        | "privacy"
+        | "hate_speech"
+        | "advertising"
+        | "copyright"
+        | "defamation"
+        | "other";
+      report_status: "pending" | "reviewing" | "upheld" | "dismissed";
+      notification_type:
+        | "reply"
+        | "vote_milestone"
+        | "mention"
+        | "report_resolved"
+        | "comment_blinded";
+      correction_status: "proposed" | "reviewing" | "accepted" | "rejected";
+      audit_action:
+        | "comment_remove"
+        | "comment_unblind"
+        | "user_suspend"
+        | "user_unsuspend"
+        | "badge_grant"
+        | "badge_revoke"
+        | "correction_accept"
+        | "correction_reject"
+        | "report_uphold"
+        | "report_dismiss"
+        | "role_change";
     };
   };
 }
 
 // Convenience row types — import these instead of reaching into Database directly.
-export type ProfileRow    = Database["public"]["Tables"]["profiles"]["Row"];
-export type QuestionRow   = Database["public"]["Tables"]["questions"]["Row"];
-export type AttemptRow    = Database["public"]["Tables"]["attempts"]["Row"];
-export type WrongNoteRow  = Database["public"]["Tables"]["wrong_notes"]["Row"];
-export type CommentRow    = Database["public"]["Tables"]["comments"]["Row"];
+export type ProfileRow             = Database["public"]["Tables"]["profiles"]["Row"];
+export type QuestionRow            = Database["public"]["Tables"]["questions"]["Row"];
+export type AttemptRow             = Database["public"]["Tables"]["attempts"]["Row"];
+export type WrongNoteRow           = Database["public"]["Tables"]["wrong_notes"]["Row"];
+export type UserProfilePublicRow   = Database["public"]["Tables"]["user_profiles_public"]["Row"];
+export type BadgeRow               = Database["public"]["Tables"]["badges"]["Row"];
+export type CommentRow             = Database["public"]["Tables"]["comments"]["Row"];
+export type CommentVoteRow         = Database["public"]["Tables"]["comment_votes"]["Row"];
+export type CommentReportRow       = Database["public"]["Tables"]["comment_reports"]["Row"];
+export type CommentEditHistoryRow  = Database["public"]["Tables"]["comment_edit_history"]["Row"];
+export type NotificationRow        = Database["public"]["Tables"]["notifications"]["Row"];
+export type QuestionCorrectionRow  = Database["public"]["Tables"]["question_corrections"]["Row"];
+export type AdminAuditLogRow       = Database["public"]["Tables"]["admin_audit_logs"]["Row"];
