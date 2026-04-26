@@ -8,6 +8,7 @@ import { useReview } from "../../lib/hooks/useReview";
 import { useDueCountCtx } from "../../lib/context/DueCountContext";
 import { findWeakestCategory } from "../../lib/stats/weakCategory";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import DDayPlanWidget from "../../components/dashboard/DDayPlanWidget";
 import type { AttemptRow } from "../../lib/supabase/types";
 import type { WrongAnswerNote } from "../../lib/types";
 
@@ -412,6 +413,7 @@ export default function DashboardPage() {
 
   return (
     <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px 64px" }}>
+      <DDayPlanWidget />
       {/* ── Header ── */}
       <div style={{ marginBottom: 24 }}>
         <span className="kvle-label" style={{ marginBottom: 10, fontSize: 13 }}>오늘의 학습</span>
