@@ -97,6 +97,8 @@ type SessionSetupProps = {
 };
 ```
 
+**인증 무관:** SessionSetup은 인증 정보를 받지 않는다. QuizPage가 `user` 유무에 따라 외곽 wrapper 카드의 카피와 시각만 바꾼다 (회원: "스마트 학습 / 오늘의 학습을 시작하세요" + 복습 큐 카드 동시 노출, 비회원: "비회원으로 연습하기" + 학습 기록 안내). SessionSetup 자체는 두 wrapper에서 동일한 props로 사용된다.
+
 내부 상태:
 - `selectedSubjects: string[]` — chip 활성 상태 (`useQuizConfig` 훅으로 init)
 - `count: number` — preset 선택값 (`useQuizConfig`)
@@ -311,7 +313,7 @@ localStorage에 저장된 subjects 중 현재 categories에 없는 것이 있을
 | 빈 선택 (subjects=[]) | activeQuestions 전체 풀에서 추출 | hint 영역에 "전체 과목 (총 N문제)" 표시, 시작 버튼 활성 |
 | 풀 = 0 (선택한 과목 모두 active 0) | 시작 버튼 비활성, 빨간 안내 | "선택한 과목에 출제 가능한 문제가 없습니다" (기존 메시지 재사용) |
 | 풀 < count | 자동 reduce + preset disabled | hint "선택 범위에 N문제 — 자동 조정됨" |
-| 풀 < 5 (모든 preset disabled) | 가장 작은 preset(5) disabled, count = pool size로 강제 | hint "N문제 가능" + 시작 버튼 활성 (풀 사이즈로 시작) |
+| 풀 < 5 (모든 preset disabled) | 모든 preset chip disabled (어떤 chip도 active 표시 없음), 내부 count = pool size로 강제 (예: pool 3 → count 3) | hint "N문제로 시작" + 시작 버튼 활성. 사용자가 직접 preset을 누를 수 없지만 시작은 가능 |
 | `useQuestions` loading | SessionSetup 비활성 + spinner/skeleton | "로딩 중…" |
 | `useQuestions` error | SessionSetup 비활성 + 빨간 안내 | "문제를 불러오지 못했습니다" (기존 메시지 재사용) |
 | 비로그인 사용자 | SessionSetup 동일하게 노출 | wrapper 카피만 변경 ("비회원으로 연습"), Setup 자체는 인증 무관 |
