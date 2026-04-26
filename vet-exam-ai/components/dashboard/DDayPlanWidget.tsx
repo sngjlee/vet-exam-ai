@@ -104,14 +104,84 @@ export default function DDayPlanWidget() {
         </div>
       </div>
 
-      {/* RIGHT: pool size only (권장 수는 Task 5에서) */}
+      {/* RIGHT: 오늘 권장 + 3회독 보조 + 풀 사이즈 */}
       <div>
-        <div style={{ fontSize: 11, letterSpacing: "0.14em", color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>
-          선택한 풀
-        </div>
-        <div style={{ fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 800, color: "var(--text)" }}>
-          {fetchError ? "—" : poolSize === null ? "···" : `${poolSize}문제`}
-        </div>
+        {(() => {
+          if (fetchError) {
+            return (
+              <div>
+                <div style={{ fontSize: 11, letterSpacing: "0.14em", color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>
+                  오늘의 학습량
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text-faint)" }}>
+                  문제 풀 정보를 불러오지 못했습니다.
+                </div>
+              </div>
+            );
+          }
+          if (days !== null && days <= 0) {
+            return (
+              <div>
+                <div style={{ fontSize: 11, letterSpacing: "0.14em", color: "var(--wrong)", fontWeight: 700, marginBottom: 6 }}>
+                  시험일 도달
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                  최선을 다했습니다.
+                </div>
+              </div>
+            );
+          }
+          if (poolSize === null || days === null) {
+            return (
+              <div>
+                <div style={{ fontSize: 11, letterSpacing: "0.14em", color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>
+                  오늘의 학습량
+                </div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 800, color: "var(--text-faint)" }}>
+                  ···
+                </div>
+              </div>
+            );
+          }
+          if (poolSize === 0) {
+            return (
+              <div>
+                <div style={{ fontSize: 11, letterSpacing: "0.14em", color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>
+                  오늘의 학습량
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 6 }}>
+                  선택한 풀에 문제가 없습니다.
+                </div>
+                <a href="/quiz" style={{ fontSize: 12, color: "var(--teal)", fontWeight: 700, textDecoration: "underline" }}>
+                  과목 다시 선택
+                </a>
+              </div>
+            );
+          }
+          const recommendedToday = Math.max(1, Math.ceil(poolSize / days));
+          const recommendedThreeRound = recommendedToday * 3;
+          return (
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: "0.14em", color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 }}>
+                오늘 권장
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 36, fontWeight: 800, color: "var(--text)" }}>
+                  {recommendedToday}
+                </span>
+                <span style={{ fontSize: 14, color: "var(--text-muted)", fontWeight: 600 }}>
+                  문제
+                </span>
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-faint)", marginTop: 4 }}>
+                3회독 시 하루 약 {recommendedThreeRound}문제
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 2 }}>
+                선택 풀: {poolSize}문제
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
