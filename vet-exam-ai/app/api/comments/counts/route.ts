@@ -28,8 +28,7 @@ export async function GET(req: NextRequest) {
   }
 
   const counts: Record<string, number> = Object.fromEntries(ids.map((id) => [id, 0]));
-  const rows = (data ?? []) as Array<{ question_id: string }>;
-  for (const row of rows) {
+  for (const row of data ?? []) {
     counts[row.question_id] = (counts[row.question_id] ?? 0) + 1;
   }
   return NextResponse.json(counts);
