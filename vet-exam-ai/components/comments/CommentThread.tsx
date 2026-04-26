@@ -13,17 +13,13 @@ type Props = {
 
 type Status = "loading" | "ready" | "error";
 
-type CommentRowWithProfile = {
+type CommentRow = {
   id: string;
   user_id: string | null;
   type: CommentType;
   body_html: string;
   created_at: string;
   status: string;
-  user_profiles_public:
-    | { nickname: string }
-    | { nickname: string }[]
-    | null;
 };
 
 export default function CommentThread({ questionId }: Props) {
@@ -57,12 +53,9 @@ export default function CommentThread({ questionId }: Props) {
         setCurrentUserNickname(null);
       }
 
-      const { data, error } = await supabase
+      const { data: commentRows, error } = await supabase
         .from("comments")
-        .select(
-          `id, user_id, type, body_html, created_at, status,
-           user_profiles_public (nickname)`
-        )
+        .select("id, user_id, type, body_html, created_at, status")
         .eq("question_id", questionId)
         .eq("status", "visible")
         .order("created_at", { ascending: false })
@@ -70,24 +63,39 @@ export default function CommentThread({ questionId }: Props) {
 
       if (cancelled) return;
       if (error) {
+        console.error("[CommentThread] comments fetch failed", error);
         setStatus("error");
         return;
       }
-      const rows = (data ?? []) as unknown as CommentRowWithProfile[];
-      const mapped: CommentItemData[] = rows.map((row) => {
-        const profile = row.user_profiles_public;
-        const nickname = Array.isArray(profile)
-          ? profile[0]?.nickname ?? null
-          : profile?.nickname ?? null;
-        return {
-          id: row.id,
-          user_id: row.user_id,
-          type: row.type,
-          body_html: row.body_html,
-          created_at: row.created_at,
-          authorNickname: nickname,
-        };
-      });
+      const rows = (commentRows ?? []) as CommentRow[];
+
+      const userIds = Array.from(
+        new Set(rows.map((r) => r.user_id).filter((v): v is string => !!v))
+      );
+      const nicknameById = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: profiles, error: profileErr } = await supabase
+          .from("user_profiles_public")
+          .select("user_id, nickname")
+          .in("user_id", userIds);
+        if (cancelled) return;
+        if (profileErr) {
+          console.warn("[CommentThread] profile fetch failed", profileErr);
+        } else {
+          for (const p of profiles ?? []) {
+            nicknameById.set(p.user_id, p.nickname);
+          }
+        }
+      }
+
+      const mapped: CommentItemData[] = rows.map((row) => ({
+        id: row.id,
+        user_id: row.user_id,
+        type: row.type,
+        body_html: row.body_html,
+        created_at: row.created_at,
+        authorNickname: row.user_id ? nicknameById.get(row.user_id) ?? null : null,
+      }));
       setComments(mapped);
       setStatus("ready");
     }
