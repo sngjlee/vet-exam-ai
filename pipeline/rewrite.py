@@ -5,6 +5,7 @@ Usage:
     python rewrite.py pipeline/output/1.1_해부_66회.json                # 1개 파일 전체
     python rewrite.py --all                                              # 전체 20과목 × 10회차
     python rewrite.py pipeline/output/1.1_해부_66회.json --force         # 이미 완료된 파일 덮어쓰기
+    python rewrite.py --all --exclude 1.2_조직 --exclude 3.2_임병        # 특정 과목 제외
 
 Output:
     pipeline/output/rewritten/<원본과 동일 파일명>.json
@@ -337,7 +338,17 @@ def main() -> None:
     p.add_argument(
         "--force", action="store_true", help="이미 처리된 파일도 다시 처리"
     )
+    p.add_argument(
+        "--exclude", action="append", default=[],
+        help="--all 과 함께 사용. 파일명에 이 문자열이 포함된 건 제외 (여러 번 지정 가능)"
+    )
     args = p.parse_args()
+
+    # Windows + 백그라운드 실행 시 stdout이 buffered되어 진행도 추적 불가 — line buffering 강제.
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except AttributeError:
+        pass  # 구버전 호환
 
     if not os.environ.get("ANTHROPIC_API_KEY"):
         print("ERROR: ANTHROPIC_API_KEY가 설정되지 않음. pipeline/.env 확인.")
@@ -349,6 +360,8 @@ def main() -> None:
         inputs = sorted(
             f for f in OUTPUT_ROOT.glob("*.json") if not f.name.startswith("_")
         )
+        if args.exclude:
+            inputs = [f for f in inputs if not any(ex in f.name for ex in args.exclude)]
     elif args.input:
         p_in = Path(args.input)
         if not p_in.is_absolute():
