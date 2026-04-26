@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { EXAM_DATE_LABEL, IS_TENTATIVE, daysUntilExam } from "../../lib/examDate";
 import type { Question } from "../../lib/questions";
-
-const STORAGE_KEY = "kvle:quiz:lastConfig";
+import { STORAGE_KEY } from "../../lib/hooks/useQuizConfig";
 
 type StoredConfig = { subjects: string[]; count: number };
 

@@ -8,7 +8,7 @@ export type QuizConfig = {
   count: number;
 };
 
-const STORAGE_KEY = "kvle:quiz:lastConfig";
+export const STORAGE_KEY = "kvle:quiz:lastConfig";
 export const VALID_COUNTS = [5, 10, 20, 30, 50] as const;
 export const DEFAULT_CONFIG: QuizConfig = { subjects: [], count: 5 };
 
