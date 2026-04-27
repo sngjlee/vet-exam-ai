@@ -6,6 +6,9 @@ import CommentList, { type RootWithReplies } from "./CommentList";
 import CommentComposer from "./CommentComposer";
 import type { CommentItemData } from "./CommentItem";
 import type { CommentType } from "../../lib/comments/schema";
+import type { SortMode } from "../../lib/comments/voteSchema";
+
+type VoteValue = 1 | -1;
 
 type Props = {
   questionId: string;
@@ -22,16 +25,29 @@ type CommentRow = {
   body_html: string;
   created_at: string;
   status: string;
+  vote_score: number;
 };
 
 export default function CommentThread({ questionId, highlightCommentId }: Props) {
   const [status, setStatus] = useState<Status>("loading");
   const [roots, setRoots] = useState<RootWithReplies[]>([]);
+  const [scoreById, setScoreById] = useState<Map<string, number>>(new Map());
+  const [myVoteById, setMyVoteById] = useState<Map<string, VoteValue>>(new Map());
+  const [sortMode, setSortMode] = useState<SortMode>("score");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserNickname, setCurrentUserNickname] = useState<string | null>(null);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
 
+  function showToast(msg: string) {
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    setToast(msg);
+    toastTimerRef.current = window.setTimeout(() => setToast(null), 2400);
+  }
+
+  // Fetch comments + roots/replies grouping
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -56,13 +72,22 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         setCurrentUserNickname(null);
       }
 
-      const { data: commentRows, error } = await supabase
+      const orderColumn = sortMode === "score" ? "vote_score" : "created_at";
+      let query = supabase
         .from("comments")
-        .select("id, user_id, parent_id, type, body_html, created_at, status")
+        .select("id, user_id, parent_id, type, body_html, created_at, status, vote_score")
         .eq("question_id", questionId)
         .eq("status", "visible")
-        .order("created_at", { ascending: false })
         .limit(50);
+      if (sortMode === "score") {
+        query = query
+          .order("vote_score", { ascending: false })
+          .order("created_at", { ascending: false });
+      } else {
+        query = query.order("created_at", { ascending: false });
+      }
+
+      const { data: commentRows, error } = await query;
 
       if (cancelled) return;
       if (error) {
@@ -72,7 +97,14 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       }
       const rows = (commentRows ?? []) as CommentRow[];
 
-      // Nickname map (separate query — embedded join not available; see comment_core_done memory)
+      // Build score map (denormalized vote_score from each row)
+      const newScores = new Map<string, number>();
+      for (const r of rows) newScores.set(r.id, r.vote_score ?? 0);
+      setScoreById(newScores);
+      // Suppress unused-var lint by referencing orderColumn (we already used it implicitly)
+      void orderColumn;
+
+      // Nickname stitch — embedded join unavailable.
       const userIds = Array.from(
         new Set(rows.map((r) => r.user_id).filter((v): v is string => !!v))
       );
@@ -101,7 +133,6 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         authorNickname: row.user_id ? nicknameById.get(row.user_id) ?? null : null,
       });
 
-      // Group: rows are already created_at desc.
       const rootRows = rows.filter((r) => r.parent_id === null);
       const replyRows = rows.filter((r) => r.parent_id !== null);
 
@@ -112,8 +143,6 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         arr.push(r);
         repliesByParent.set(pid, arr);
       }
-
-      // Sort each parent's replies asc (caller spec: created_at asc).
       for (const [pid, arr] of repliesByParent) {
         arr.sort(
           (a, b) =>
@@ -128,10 +157,9 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         replies: (repliesByParent.get(row.id) ?? []).map(toItem),
       }));
 
-      // Synthesize placeholder roots for orphan replies (parent hidden).
       for (const [pid, arr] of repliesByParent) {
         if (!knownRootIds.has(pid)) {
-          const oldestReply = arr[0]; // arr is sorted asc — oldest first
+          const oldestReply = arr[0];
           assembled.push({
             id: pid,
             user_id: null,
@@ -145,11 +173,20 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         }
       }
 
-      // Final order — desc by created_at across all roots (real + placeholder).
-      assembled.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      // Apply sort to roots in-memory (placeholders also sorted in)
+      if (sortMode === "score") {
+        assembled.sort((a, b) => {
+          const sa = newScores.get(a.id) ?? 0;
+          const sb = newScores.get(b.id) ?? 0;
+          if (sb !== sa) return sb - sa;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+      } else {
+        assembled.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      }
 
       setRoots(assembled);
       setStatus("ready");
@@ -158,12 +195,39 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     return () => {
       cancelled = true;
     };
-  }, [questionId, reloadKey]);
+  }, [questionId, sortMode, reloadKey]);
 
-  // Scroll to + ring-highlight a target comment after roots are populated.
-  // Used when arriving via a notification deep-link (?comment=<id>).
-  // Run-once per highlightCommentId — re-fires on roots changes (e.g. user
-  // posts a new comment) would otherwise scroll back to the target.
+  // Fetch my-votes — independent of sortMode (votes don't change with sort)
+  useEffect(() => {
+    let cancelled = false;
+    async function loadVotes() {
+      if (!currentUserId) {
+        setMyVoteById(new Map());
+        return;
+      }
+      try {
+        const res = await fetch(
+          `/api/comments/votes-mine?question_id=${encodeURIComponent(questionId)}`
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as Record<string, 1 | -1>;
+        if (cancelled) return;
+        const m = new Map<string, VoteValue>();
+        for (const [id, value] of Object.entries(data)) {
+          if (value === 1 || value === -1) m.set(id, value);
+        }
+        setMyVoteById(m);
+      } catch {
+        // silent — votes optional
+      }
+    }
+    loadVotes();
+    return () => {
+      cancelled = true;
+    };
+  }, [questionId, currentUserId, reloadKey]);
+
+  // highlightCommentId scroll effect (existing — preserved)
   const highlightedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!highlightCommentId) {
@@ -173,14 +237,11 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     if (highlightedRef.current === highlightCommentId) return;
     if (status !== "ready") return;
     const el = document.getElementById(`comment-${highlightCommentId}`);
-    if (!el) return; // blinded / removed / not in last 50 — silent
+    if (!el) return;
 
     highlightedRef.current = highlightCommentId;
     el.scrollIntoView({ block: "center", behavior: "smooth" });
 
-    // Inline boxShadow ring — consistent with the comments module's style-based
-    // approach (no Tailwind utilities elsewhere in this folder). Snapshot the
-    // previous value so cleanup restores anything we displaced.
     const prev = el.style.boxShadow;
     const prevTransition = el.style.transition;
     el.style.transition = "box-shadow 200ms ease-out";
@@ -201,6 +262,11 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       },
       ...prev,
     ]);
+    setScoreById((prev) => {
+      const next = new Map(prev);
+      next.set(newComment.id, 0);
+      return next;
+    });
   }
 
   function handleSubmitReply(parentId: string, newComment: CommentItemData) {
@@ -217,6 +283,11 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           : root
       )
     );
+    setScoreById((prev) => {
+      const next = new Map(prev);
+      next.set(newComment.id, 0);
+      return next;
+    });
     setReplyingToId(null);
   }
 
@@ -230,13 +301,10 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
 
   async function handleDelete(id: string) {
     if (!window.confirm("이 댓글을 삭제하시겠습니까?")) return;
-    // Optimistic remove — try root first, then reply within each root.
     setRoots((prev) => {
-      // If id is a root, drop it (replies stay; on next fetch they'll become orphan placeholder).
       if (prev.some((r) => r.id === id && !r.isPlaceholder)) {
         return prev.filter((r) => r.id !== id);
       }
-      // Otherwise it's a reply — strip from the matching root.
       return prev.map((root) => ({
         ...root,
         replies: root.replies.filter((rep) => rep.id !== id),
@@ -246,15 +314,80 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       const res = await fetch(`/api/comments/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("삭제 실패");
     } catch {
-      // Refetch to recover correct state — avoids stale-snapshot rollback wiping
-      // intervening reply submissions.
       setReloadKey((k) => k + 1);
       window.alert("댓글 삭제에 실패했습니다. 다시 시도해주세요.");
     }
   }
 
+  function handleUnauthedAttempt() {
+    showToast("로그인하면 투표할 수 있습니다");
+  }
+
+  async function handleVoteChange(
+    commentId: string,
+    value: VoteValue,
+    prev: VoteValue | null
+  ) {
+    // optimistic — myVote and score
+    const prevScore = scoreById.get(commentId) ?? 0;
+    let optimisticVote: VoteValue | null;
+    let scoreDelta: number;
+    if (prev === value) {
+      optimisticVote = null;
+      scoreDelta = -value;
+    } else {
+      optimisticVote = value;
+      scoreDelta = value - (prev ?? 0);
+    }
+
+    setMyVoteById((m) => {
+      const next = new Map(m);
+      if (optimisticVote === null) next.delete(commentId);
+      else next.set(commentId, optimisticVote);
+      return next;
+    });
+    setScoreById((m) => {
+      const next = new Map(m);
+      next.set(commentId, prevScore + scoreDelta);
+      return next;
+    });
+
+    try {
+      const res = await fetch(`/api/comments/${commentId}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value }),
+      });
+      if (!res.ok) {
+        throw new Error(`vote failed: ${res.status}`);
+      }
+      const data = (await res.json()) as { vote: 1 | -1 | null };
+      // Reconcile if server result diverges (e.g. race)
+      setMyVoteById((m) => {
+        const next = new Map(m);
+        if (data.vote === null) next.delete(commentId);
+        else next.set(commentId, data.vote);
+        return next;
+      });
+    } catch {
+      // rollback both
+      setMyVoteById((m) => {
+        const next = new Map(m);
+        if (prev === null) next.delete(commentId);
+        else next.set(commentId, prev);
+        return next;
+      });
+      setScoreById((m) => {
+        const next = new Map(m);
+        next.set(commentId, prevScore);
+        return next;
+      });
+      showToast("투표 처리에 실패했습니다.");
+    }
+  }
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
       {status === "loading" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[0, 1, 2].map((i) => (
@@ -311,12 +444,18 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           <CommentList
             questionId={questionId}
             roots={roots}
+            scoreById={scoreById}
+            myVoteById={myVoteById}
             currentUserId={currentUserId}
+            sortMode={sortMode}
+            onSortChange={setSortMode}
             replyingToId={replyingToId}
             onStartReply={handleStartReply}
             onCancelReply={handleCancelReply}
             onSubmitReply={handleSubmitReply}
             onDelete={handleDelete}
+            onVoteChange={handleVoteChange}
+            onUnauthedAttempt={handleUnauthedAttempt}
           />
           {currentUserId ? (
             <CommentComposer questionId={questionId} onSubmitted={handleRootSubmitted} />
@@ -336,6 +475,28 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             </div>
           )}
         </>
+      )}
+
+      {toast && (
+        <div
+          role="status"
+          style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "var(--text)",
+            color: "var(--bg)",
+            padding: "10px 18px",
+            borderRadius: 999,
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
+            zIndex: 50,
+          }}
+        >
+          {toast}
+        </div>
       )}
     </div>
   );

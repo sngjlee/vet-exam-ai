@@ -2,6 +2,9 @@
 
 import { Trash2, MessageCircle } from "lucide-react";
 import type { CommentType } from "../../lib/comments/schema";
+import CommentVoteButton from "./CommentVoteButton";
+
+type VoteValue = 1 | -1;
 
 export type CommentItemData = {
   id: string;
@@ -14,8 +17,14 @@ export type CommentItemData = {
 
 type Props = {
   comment: CommentItemData;
+  score: number;
+  myVote: VoteValue | null;
+  isOwner: boolean;
+  isAuthed: boolean;
   canDelete: boolean;
   onDelete: (id: string) => void;
+  onVoteChange: (commentId: string, value: VoteValue, prev: VoteValue | null) => void;
+  onUnauthedAttempt?: () => void;
   onStartReply?: (id: string) => void;
   isReply?: boolean;
   isPlaceholder?: boolean;
@@ -43,8 +52,14 @@ function formatRelative(iso: string): string {
 
 export default function CommentItem({
   comment,
+  score,
+  myVote,
+  isOwner,
+  isAuthed,
   canDelete,
   onDelete,
+  onVoteChange,
+  onUnauthedAttempt,
   onStartReply,
   isReply,
   isPlaceholder,
@@ -104,7 +119,17 @@ export default function CommentItem({
         )}
         <span style={{ color: "var(--text)", fontWeight: 600 }}>@{author}</span>
         <span style={{ color: "var(--text-faint)" }}>· {formatRelative(comment.created_at)}</span>
-        <div style={{ marginLeft: "auto", display: "inline-flex", gap: 4 }}>
+        <div style={{ marginLeft: "auto", display: "inline-flex", gap: 4, alignItems: "center" }}>
+          <CommentVoteButton
+            commentId={comment.id}
+            score={score}
+            myVote={myVote}
+            isOwner={isOwner}
+            isAuthed={isAuthed}
+            size={isReply ? "small" : "normal"}
+            onVoteChange={onVoteChange}
+            onUnauthedAttempt={onUnauthedAttempt}
+          />
           {!isReply && onStartReply && (
             <button
               type="button"
