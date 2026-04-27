@@ -1,8 +1,9 @@
 "use client";
 
-import { Trash2, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import type { CommentType } from "../../lib/comments/schema";
 import CommentVoteButton from "./CommentVoteButton";
+import CommentMenuOverflow from "./CommentMenuOverflow";
 
 type VoteValue = 1 | -1;
 
@@ -19,10 +20,13 @@ type Props = {
   comment: CommentItemData;
   score: number;
   myVote: VoteValue | null;
+  status: "visible" | "hidden_by_votes" | "blinded_by_report";
   isOwner: boolean;
   isAuthed: boolean;
+  isReported: boolean;
   canDelete: boolean;
   onDelete: (id: string) => void;
+  onReport: (id: string) => void;
   onVoteChange: (commentId: string, value: VoteValue, prev: VoteValue | null) => void;
   onUnauthedAttempt?: () => void;
   onStartReply?: (id: string) => void;
@@ -54,10 +58,13 @@ export default function CommentItem({
   comment,
   score,
   myVote,
+  status,
   isOwner,
   isAuthed,
+  isReported,
   canDelete,
   onDelete,
+  onReport,
   onVoteChange,
   onUnauthedAttempt,
   onStartReply,
@@ -89,6 +96,8 @@ export default function CommentItem({
       ? "탈퇴한 사용자"
       : comment.authorNickname ?? `익명-${comment.user_id.slice(-4)}`;
 
+  const voteDisabled = status === "blinded_by_report";
+
   return (
     <div
       id={`comment-${comment.id}`}
@@ -119,12 +128,26 @@ export default function CommentItem({
         )}
         <span style={{ color: "var(--text)", fontWeight: 600 }}>@{author}</span>
         <span style={{ color: "var(--text-faint)" }}>· {formatRelative(comment.created_at)}</span>
+        {status === "blinded_by_report" && isOwner && (
+          <span
+            style={{
+              background: "var(--wrong-dim)",
+              color: "var(--wrong)",
+              borderRadius: 999,
+              padding: "2px 8px",
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            신고로 임시 비공개됨
+          </span>
+        )}
         <div style={{ marginLeft: "auto", display: "inline-flex", gap: 4, alignItems: "center" }}>
           <CommentVoteButton
             commentId={comment.id}
             score={score}
             myVote={myVote}
-            isOwner={isOwner}
+            isOwner={isOwner || voteDisabled}
             isAuthed={isAuthed}
             size={isReply ? "small" : "normal"}
             onVoteChange={onVoteChange}
@@ -152,24 +175,14 @@ export default function CommentItem({
               답글
             </button>
           )}
-          {canDelete && (
-            <button
-              type="button"
-              onClick={() => onDelete(comment.id)}
-              aria-label="댓글 삭제"
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "var(--text-faint)",
-                cursor: "pointer",
-                padding: 4,
-                display: "inline-flex",
-                alignItems: "center",
-              }}
-            >
-              <Trash2 size={14} />
-            </button>
-          )}
+          <CommentMenuOverflow
+            isOwner={isOwner}
+            isReported={isReported}
+            canDelete={canDelete}
+            canReport={isAuthed && status !== "blinded_by_report"}
+            onDelete={() => onDelete(comment.id)}
+            onReport={() => onReport(comment.id)}
+          />
         </div>
       </div>
 
