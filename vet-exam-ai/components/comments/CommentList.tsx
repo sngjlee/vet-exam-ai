@@ -1,15 +1,17 @@
-// vet-exam-ai/components/comments/CommentList.tsx
 "use client";
 
 import CommentItem, { type CommentItemData } from "./CommentItem";
-import CommentReplyGroup from "./CommentReplyGroup";
+import CommentReplyGroup, { type ReplyRow } from "./CommentReplyGroup";
 import CommentSortToggle from "./CommentSortToggle";
+import CommentCollapsedRow from "./CommentCollapsedRow";
 import type { SortMode } from "../../lib/comments/voteSchema";
 
 type VoteValue = 1 | -1;
+type CommentStatus = "visible" | "hidden_by_votes" | "blinded_by_report";
 
 export type RootWithReplies = CommentItemData & {
-  replies: CommentItemData[];
+  status: CommentStatus;
+  replies: ReplyRow[];
   isPlaceholder?: boolean;
 };
 
@@ -18,6 +20,8 @@ type Props = {
   roots: RootWithReplies[];
   scoreById: Map<string, number>;
   myVoteById: Map<string, VoteValue>;
+  reportedIds: Set<string>;
+  expandedIds: Set<string>;
   currentUserId: string | null;
   sortMode: SortMode;
   onSortChange: (mode: SortMode) => void;
@@ -26,8 +30,10 @@ type Props = {
   onCancelReply: () => void;
   onSubmitReply: (parentId: string, newComment: CommentItemData) => void;
   onDelete: (id: string) => void;
+  onReport: (id: string) => void;
   onVoteChange: (commentId: string, value: VoteValue, prev: VoteValue | null) => void;
   onUnauthedAttempt?: () => void;
+  onExpand: (id: string) => void;
 };
 
 export default function CommentList({
@@ -35,6 +41,8 @@ export default function CommentList({
   roots,
   scoreById,
   myVoteById,
+  reportedIds,
+  expandedIds,
   currentUserId,
   sortMode,
   onSortChange,
@@ -43,8 +51,10 @@ export default function CommentList({
   onCancelReply,
   onSubmitReply,
   onDelete,
+  onReport,
   onVoteChange,
   onUnauthedAttempt,
+  onExpand,
 }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -78,34 +88,77 @@ export default function CommentList({
         roots.map((root) => {
           const composerOpenForRoot = replyingToId === root.id;
           const showGroup = root.replies.length > 0 || composerOpenForRoot;
-          const canDeleteRoot =
-            !root.isPlaceholder &&
-            currentUserId !== null &&
-            root.user_id === currentUserId;
+          const isOwner =
+            currentUserId !== null && root.user_id === currentUserId;
+          const expanded = expandedIds.has(root.id);
+
+          let rootDisplay: React.ReactNode;
+          if (root.isPlaceholder) {
+            rootDisplay = (
+              <CommentItem
+                comment={root}
+                score={scoreById.get(root.id) ?? 0}
+                myVote={myVoteById.get(root.id) ?? null}
+                status="visible"
+                isOwner={false}
+                isAuthed={currentUserId !== null}
+                isReported={false}
+                canDelete={false}
+                onDelete={onDelete}
+                onReport={onReport}
+                onVoteChange={onVoteChange}
+                onUnauthedAttempt={onUnauthedAttempt}
+                onStartReply={undefined}
+                isPlaceholder
+              />
+            );
+          } else if (root.status === "hidden_by_votes" && !expanded && !isOwner) {
+            rootDisplay = (
+              <CommentCollapsedRow
+                commentId={root.id}
+                reason="votes"
+                score={scoreById.get(root.id)}
+                canExpand
+                onExpand={onExpand}
+              />
+            );
+          } else if (root.status === "blinded_by_report" && !isOwner) {
+            rootDisplay = (
+              <CommentCollapsedRow
+                commentId={root.id}
+                reason="reports"
+                canExpand={false}
+              />
+            );
+          } else {
+            const canDeleteRoot = isOwner;
+            rootDisplay = (
+              <CommentItem
+                comment={root}
+                score={scoreById.get(root.id) ?? 0}
+                myVote={myVoteById.get(root.id) ?? null}
+                status={root.status}
+                isOwner={isOwner}
+                isAuthed={currentUserId !== null}
+                isReported={reportedIds.has(root.id)}
+                canDelete={canDeleteRoot}
+                onDelete={onDelete}
+                onReport={onReport}
+                onVoteChange={onVoteChange}
+                onUnauthedAttempt={onUnauthedAttempt}
+                onStartReply={
+                  currentUserId === null ? undefined : onStartReply
+                }
+              />
+            );
+          }
+
           return (
             <div
               key={root.id}
               style={{ display: "flex", flexDirection: "column", gap: 0 }}
             >
-              <CommentItem
-                comment={root}
-                score={scoreById.get(root.id) ?? 0}
-                myVote={myVoteById.get(root.id) ?? null}
-                isOwner={
-                  currentUserId !== null && root.user_id === currentUserId
-                }
-                isAuthed={currentUserId !== null}
-                canDelete={canDeleteRoot}
-                onDelete={onDelete}
-                onVoteChange={onVoteChange}
-                onUnauthedAttempt={onUnauthedAttempt}
-                onStartReply={
-                  root.isPlaceholder || currentUserId === null
-                    ? undefined
-                    : onStartReply
-                }
-                isPlaceholder={root.isPlaceholder}
-              />
+              {rootDisplay}
               {showGroup && (
                 <CommentReplyGroup
                   questionId={questionId}
@@ -113,13 +166,17 @@ export default function CommentList({
                   replies={root.replies}
                   scoreById={scoreById}
                   myVoteById={myVoteById}
+                  reportedIds={reportedIds}
+                  expandedIds={expandedIds}
                   currentUserId={currentUserId}
                   isComposerOpen={composerOpenForRoot}
                   onSubmitReply={onSubmitReply}
                   onCancelReply={onCancelReply}
                   onDelete={onDelete}
+                  onReport={onReport}
                   onVoteChange={onVoteChange}
                   onUnauthedAttempt={onUnauthedAttempt}
+                  onExpand={onExpand}
                 />
               )}
             </div>
