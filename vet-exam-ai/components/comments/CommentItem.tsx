@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Trash2, MessageCircle } from "lucide-react";
 import type { CommentType } from "../../lib/comments/schema";
 
 export type CommentItemData = {
@@ -16,6 +16,9 @@ type Props = {
   comment: CommentItemData;
   canDelete: boolean;
   onDelete: (id: string) => void;
+  onStartReply?: (id: string) => void;
+  isReply?: boolean;
+  isPlaceholder?: boolean;
 };
 
 const TYPE_META: Record<CommentType, { label: string; color: string; bg: string }> = {
@@ -38,10 +41,37 @@ function formatRelative(iso: string): string {
   return new Date(iso).toLocaleDateString("ko-KR");
 }
 
-export default function CommentItem({ comment, canDelete, onDelete }: Props) {
+export default function CommentItem({
+  comment,
+  canDelete,
+  onDelete,
+  onStartReply,
+  isReply,
+  isPlaceholder,
+}: Props) {
+  if (isPlaceholder) {
+    return (
+      <div
+        style={{
+          background: "var(--bg)",
+          border: "1px dashed var(--border)",
+          borderRadius: 10,
+          padding: "12px 14px",
+          fontSize: 12,
+          color: "var(--text-faint)",
+          fontStyle: "italic",
+        }}
+      >
+        [작성자에 의해 삭제된 댓글]
+      </div>
+    );
+  }
+
   const meta = TYPE_META[comment.type];
   const author =
-    comment.user_id === null ? "탈퇴한 사용자" : comment.authorNickname ?? "익명";
+    comment.user_id === null
+      ? "탈퇴한 사용자"
+      : comment.authorNickname ?? `익명-${comment.user_id.slice(-4)}`;
 
   return (
     <div
@@ -56,39 +86,64 @@ export default function CommentItem({ comment, canDelete, onDelete }: Props) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
-        <span
-          style={{
-            background: meta.bg,
-            color: meta.color,
-            borderRadius: 999,
-            padding: "2px 8px",
-            fontWeight: 700,
-            letterSpacing: "0.02em",
-          }}
-        >
-          {meta.label}
-        </span>
-        <span style={{ color: "var(--text)", fontWeight: 600 }}>@{author}</span>
-        <span style={{ color: "var(--text-faint)" }}>· {formatRelative(comment.created_at)}</span>
-        {canDelete && (
-          <button
-            type="button"
-            onClick={() => onDelete(comment.id)}
-            aria-label="댓글 삭제"
+        {!isReply && (
+          <span
             style={{
-              marginLeft: "auto",
-              background: "transparent",
-              border: "none",
-              color: "var(--text-faint)",
-              cursor: "pointer",
-              padding: 4,
-              display: "inline-flex",
-              alignItems: "center",
+              background: meta.bg,
+              color: meta.color,
+              borderRadius: 999,
+              padding: "2px 8px",
+              fontWeight: 700,
+              letterSpacing: "0.02em",
             }}
           >
-            <Trash2 size={14} />
-          </button>
+            {meta.label}
+          </span>
         )}
+        <span style={{ color: "var(--text)", fontWeight: 600 }}>@{author}</span>
+        <span style={{ color: "var(--text-faint)" }}>· {formatRelative(comment.created_at)}</span>
+        <div style={{ marginLeft: "auto", display: "inline-flex", gap: 4 }}>
+          {!isReply && onStartReply && (
+            <button
+              type="button"
+              onClick={() => onStartReply(comment.id)}
+              aria-label="답글 달기"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--text-faint)",
+                cursor: "pointer",
+                padding: 4,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                fontSize: 11,
+                fontWeight: 600,
+              }}
+            >
+              <MessageCircle size={14} />
+              답글
+            </button>
+          )}
+          {canDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(comment.id)}
+              aria-label="댓글 삭제"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--text-faint)",
+                cursor: "pointer",
+                padding: 4,
+                display: "inline-flex",
+                alignItems: "center",
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div

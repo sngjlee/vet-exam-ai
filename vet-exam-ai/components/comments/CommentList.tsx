@@ -1,15 +1,35 @@
 "use client";
 
 import CommentItem, { type CommentItemData } from "./CommentItem";
+import CommentReplyGroup from "./CommentReplyGroup";
+
+export type RootWithReplies = CommentItemData & {
+  replies: CommentItemData[];
+  isPlaceholder?: boolean;
+};
 
 type Props = {
-  comments: CommentItemData[];
+  questionId: string;
+  roots: RootWithReplies[];
   currentUserId: string | null;
+  replyingToId: string | null;
+  onStartReply: (id: string) => void;
+  onCancelReply: () => void;
+  onSubmitReply: (parentId: string, newComment: CommentItemData) => void;
   onDelete: (id: string) => void;
 };
 
-export default function CommentList({ comments, currentUserId, onDelete }: Props) {
-  if (comments.length === 0) {
+export default function CommentList({
+  questionId,
+  roots,
+  currentUserId,
+  replyingToId,
+  onStartReply,
+  onCancelReply,
+  onSubmitReply,
+  onDelete,
+}: Props) {
+  if (roots.length === 0) {
     return (
       <div
         style={{
@@ -27,15 +47,45 @@ export default function CommentList({ comments, currentUserId, onDelete }: Props
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {comments.map((c) => (
-        <CommentItem
-          key={c.id}
-          comment={c}
-          canDelete={currentUserId !== null && c.user_id === currentUserId}
-          onDelete={onDelete}
-        />
-      ))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {roots.map((root) => {
+        const composerOpenForRoot = replyingToId === root.id;
+        const showGroup = root.replies.length > 0 || composerOpenForRoot;
+        const canDeleteRoot =
+          !root.isPlaceholder &&
+          currentUserId !== null &&
+          root.user_id === currentUserId;
+        return (
+          <div
+            key={root.id}
+            style={{ display: "flex", flexDirection: "column", gap: 0 }}
+          >
+            <CommentItem
+              comment={root}
+              canDelete={canDeleteRoot}
+              onDelete={onDelete}
+              onStartReply={
+                root.isPlaceholder || currentUserId === null
+                  ? undefined
+                  : onStartReply
+              }
+              isPlaceholder={root.isPlaceholder}
+            />
+            {showGroup && (
+              <CommentReplyGroup
+                questionId={questionId}
+                parentId={root.id}
+                replies={root.replies}
+                currentUserId={currentUserId}
+                isComposerOpen={composerOpenForRoot}
+                onSubmitReply={onSubmitReply}
+                onCancelReply={onCancelReply}
+                onDelete={onDelete}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
