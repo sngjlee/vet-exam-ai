@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "../../lib/supabase/client";
 import CommentList, { type RootWithReplies } from "./CommentList";
 import CommentComposer from "./CommentComposer";
@@ -162,18 +162,32 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
 
   // Scroll to + ring-highlight a target comment after roots are populated.
   // Used when arriving via a notification deep-link (?comment=<id>).
+  // Run-once per highlightCommentId — re-fires on roots changes (e.g. user
+  // posts a new comment) would otherwise scroll back to the target.
+  const highlightedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!highlightCommentId) return;
+    if (!highlightCommentId) {
+      highlightedRef.current = null;
+      return;
+    }
+    if (highlightedRef.current === highlightCommentId) return;
     if (status !== "ready") return;
     const el = document.getElementById(`comment-${highlightCommentId}`);
     if (!el) return; // blinded / removed / not in last 50 — silent
 
+    highlightedRef.current = highlightCommentId;
     el.scrollIntoView({ block: "center", behavior: "smooth" });
 
-    const RING_CLASSES = ["ring-2", "ring-[var(--teal)]"];
-    el.classList.add(...RING_CLASSES);
+    // Inline boxShadow ring — consistent with the comments module's style-based
+    // approach (no Tailwind utilities elsewhere in this folder). Snapshot the
+    // previous value so cleanup restores anything we displaced.
+    const prev = el.style.boxShadow;
+    const prevTransition = el.style.transition;
+    el.style.transition = "box-shadow 200ms ease-out";
+    el.style.boxShadow = "0 0 0 2px var(--teal)";
     const timer = window.setTimeout(() => {
-      el.classList.remove(...RING_CLASSES);
+      el.style.boxShadow = prev;
+      el.style.transition = prevTransition;
     }, 1500);
     return () => window.clearTimeout(timer);
   }, [highlightCommentId, status, roots]);
