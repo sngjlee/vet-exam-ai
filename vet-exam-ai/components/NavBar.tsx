@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../lib/hooks/useAuth";
 import { useDueCountCtx } from "../lib/context/DueCountContext";
 import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User, CirclePlay } from "lucide-react";
+import NotificationBell from "./notifications/NotificationBell";
 
 export default function NavBar() {
   const { user, loading, signOut } = useAuth();
@@ -83,6 +84,10 @@ export default function NavBar() {
                 )}
               </Link>
             </>
+          )}
+
+          {!loading && user && (
+            <NotificationBell />
           )}
 
           <div className="h-6 w-px mx-2" style={{ background: "var(--border)" }}></div>

@@ -52,6 +52,7 @@ export default function CommentItem({
   if (isPlaceholder) {
     return (
       <div
+        id={`comment-${comment.id}`}
         style={{
           background: "var(--bg)",
           border: "1px dashed var(--border)",
@@ -75,6 +76,7 @@ export default function CommentItem({
 
   return (
     <div
+      id={`comment-${comment.id}`}
       style={{
         background: "var(--bg)",
         border: "1px solid var(--border)",
