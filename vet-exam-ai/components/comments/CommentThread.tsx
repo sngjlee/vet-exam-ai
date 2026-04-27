@@ -197,7 +197,6 @@ export default function CommentThread({ questionId }: Props) {
 
   async function handleDelete(id: string) {
     if (!window.confirm("이 댓글을 삭제하시겠습니까?")) return;
-    const previous = roots;
     // Optimistic remove — try root first, then reply within each root.
     setRoots((prev) => {
       // If id is a root, drop it (replies stay; on next fetch they'll become orphan placeholder).
@@ -214,7 +213,9 @@ export default function CommentThread({ questionId }: Props) {
       const res = await fetch(`/api/comments/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("삭제 실패");
     } catch {
-      setRoots(previous);
+      // Refetch to recover correct state — avoids stale-snapshot rollback wiping
+      // intervening reply submissions.
+      setReloadKey((k) => k + 1);
       window.alert("댓글 삭제에 실패했습니다. 다시 시도해주세요.");
     }
   }
