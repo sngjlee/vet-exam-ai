@@ -9,6 +9,7 @@ import type { CommentType } from "../../lib/comments/schema";
 
 type Props = {
   questionId: string;
+  highlightCommentId?: string;
 };
 
 type Status = "loading" | "ready" | "error";
@@ -23,7 +24,7 @@ type CommentRow = {
   status: string;
 };
 
-export default function CommentThread({ questionId }: Props) {
+export default function CommentThread({ questionId, highlightCommentId }: Props) {
   const [status, setStatus] = useState<Status>("loading");
   const [roots, setRoots] = useState<RootWithReplies[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -158,6 +159,24 @@ export default function CommentThread({ questionId }: Props) {
       cancelled = true;
     };
   }, [questionId, reloadKey]);
+
+  // Scroll to + ring-highlight a target comment after roots are populated.
+  // Used when arriving via a notification deep-link (?comment=<id>).
+  useEffect(() => {
+    if (!highlightCommentId) return;
+    if (status !== "ready") return;
+    const el = document.getElementById(`comment-${highlightCommentId}`);
+    if (!el) return; // blinded / removed / not in last 50 — silent
+
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+
+    const RING_CLASSES = ["ring-2", "ring-[var(--teal)]"];
+    el.classList.add(...RING_CLASSES);
+    const timer = window.setTimeout(() => {
+      el.classList.remove(...RING_CLASSES);
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [highlightCommentId, status, roots]);
 
   function handleRootSubmitted(newComment: CommentItemData) {
     setRoots((prev) => [
