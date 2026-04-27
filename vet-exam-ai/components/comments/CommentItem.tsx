@@ -69,7 +69,9 @@ export default function CommentItem({
 
   const meta = TYPE_META[comment.type];
   const author =
-    comment.user_id === null ? "탈퇴한 사용자" : comment.authorNickname ?? "익명";
+    comment.user_id === null
+      ? "탈퇴한 사용자"
+      : comment.authorNickname ?? `익명-${comment.user_id.slice(-4)}`;
 
   return (
     <div
