@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "../../lib/supabase/client";
-import CommentList from "./CommentList";
+import CommentList, { type RootWithReplies } from "./CommentList";
 import CommentComposer from "./CommentComposer";
 import type { CommentItemData } from "./CommentItem";
 import type { CommentType } from "../../lib/comments/schema";
@@ -16,6 +16,7 @@ type Status = "loading" | "ready" | "error";
 type CommentRow = {
   id: string;
   user_id: string | null;
+  parent_id: string | null;
   type: CommentType;
   body_html: string;
   created_at: string;
@@ -24,9 +25,10 @@ type CommentRow = {
 
 export default function CommentThread({ questionId }: Props) {
   const [status, setStatus] = useState<Status>("loading");
-  const [comments, setComments] = useState<CommentItemData[]>([]);
+  const [roots, setRoots] = useState<RootWithReplies[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserNickname, setCurrentUserNickname] = useState<string | null>(null);
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function CommentThread({ questionId }: Props) {
 
       const { data: commentRows, error } = await supabase
         .from("comments")
-        .select("id, user_id, type, body_html, created_at, status")
+        .select("id, user_id, parent_id, type, body_html, created_at, status")
         .eq("question_id", questionId)
         .eq("status", "visible")
         .order("created_at", { ascending: false })
@@ -69,6 +71,7 @@ export default function CommentThread({ questionId }: Props) {
       }
       const rows = (commentRows ?? []) as CommentRow[];
 
+      // Nickname map (separate query — embedded join not available; see comment_core_done memory)
       const userIds = Array.from(
         new Set(rows.map((r) => r.user_id).filter((v): v is string => !!v))
       );
@@ -88,15 +91,66 @@ export default function CommentThread({ questionId }: Props) {
         }
       }
 
-      const mapped: CommentItemData[] = rows.map((row) => ({
+      const toItem = (row: CommentRow): CommentItemData => ({
         id: row.id,
         user_id: row.user_id,
         type: row.type,
         body_html: row.body_html,
         created_at: row.created_at,
         authorNickname: row.user_id ? nicknameById.get(row.user_id) ?? null : null,
+      });
+
+      // Group: rows are already created_at desc.
+      const rootRows = rows.filter((r) => r.parent_id === null);
+      const replyRows = rows.filter((r) => r.parent_id !== null);
+
+      const repliesByParent = new Map<string, CommentRow[]>();
+      for (const r of replyRows) {
+        const pid = r.parent_id as string;
+        const arr = repliesByParent.get(pid) ?? [];
+        arr.push(r);
+        repliesByParent.set(pid, arr);
+      }
+
+      // Sort each parent's replies asc (caller spec: created_at asc).
+      for (const [pid, arr] of repliesByParent) {
+        arr.sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        repliesByParent.set(pid, arr);
+      }
+
+      const knownRootIds = new Set(rootRows.map((r) => r.id));
+      const assembled: RootWithReplies[] = rootRows.map((row) => ({
+        ...toItem(row),
+        replies: (repliesByParent.get(row.id) ?? []).map(toItem),
       }));
-      setComments(mapped);
+
+      // Synthesize placeholder roots for orphan replies (parent hidden).
+      for (const [pid, arr] of repliesByParent) {
+        if (!knownRootIds.has(pid)) {
+          const oldestReply = arr[0]; // arr is sorted asc — oldest first
+          assembled.push({
+            id: pid,
+            user_id: null,
+            type: "discussion",
+            body_html: "",
+            created_at: oldestReply.created_at,
+            authorNickname: null,
+            replies: arr.map(toItem),
+            isPlaceholder: true,
+          });
+        }
+      }
+
+      // Final order — desc by created_at across all roots (real + placeholder).
+      assembled.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setRoots(assembled);
       setStatus("ready");
     }
     load();
@@ -105,22 +159,62 @@ export default function CommentThread({ questionId }: Props) {
     };
   }, [questionId, reloadKey]);
 
-  function handleSubmitted(newComment: CommentItemData) {
-    setComments((prev) => [
-      { ...newComment, authorNickname: currentUserNickname },
+  function handleRootSubmitted(newComment: CommentItemData) {
+    setRoots((prev) => [
+      {
+        ...newComment,
+        authorNickname: currentUserNickname,
+        replies: [],
+      },
       ...prev,
     ]);
   }
 
+  function handleSubmitReply(parentId: string, newComment: CommentItemData) {
+    setRoots((prev) =>
+      prev.map((root) =>
+        root.id === parentId
+          ? {
+              ...root,
+              replies: [
+                ...root.replies,
+                { ...newComment, authorNickname: currentUserNickname },
+              ],
+            }
+          : root
+      )
+    );
+    setReplyingToId(null);
+  }
+
+  function handleStartReply(id: string) {
+    setReplyingToId(id);
+  }
+
+  function handleCancelReply() {
+    setReplyingToId(null);
+  }
+
   async function handleDelete(id: string) {
     if (!window.confirm("이 댓글을 삭제하시겠습니까?")) return;
-    const previous = comments;
-    setComments((prev) => prev.filter((c) => c.id !== id));
+    const previous = roots;
+    // Optimistic remove — try root first, then reply within each root.
+    setRoots((prev) => {
+      // If id is a root, drop it (replies stay; on next fetch they'll become orphan placeholder).
+      if (prev.some((r) => r.id === id && !r.isPlaceholder)) {
+        return prev.filter((r) => r.id !== id);
+      }
+      // Otherwise it's a reply — strip from the matching root.
+      return prev.map((root) => ({
+        ...root,
+        replies: root.replies.filter((rep) => rep.id !== id),
+      }));
+    });
     try {
       const res = await fetch(`/api/comments/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("삭제 실패");
     } catch {
-      setComments(previous);
+      setRoots(previous);
       window.alert("댓글 삭제에 실패했습니다. 다시 시도해주세요.");
     }
   }
@@ -181,12 +275,17 @@ export default function CommentThread({ questionId }: Props) {
       {status === "ready" && (
         <>
           <CommentList
-            comments={comments}
+            questionId={questionId}
+            roots={roots}
             currentUserId={currentUserId}
+            replyingToId={replyingToId}
+            onStartReply={handleStartReply}
+            onCancelReply={handleCancelReply}
+            onSubmitReply={handleSubmitReply}
             onDelete={handleDelete}
           />
           {currentUserId ? (
-            <CommentComposer questionId={questionId} onSubmitted={handleSubmitted} />
+            <CommentComposer questionId={questionId} onSubmitted={handleRootSubmitted} />
           ) : (
             <div
               style={{
