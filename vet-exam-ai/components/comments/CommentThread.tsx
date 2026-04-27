@@ -3,12 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "../../lib/supabase/client";
 import CommentList, { type RootWithReplies } from "./CommentList";
+import type { ReplyRow } from "./CommentReplyGroup";
 import CommentComposer from "./CommentComposer";
+import CommentReportModal from "./CommentReportModal";
 import type { CommentItemData } from "./CommentItem";
 import type { CommentType } from "../../lib/comments/schema";
 import type { SortMode } from "../../lib/comments/voteSchema";
 
 type VoteValue = 1 | -1;
+type CommentStatus = "visible" | "hidden_by_votes" | "blinded_by_report";
 
 type Props = {
   questionId: string;
@@ -24,19 +27,28 @@ type CommentRow = {
   type: CommentType;
   body_html: string;
   created_at: string;
-  status: string;
+  status: CommentStatus;
   vote_score: number;
 };
+
+const VISIBLE_STATUSES: CommentStatus[] = [
+  "visible",
+  "hidden_by_votes",
+  "blinded_by_report",
+];
 
 export default function CommentThread({ questionId, highlightCommentId }: Props) {
   const [status, setStatus] = useState<Status>("loading");
   const [roots, setRoots] = useState<RootWithReplies[]>([]);
   const [scoreById, setScoreById] = useState<Map<string, number>>(new Map());
   const [myVoteById, setMyVoteById] = useState<Map<string, VoteValue>>(new Map());
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [sortMode, setSortMode] = useState<SortMode>("score");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserNickname, setCurrentUserNickname] = useState<string | null>(null);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [reportingId, setReportingId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
@@ -47,7 +59,6 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     toastTimerRef.current = window.setTimeout(() => setToast(null), 2400);
   }
 
-  // Fetch comments + roots/replies grouping
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -72,12 +83,11 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         setCurrentUserNickname(null);
       }
 
-      const orderColumn = sortMode === "score" ? "vote_score" : "created_at";
       let query = supabase
         .from("comments")
         .select("id, user_id, parent_id, type, body_html, created_at, status, vote_score")
         .eq("question_id", questionId)
-        .eq("status", "visible")
+        .in("status", VISIBLE_STATUSES)
         .limit(50);
       if (sortMode === "score") {
         query = query
@@ -97,14 +107,10 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       }
       const rows = (commentRows ?? []) as CommentRow[];
 
-      // Build score map (denormalized vote_score from each row)
       const newScores = new Map<string, number>();
       for (const r of rows) newScores.set(r.id, r.vote_score ?? 0);
       setScoreById(newScores);
-      // Suppress unused-var lint by referencing orderColumn (we already used it implicitly)
-      void orderColumn;
 
-      // Nickname stitch — embedded join unavailable.
       const userIds = Array.from(
         new Set(rows.map((r) => r.user_id).filter((v): v is string => !!v))
       );
@@ -154,7 +160,11 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       const knownRootIds = new Set(rootRows.map((r) => r.id));
       const assembled: RootWithReplies[] = rootRows.map((row) => ({
         ...toItem(row),
-        replies: (repliesByParent.get(row.id) ?? []).map(toItem),
+        status: row.status,
+        replies: (repliesByParent.get(row.id) ?? []).map<ReplyRow>((rr) => ({
+          ...toItem(rr),
+          status: rr.status,
+        })),
       }));
 
       for (const [pid, arr] of repliesByParent) {
@@ -167,13 +177,16 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             body_html: "",
             created_at: oldestReply.created_at,
             authorNickname: null,
-            replies: arr.map(toItem),
+            status: "visible",
+            replies: arr.map<ReplyRow>((rr) => ({
+              ...toItem(rr),
+              status: rr.status,
+            })),
             isPlaceholder: true,
           });
         }
       }
 
-      // Apply sort to roots in-memory (placeholders also sorted in)
       if (sortMode === "score") {
         assembled.sort((a, b) => {
           const sa = newScores.get(a.id) ?? 0;
@@ -197,7 +210,6 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     };
   }, [questionId, sortMode, reloadKey]);
 
-  // Fetch my-votes — independent of sortMode (votes don't change with sort)
   useEffect(() => {
     let cancelled = false;
     async function loadVotes() {
@@ -218,7 +230,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         }
         setMyVoteById(m);
       } catch {
-        // silent — votes optional
+        /* silent */
       }
     }
     loadVotes();
@@ -227,7 +239,31 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     };
   }, [questionId, currentUserId, reloadKey]);
 
-  // highlightCommentId scroll effect (existing — preserved)
+  useEffect(() => {
+    let cancelled = false;
+    async function loadReports() {
+      if (!currentUserId) {
+        setReportedIds(new Set());
+        return;
+      }
+      try {
+        const res = await fetch(
+          `/api/comments/reports-mine?question_id=${encodeURIComponent(questionId)}`
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as string[];
+        if (cancelled) return;
+        setReportedIds(new Set(data));
+      } catch {
+        /* silent */
+      }
+    }
+    loadReports();
+    return () => {
+      cancelled = true;
+    };
+  }, [questionId, currentUserId, reloadKey]);
+
   const highlightedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!highlightCommentId) {
@@ -257,6 +293,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     setRoots((prev) => [
       {
         ...newComment,
+        status: "visible",
         authorNickname: currentUserNickname,
         replies: [],
       },
@@ -277,7 +314,11 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
               ...root,
               replies: [
                 ...root.replies,
-                { ...newComment, authorNickname: currentUserNickname },
+                {
+                  ...newComment,
+                  status: "visible",
+                  authorNickname: currentUserNickname,
+                },
               ],
             }
           : root
@@ -294,7 +335,6 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
   function handleStartReply(id: string) {
     setReplyingToId(id);
   }
-
   function handleCancelReply() {
     setReplyingToId(null);
   }
@@ -328,7 +368,6 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     value: VoteValue,
     prev: VoteValue | null
   ) {
-    // optimistic — myVote and score
     const prevScore = scoreById.get(commentId) ?? 0;
     let optimisticVote: VoteValue | null;
     let scoreDelta: number;
@@ -362,7 +401,6 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         throw new Error(`vote failed: ${res.status}`);
       }
       const data = (await res.json()) as { vote: 1 | -1 | null };
-      // Reconcile if server result diverges (e.g. race)
       setMyVoteById((m) => {
         const next = new Map(m);
         if (data.vote === null) next.delete(commentId);
@@ -370,7 +408,6 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         return next;
       });
     } catch {
-      // rollback both
       setMyVoteById((m) => {
         const next = new Map(m);
         if (prev === null) next.delete(commentId);
@@ -384,6 +421,40 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       });
       showToast("투표 처리에 실패했습니다.");
     }
+  }
+
+  function handleReport(id: string) {
+    if (!currentUserId) {
+      showToast("로그인하면 신고할 수 있습니다");
+      return;
+    }
+    setReportingId(id);
+  }
+
+  function handleReportSubmitted(id: string) {
+    setReportedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    showToast("신고가 접수되었습니다.");
+  }
+
+  function handleAlreadyReported(id: string) {
+    setReportedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    showToast("이미 신고하신 댓글입니다.");
+  }
+
+  function handleExpand(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
   }
 
   return (
@@ -446,6 +517,8 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             roots={roots}
             scoreById={scoreById}
             myVoteById={myVoteById}
+            reportedIds={reportedIds}
+            expandedIds={expandedIds}
             currentUserId={currentUserId}
             sortMode={sortMode}
             onSortChange={setSortMode}
@@ -454,8 +527,10 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             onCancelReply={handleCancelReply}
             onSubmitReply={handleSubmitReply}
             onDelete={handleDelete}
+            onReport={handleReport}
             onVoteChange={handleVoteChange}
             onUnauthedAttempt={handleUnauthedAttempt}
+            onExpand={handleExpand}
           />
           {currentUserId ? (
             <CommentComposer questionId={questionId} onSubmitted={handleRootSubmitted} />
@@ -475,6 +550,16 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             </div>
           )}
         </>
+      )}
+
+      {reportingId && (
+        <CommentReportModal
+          commentId={reportingId}
+          open={!!reportingId}
+          onClose={() => setReportingId(null)}
+          onSubmitted={handleReportSubmitted}
+          onAlreadyReported={handleAlreadyReported}
+        />
       )}
 
       {toast && (
