@@ -2,22 +2,30 @@
 
 import CommentItem, { type CommentItemData } from "./CommentItem";
 import CommentReplyComposer from "./CommentReplyComposer";
+import CommentCollapsedRow from "./CommentCollapsedRow";
 
 type VoteValue = 1 | -1;
+type CommentStatus = "visible" | "hidden_by_votes" | "blinded_by_report";
+
+export type ReplyRow = CommentItemData & { status: CommentStatus };
 
 type Props = {
   questionId: string;
   parentId: string;
-  replies: CommentItemData[];
+  replies: ReplyRow[];
   scoreById: Map<string, number>;
   myVoteById: Map<string, VoteValue>;
+  reportedIds: Set<string>;
+  expandedIds: Set<string>;
   currentUserId: string | null;
   isComposerOpen: boolean;
   onSubmitReply: (parentId: string, newComment: CommentItemData) => void;
   onCancelReply: () => void;
   onDelete: (id: string) => void;
+  onReport: (id: string) => void;
   onVoteChange: (commentId: string, value: VoteValue, prev: VoteValue | null) => void;
   onUnauthedAttempt?: () => void;
+  onExpand: (id: string) => void;
 };
 
 export default function CommentReplyGroup({
@@ -26,13 +34,17 @@ export default function CommentReplyGroup({
   replies,
   scoreById,
   myVoteById,
+  reportedIds,
+  expandedIds,
   currentUserId,
   isComposerOpen,
   onSubmitReply,
   onCancelReply,
   onDelete,
+  onReport,
   onVoteChange,
   onUnauthedAttempt,
+  onExpand,
 }: Props) {
   return (
     <div
@@ -46,21 +58,51 @@ export default function CommentReplyGroup({
         marginTop: 8,
       }}
     >
-      {replies.map((r) => (
-        <CommentItem
-          key={r.id}
-          comment={r}
-          score={scoreById.get(r.id) ?? 0}
-          myVote={myVoteById.get(r.id) ?? null}
-          isOwner={currentUserId !== null && r.user_id === currentUserId}
-          isAuthed={currentUserId !== null}
-          canDelete={currentUserId !== null && r.user_id === currentUserId}
-          onDelete={onDelete}
-          onVoteChange={onVoteChange}
-          onUnauthedAttempt={onUnauthedAttempt}
-          isReply
-        />
-      ))}
+      {replies.map((r) => {
+        const isOwner = currentUserId !== null && r.user_id === currentUserId;
+        const expanded = expandedIds.has(r.id);
+
+        if (r.status === "hidden_by_votes" && !expanded && !isOwner) {
+          return (
+            <CommentCollapsedRow
+              key={r.id}
+              commentId={r.id}
+              reason="votes"
+              score={scoreById.get(r.id)}
+              canExpand
+              onExpand={onExpand}
+            />
+          );
+        }
+        if (r.status === "blinded_by_report" && !isOwner) {
+          return (
+            <CommentCollapsedRow
+              key={r.id}
+              commentId={r.id}
+              reason="reports"
+              canExpand={false}
+            />
+          );
+        }
+        return (
+          <CommentItem
+            key={r.id}
+            comment={r}
+            score={scoreById.get(r.id) ?? 0}
+            myVote={myVoteById.get(r.id) ?? null}
+            status={r.status}
+            isOwner={isOwner}
+            isAuthed={currentUserId !== null}
+            isReported={reportedIds.has(r.id)}
+            canDelete={isOwner}
+            onDelete={onDelete}
+            onReport={onReport}
+            onVoteChange={onVoteChange}
+            onUnauthedAttempt={onUnauthedAttempt}
+            isReply
+          />
+        );
+      })}
       {isComposerOpen && (
         <CommentReplyComposer
           questionId={questionId}
