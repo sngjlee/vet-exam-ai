@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import type { Question } from "../lib/questions";
+import { formatPublicId } from "../lib/questions";
 import { CheckCircle2, XCircle, ArrowRight, HelpCircle, Clock } from "lucide-react";
 import CommentThread from "./comments/CommentThread";
 
@@ -216,7 +217,7 @@ export default function QuestionCard({
               fontFamily: "var(--font-mono)",
             }}
           >
-            Q{String(questionNumber).padStart(3, "0")}
+            {formatPublicId(question)}
           </span>
         </div>
 

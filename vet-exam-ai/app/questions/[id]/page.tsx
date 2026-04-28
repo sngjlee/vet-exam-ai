@@ -13,6 +13,7 @@ type Status = "loading" | "ready" | "not_found" | "error";
 
 type QuestionDbRow = {
   id: string;
+  public_id: string | null;
   question: string;
   choices: string[];
   answer: string;
@@ -49,7 +50,7 @@ export default function QuestionDetailPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("questions")
-        .select("id, question, choices, answer, explanation, category")
+        .select("id, public_id, question, choices, answer, explanation, category")
         .eq("id", questionId)
         .maybeSingle<QuestionDbRow>();
 
@@ -65,6 +66,7 @@ export default function QuestionDetailPage() {
       }
       setQuestion({
         id: data.id,
+        publicId: data.public_id ?? undefined,
         question: data.question,
         choices: data.choices,
         answer: data.answer,

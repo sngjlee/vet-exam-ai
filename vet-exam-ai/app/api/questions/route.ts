@@ -6,6 +6,7 @@ import type { QuestionRow } from "../../../lib/supabase/types";
 type QuestionApiRow = Pick<
   QuestionRow,
   | "id"
+  | "public_id"
   | "question"
   | "choices"
   | "answer"
@@ -23,6 +24,7 @@ type QuestionApiRow = Pick<
 function toQuestion(row: QuestionApiRow): Question {
   return {
     id: row.id,
+    publicId: row.public_id ?? undefined,
     question: row.question,
     choices: row.choices,
     answer: row.answer,
@@ -50,7 +52,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("questions")
       .select(
-        "id, question, choices, answer, explanation, category, subject, topic, difficulty, source, year, tags, is_active"
+        "id, public_id, question, choices, answer, explanation, category, subject, topic, difficulty, source, year, tags, is_active"
       )
       .eq("is_active", true)
       .order("category", { ascending: true })

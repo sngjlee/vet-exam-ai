@@ -40,6 +40,7 @@ export interface Database {
       questions: {
         Row: {
           id: string;           // text — matches bank.ts ids ("q1", "q2" …)
+          public_id: string;    // KVLE-0001 — copyright-safe display id (assigned by trigger)
           question: string;
           choices: string[];
           answer: string;
@@ -50,8 +51,8 @@ export interface Database {
           difficulty: "easy" | "medium" | "hard" | null;
           source: "manual" | "past_exam" | "ai_generated" | null;
           year: number | null;
-          session: number | null;          // 1~4 교시
-          round: number | null;            // 국시 회차 (year = round + 1956)
+          session: number | null;          // 1~4 교시 (internal, never displayed)
+          round: number | null;            // 국시 회차 (internal, never displayed; year = round + 1956)
           community_notes: string | null;  // vet40 댓글 — 수험생 팁
           tags: string[] | null;
           is_active: boolean;
@@ -59,6 +60,7 @@ export interface Database {
         };
         Insert: {
           id: string;
+          public_id?: string;   // optional — trigger auto-assigns when omitted
           question: string;
           choices: string[];
           answer: string;
@@ -77,6 +79,7 @@ export interface Database {
           created_at?: string;
         };
         Update: {
+          public_id?: string;
           question?: string;
           choices?: string[];
           answer?: string;

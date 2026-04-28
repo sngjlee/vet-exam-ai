@@ -2,6 +2,7 @@
 
 import { CheckCircle2, HelpCircle } from "lucide-react";
 import type { Question } from "../lib/questions";
+import { formatPublicId } from "../lib/questions";
 
 const SUBJECT_COLORS: Record<string, string> = {
   "약리학": "#9B6FD4",
@@ -61,7 +62,7 @@ export default function QuestionReadOnly({ question }: Props) {
             fontFamily: "var(--font-mono)",
           }}
         >
-          {question.id}
+          {formatPublicId(question)}
         </span>
       </div>
 
