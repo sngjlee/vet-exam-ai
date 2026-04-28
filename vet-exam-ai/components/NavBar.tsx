@@ -24,7 +24,7 @@ export default function NavBar() {
   const isActive = (path: string) => pathname === path;
 
   const linkClass = (path: string) =>
-    `flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 kvle-touch ${
+    `flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-2 text-sm font-medium transition-all duration-200 kvle-touch ${
       isActive(path)
         ? "text-[var(--teal)] bg-[var(--teal-dim)]"
         : "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-raised)]"
@@ -38,14 +38,14 @@ export default function NavBar() {
         borderBottom: "1px solid var(--rule)",
       }}
     >
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-4">
         {/* Logo */}
-        <Link href="/dashboard" className="brand-logo-wrap">
+        <Link href="/dashboard" className="brand-logo-wrap shrink-0">
           <Image src="/logo.png" alt="KVLE 수의미래연구소" width={120} height={40} style={{ objectFit: "contain" }} priority />
         </Link>
 
         {/* Nav */}
-        <nav className="flex items-center gap-1 text-sm font-medium">
+        <nav className="flex min-w-0 items-center gap-1 text-sm font-medium">
           <Link href="/wrong-notes" className={linkClass("/wrong-notes")} aria-label="오답 노트">
             <RotateCcw size={16} />
             <span className="hidden sm:inline">오답 노트</span>

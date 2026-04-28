@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, ListChecks } from "lucide-react";
-import { createClient } from "../../../lib/supabase/client";
 import { useAuth } from "../../../lib/hooks/useAuth";
+import { useQuestions } from "../../../lib/hooks/useQuestions";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import QuestionReadOnly from "../../../components/QuestionReadOnly";
 import CommentThread from "../../../components/comments/CommentThread";
@@ -17,21 +17,16 @@ import {
 
 type Status = "loading" | "ready" | "not_found" | "error";
 
-type QuestionDbRow = {
-  id: string;
-  public_id: string | null;
-  question: string;
-  choices: string[];
-  answer: string;
-  explanation: string;
-  category: string;
-};
-
 export default function QuestionDetailPage() {
   const params = useParams<{ id: string }>();
   const search = useSearchParams();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const {
+    questions,
+    loading: questionsLoading,
+    error: questionsError,
+  } = useQuestions();
 
   const questionId = params?.id ?? "";
   const highlightCommentId = search?.get("comment") ?? undefined;
@@ -50,8 +45,9 @@ export default function QuestionDetailPage() {
   }, [questionId]);
 
   const navInfo = useMemo(() => {
-    if (!listContext || !questionId) return null;
-    const idx = listContext.ids.indexOf(questionId);
+    const activeId = question?.id ?? questionId;
+    if (!listContext || !activeId) return null;
+    const idx = listContext.ids.indexOf(activeId);
     if (idx < 0) return null;
     return {
       prevId: idx > 0 ? listContext.ids[idx - 1] : null,
@@ -60,7 +56,7 @@ export default function QuestionDetailPage() {
       position: idx + 1,
       total: listContext.ids.length,
     };
-  }, [listContext, questionId]);
+  }, [listContext, question?.id, questionId]);
 
   // Auth gate (UX only — RLS is the real boundary).
   useEffect(() => {
@@ -70,45 +66,31 @@ export default function QuestionDetailPage() {
     }
   }, [user, authLoading, router]);
 
-  // Fetch the question.
+  // Resolve from the same question payload used by the list. This keeps the
+  // list/detail ID contract in one place and also supports public IDs in URLs.
   useEffect(() => {
     if (authLoading || !user || !questionId) return;
-    let cancelled = false;
-    async function load() {
+    if (questionsLoading) {
       setStatus("loading");
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("questions")
-        .select("id, public_id, question, choices, answer, explanation, category")
-        .eq("id", questionId)
-        .maybeSingle<QuestionDbRow>();
-
-      if (cancelled) return;
-      if (error) {
-        console.error("[QuestionDetailPage] question fetch failed", error);
-        setStatus("error");
-        return;
-      }
-      if (!data) {
-        setStatus("not_found");
-        return;
-      }
-      setQuestion({
-        id: data.id,
-        publicId: data.public_id ?? undefined,
-        question: data.question,
-        choices: data.choices,
-        answer: data.answer,
-        explanation: data.explanation,
-        category: data.category,
-      });
-      setStatus("ready");
+      return;
     }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [questionId, user, authLoading]);
+    if (questionsError) {
+      setStatus("error");
+      return;
+    }
+
+    const found = questions.find(
+      (item) => item.id === questionId || item.publicId === questionId,
+    );
+    if (!found) {
+      setQuestion(null);
+      setStatus("not_found");
+      return;
+    }
+
+    setQuestion(found);
+    setStatus("ready");
+  }, [questionId, user, authLoading, questions, questionsLoading, questionsError]);
 
   if (authLoading || !user) {
     return (
