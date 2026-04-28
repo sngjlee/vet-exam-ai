@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   USER_ROLE_KO,
