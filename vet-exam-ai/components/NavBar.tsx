@@ -5,12 +5,14 @@ import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../lib/hooks/useAuth";
 import { useDueCountCtx } from "../lib/context/DueCountContext";
+import { useMyNickname } from "../lib/hooks/useMyNickname";
 import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User, CirclePlay, ListChecks } from "lucide-react";
 import NotificationBell from "./notifications/NotificationBell";
 
 export default function NavBar() {
   const { user, loading, signOut } = useAuth();
   const dueCount = useDueCountCtx();
+  const myNickname = useMyNickname();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -99,17 +101,34 @@ export default function NavBar() {
           {!loading && (
             user ? (
               <div className="flex items-center gap-2">
-                <div
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
-                  style={{
-                    background: "var(--surface-raised)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text-muted)",
-                  }}
-                >
-                  <User size={13} />
-                  <span className="truncate max-w-[120px]">{user.email}</span>
-                </div>
+                {myNickname ? (
+                  <Link
+                    href={`/profile/${encodeURIComponent(myNickname)}`}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs no-underline"
+                    style={{
+                      background: "var(--surface-raised)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text-muted)",
+                      textDecoration: "none",
+                    }}
+                    title="내 프로필"
+                  >
+                    <User size={13} />
+                    <span className="truncate max-w-[120px]">{myNickname}</span>
+                  </Link>
+                ) : (
+                  <div
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
+                    style={{
+                      background: "var(--surface-raised)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    <User size={13} />
+                    <span className="truncate max-w-[120px]">{user.email}</span>
+                  </div>
+                )}
                 <button
                   onClick={handleSignOut}
                   style={{

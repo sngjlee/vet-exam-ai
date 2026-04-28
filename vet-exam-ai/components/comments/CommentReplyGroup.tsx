@@ -3,6 +3,7 @@
 import CommentItem, { type CommentItemData } from "./CommentItem";
 import CommentReplyComposer from "./CommentReplyComposer";
 import CommentCollapsedRow from "./CommentCollapsedRow";
+import type { BadgeType } from "../../lib/profile/badgeMeta";
 
 type VoteValue = 1 | -1;
 type CommentStatus = "visible" | "hidden_by_votes" | "blinded_by_report";
@@ -26,6 +27,7 @@ type Props = {
   onVoteChange: (commentId: string, value: VoteValue, prev: VoteValue | null) => void;
   onUnauthedAttempt?: () => void;
   onExpand: (id: string) => void;
+  authorBadgesById: Map<string, BadgeType[]>;
 };
 
 export default function CommentReplyGroup({
@@ -45,6 +47,7 @@ export default function CommentReplyGroup({
   onVoteChange,
   onUnauthedAttempt,
   onExpand,
+  authorBadgesById,
 }: Props) {
   return (
     <div
@@ -95,6 +98,9 @@ export default function CommentReplyGroup({
             isAuthed={currentUserId !== null}
             isReported={reportedIds.has(r.id)}
             canDelete={isOwner}
+            authorBadges={
+              r.user_id ? authorBadgesById.get(r.user_id) ?? [] : []
+            }
             onDelete={onDelete}
             onReport={onReport}
             onVoteChange={onVoteChange}
