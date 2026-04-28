@@ -160,7 +160,12 @@ export default async function AdminDashboardPage() {
             desc="문제 은행 둘러보기, 회차/과목/카테고리 필터, KVLE-ID 검색."
             icon={FileText}
           />
-          <HubCard href="#" label="회원 관리" desc="역할/활성 상태 변경, 뱃지 부여." icon={Users} disabled />
+          <HubCard
+            href="/admin/users"
+            label="회원 관리"
+            desc="역할/활성 상태 변경, 뱃지 부여."
+            icon={Users}
+          />
           <HubCard href="#" label="시험 회차" desc="회차별 문제 수/공개 상태 집계." icon={GraduationCap} disabled />
           <HubCard
             href="/admin/reports"
