@@ -22,7 +22,7 @@ export default function NavBar() {
   const isActive = (path: string) => pathname === path;
 
   const linkClass = (path: string) =>
-    `flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 ${
+    `flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 kvle-touch ${
       isActive(path)
         ? "text-[var(--teal)] bg-[var(--teal-dim)]"
         : "text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-raised)]"

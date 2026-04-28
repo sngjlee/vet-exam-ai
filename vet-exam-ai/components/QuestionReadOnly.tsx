@@ -124,7 +124,12 @@ export default function QuestionReadOnly({ question }: Props) {
               >
                 {letter}
               </div>
-              <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>{choice}</span>
+              <span
+                className="kvle-selectable-text"
+                style={{ fontSize: 14, fontWeight: 500, flex: 1 }}
+              >
+                {choice}
+              </span>
               {isCorrect && (
                 <CheckCircle2 size={18} style={{ color: "var(--correct)", flexShrink: 0 }} />
               )}
