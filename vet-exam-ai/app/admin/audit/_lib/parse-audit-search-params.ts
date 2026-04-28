@@ -120,7 +120,7 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   report_dismiss:         "신고 기각",
   role_change:            "역할 변경",
   question_update:        "문제 수정",
-  password_reset_issued:  "비밀번호 초기화",
+  password_reset_issued:  "비밀번호 재설정 링크 발급",
 };
 
 export const TARGET_TYPE_LABEL: Record<string, string> = {
