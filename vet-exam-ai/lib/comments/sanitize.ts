@@ -1,5 +1,5 @@
 import { marked } from "marked";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
 const ALLOWED_TAGS = [
   "p",
@@ -15,12 +15,10 @@ const ALLOWED_TAGS = [
   "br",
 ];
 
-const ALLOWED_ATTR: string[] = [];
-
 export function renderCommentMarkdown(bodyText: string): string {
   const rawHtml = marked.parse(bodyText, { async: false }) as string;
-  return DOMPurify.sanitize(rawHtml, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR,
+  return sanitizeHtml(rawHtml, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: {},
   });
 }
