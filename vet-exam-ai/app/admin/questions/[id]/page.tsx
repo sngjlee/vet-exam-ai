@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, Pencil } from "lucide-react";
 import { createClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -83,16 +83,26 @@ export default async function AdminQuestionDetailPage({
           목록으로
         </Link>
 
-        <a
-          href={publicHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs"
-          style={{ color: "var(--teal)", textDecoration: "none" }}
-        >
-          공개 페이지로 이동
-          <ExternalLink size={12} />
-        </a>
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/admin/questions/${encodeURIComponent(q.id)}/edit`}
+            className="inline-flex items-center gap-1.5 text-xs"
+            style={{ color: "var(--teal)", textDecoration: "none" }}
+          >
+            <Pencil size={12} />
+            수정
+          </Link>
+          <a
+            href={publicHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs"
+            style={{ color: "var(--text-muted)", textDecoration: "none" }}
+          >
+            공개 페이지로 이동
+            <ExternalLink size={12} />
+          </a>
+        </div>
       </div>
 
       <header className="mb-6">
