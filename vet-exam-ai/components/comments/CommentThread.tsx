@@ -10,6 +10,7 @@ import CommentItem, { type CommentItemData } from "./CommentItem";
 import CommentReportModal from "./CommentReportModal";
 import type { CommentType } from "../../lib/comments/schema";
 import type { SortMode } from "../../lib/comments/voteSchema";
+import type { BadgeType } from "../../lib/profile/badgeMeta";
 
 type VoteValue = 1 | -1;
 type CommentStatus = "visible" | "hidden_by_votes" | "blinded_by_report";
@@ -52,6 +53,9 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
   const [reportingId, setReportingId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [pinnedCommentId, setPinnedCommentId] = useState<string | null>(null);
+  const [authorBadgesById, setAuthorBadgesById] = useState<Map<string, BadgeType[]>>(
+    new Map()
+  );
   const [pinnedFallback, setPinnedFallback] = useState<{
     item: CommentItemData;
     status: CommentStatus;
@@ -122,17 +126,34 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         new Set(rows.map((r) => r.user_id).filter((v): v is string => !!v))
       );
       const nicknameById = new Map<string, string>();
+      const badgesByUser = new Map<string, BadgeType[]>();
       if (userIds.length > 0) {
-        const { data: profiles, error: profileErr } = await supabase
-          .from("user_profiles_public")
-          .select("user_id, nickname")
-          .in("user_id", userIds);
+        const [profilesRes, badgesRes] = await Promise.all([
+          supabase
+            .from("user_profiles_public")
+            .select("user_id, nickname")
+            .in("user_id", userIds),
+          supabase
+            .from("badges")
+            .select("user_id, badge_type")
+            .in("user_id", userIds)
+            .in("badge_type", ["operator", "reviewer", "popular_comment"]),
+        ]);
         if (cancelled) return;
-        if (profileErr) {
-          console.warn("[CommentThread] profile fetch failed", profileErr);
+        if (profilesRes.error) {
+          console.warn("[CommentThread] profile fetch failed", profilesRes.error);
         } else {
-          for (const p of profiles ?? []) {
+          for (const p of profilesRes.data ?? []) {
             nicknameById.set(p.user_id, p.nickname);
+          }
+        }
+        if (badgesRes.error) {
+          console.warn("[CommentThread] badges fetch failed", badgesRes.error);
+        } else {
+          for (const b of badgesRes.data ?? []) {
+            const arr = badgesByUser.get(b.user_id) ?? [];
+            arr.push(b.badge_type as BadgeType);
+            badgesByUser.set(b.user_id, arr);
           }
         }
       }
@@ -209,6 +230,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       }
 
       setRoots(assembled);
+      setAuthorBadgesById(badgesByUser);
       setStatus("ready");
     }
     load();
@@ -701,6 +723,11 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
                 isReported={reportedIds.has(pinnedDisplay.item.id)}
                 canDelete={pinnedDisplay.item.user_id === currentUserId}
                 isPinned
+                authorBadges={
+                  pinnedDisplay.item.user_id
+                    ? authorBadgesById.get(pinnedDisplay.item.user_id) ?? []
+                    : []
+                }
                 onDelete={handleDelete}
                 onReport={handleReport}
                 onVoteChange={handleVoteChange}
@@ -730,6 +757,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             onExpand={handleExpand}
             pinnedCommentId={pinnedCommentId}
             onTogglePin={handleTogglePin}
+            authorBadgesById={authorBadgesById}
           />
           {currentUserId ? (
             <CommentComposer questionId={questionId} onSubmitted={handleRootSubmitted} />
