@@ -1,5 +1,15 @@
 import Link from "next/link";
-import { FileText, Layers, Hash, CheckCircle2, Users, GraduationCap, Flag, History } from "lucide-react";
+import {
+  FileText,
+  Layers,
+  Hash,
+  CheckCircle2,
+  Users,
+  GraduationCap,
+  Flag,
+  GitPullRequest,
+  History,
+} from "lucide-react";
 import { createClient } from "../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -152,7 +162,18 @@ export default async function AdminDashboardPage() {
           />
           <HubCard href="#" label="회원 관리" desc="역할/활성 상태 변경, 뱃지 부여." icon={Users} disabled />
           <HubCard href="#" label="시험 회차" desc="회차별 문제 수/공개 상태 집계." icon={GraduationCap} disabled />
-          <HubCard href="#" label="신고/정정" desc="댓글 신고 큐, 문제 정정 제안 처리." icon={Flag} disabled />
+          <HubCard
+            href="/admin/reports"
+            label="신고"
+            desc="댓글 신고 큐. 24시간 임시조치 결정."
+            icon={Flag}
+          />
+          <HubCard
+            href="/admin/corrections"
+            label="정정"
+            desc="문제 정정 제안 처리."
+            icon={GitPullRequest}
+          />
           <HubCard href="/admin/audit" label="감사 로그" desc="모든 운영 작업 기록." icon={History} />
         </div>
       </section>
