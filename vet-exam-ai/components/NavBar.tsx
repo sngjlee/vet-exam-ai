@@ -6,13 +6,16 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../lib/hooks/useAuth";
 import { useDueCountCtx } from "../lib/context/DueCountContext";
 import { useMyNickname } from "../lib/hooks/useMyNickname";
-import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User, CirclePlay, ListChecks } from "lucide-react";
+import { useMyRole } from "../lib/hooks/useMyRole";
+import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User, CirclePlay, ListChecks, Shield } from "lucide-react";
 import NotificationBell from "./notifications/NotificationBell";
 
 export default function NavBar() {
   const { user, loading, signOut } = useAuth();
   const dueCount = useDueCountCtx();
   const myNickname = useMyNickname();
+  const myRole = useMyRole();
+  const isAdmin = myRole?.role === "admin" && myRole.isActive;
   const router = useRouter();
   const pathname = usePathname();
 
@@ -101,6 +104,22 @@ export default function NavBar() {
           {!loading && (
             user ? (
               <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold no-underline"
+                    style={{
+                      background: "var(--teal-dim)",
+                      color: "var(--teal)",
+                      border: "1px solid var(--teal)",
+                      textDecoration: "none",
+                    }}
+                    title="운영자 콘솔"
+                  >
+                    <Shield size={13} />
+                    <span>운영</span>
+                  </Link>
+                )}
                 {myNickname ? (
                   <Link
                     href={`/profile/${encodeURIComponent(myNickname)}`}
