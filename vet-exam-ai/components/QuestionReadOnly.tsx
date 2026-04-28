@@ -68,14 +68,8 @@ export default function QuestionReadOnly({ question }: Props) {
 
       {/* Question stem */}
       <h2
-        style={{
-          fontFamily: "var(--font-serif)",
-          fontSize: 20,
-          fontWeight: 700,
-          lineHeight: 1.5,
-          color: "var(--text)",
-          margin: "0 0 24px",
-        }}
+        className="kvle-question-stem kvle-selectable-text"
+        style={{ margin: "0 0 24px" }}
       >
         {question.question}
       </h2>
@@ -125,8 +119,8 @@ export default function QuestionReadOnly({ question }: Props) {
                 {letter}
               </div>
               <span
-                className="kvle-selectable-text"
-                style={{ fontSize: 14, fontWeight: 500, flex: 1 }}
+                className="kvle-choice-text kvle-selectable-text"
+                style={{ flex: 1 }}
               >
                 {choice}
               </span>
@@ -157,12 +151,8 @@ export default function QuestionReadOnly({ question }: Props) {
               해설
             </span>
             <p
-              style={{
-                fontSize: 13,
-                color: "var(--text-muted)",
-                lineHeight: 1.7,
-                margin: "6px 0 0",
-              }}
+              className="kvle-prose kvle-selectable-text"
+              style={{ margin: "6px 0 0" }}
             >
               {question.explanation}
             </p>

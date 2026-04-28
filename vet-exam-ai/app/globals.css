@@ -218,6 +218,48 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     -webkit-user-select: text;
     user-select: text;
   }
+
+  /* Reading typography — scoped utilities tuned for mobile/iPad legibility (P1-2c).
+     Single source of truth for question stems, choices, explanations, comment bodies.
+     Mobile (<640px) bumps base size + line-height; desktop stays compact. */
+  .kvle-question-stem {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    line-height: 1.5;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    word-break: keep-all;
+  }
+
+  .kvle-choice-text {
+    font-size: 15px;
+    line-height: 1.5;
+    font-weight: 500;
+    word-break: keep-all;
+  }
+
+  .kvle-prose {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-muted);
+    word-break: keep-all;
+  }
+
+  @media (max-width: 640px) {
+    .kvle-question-stem {
+      font-size: 19px;
+      line-height: 1.55;
+    }
+    .kvle-choice-text {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .kvle-prose {
+      font-size: 15px;
+      line-height: 1.8;
+    }
+  }
   .kvle-input:focus {
     border-color: var(--teal);
     box-shadow: 0 0 0 2px rgba(30, 167, 187, 0.2);
