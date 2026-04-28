@@ -4,6 +4,8 @@ import { MessageCircle, Pin, PinOff } from "lucide-react";
 import type { CommentType } from "../../lib/comments/schema";
 import CommentVoteButton from "./CommentVoteButton";
 import CommentMenuOverflow from "./CommentMenuOverflow";
+import CommentAuthorInline from "./CommentAuthorInline";
+import type { BadgeType } from "../../lib/profile/badgeMeta";
 
 type VoteValue = 1 | -1;
 
@@ -26,6 +28,7 @@ type Props = {
   isReported: boolean;
   canDelete: boolean;
   isPinned?: boolean;
+  authorBadges: BadgeType[];
   onDelete: (id: string) => void;
   onReport: (id: string) => void;
   onVoteChange: (commentId: string, value: VoteValue, prev: VoteValue | null) => void;
@@ -66,6 +69,7 @@ export default function CommentItem({
   isReported,
   canDelete,
   isPinned,
+  authorBadges,
   onDelete,
   onReport,
   onVoteChange,
@@ -130,7 +134,12 @@ export default function CommentItem({
             {meta.label}
           </span>
         )}
-        <span style={{ color: "var(--text)", fontWeight: 600 }}>@{author}</span>
+        <CommentAuthorInline
+          userId={comment.user_id}
+          nickname={author}
+          badges={authorBadges}
+          size={isReply ? "small" : "normal"}
+        />
         <span style={{ color: "var(--text-faint)" }}>· {formatRelative(comment.created_at)}</span>
         {status === "blinded_by_report" && isOwner && (
           <span
