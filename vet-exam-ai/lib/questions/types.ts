@@ -4,6 +4,7 @@ export type QuestionSource = "manual" | "past_exam" | "ai_generated";
 export interface Question {
   // --- core fields ---
   id: string;
+  publicId?: string;      // KVLE-0001 — copyright-safe display id, never reveals round/session/year
   question: string;
   choices: string[];
   answer: string;
@@ -15,7 +16,7 @@ export interface Question {
   topic?: string;         // specific topic within subject, e.g. "Ovulation"
   difficulty?: Difficulty;
   source?: QuestionSource;
-  year?: number;          // exam year if sourced from a past exam
+  year?: number;          // exam year if sourced from a past exam — INTERNAL only, never display
   tags?: string[];        // free-form labels, e.g. ["cow", "LH", "ovulation"]
   isActive?: boolean;     // soft-delete flag — false means excluded from sessions
 }
