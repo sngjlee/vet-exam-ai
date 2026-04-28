@@ -188,8 +188,14 @@ export default function QuestionsListPage() {
           {pageItems.map((q, i) => (
             <Link
               key={q.id}
-              href={`/questions/${encodeURIComponent(q.id)}`}
-              onClick={() => saveQuestionsListContext(filtered.map((f) => f.id))}
+              // KVLE public id keeps URLs ASCII-safe and avoids leaking 회차/연도.
+              // Falls back to raw id only for legacy rows missing public_id.
+              href={`/questions/${encodeURIComponent(q.publicId ?? q.id)}`}
+              onClick={() =>
+                saveQuestionsListContext(
+                  filtered.map((f) => f.publicId ?? f.id),
+                )
+              }
               style={{
                 display: "flex",
                 alignItems: "center",
