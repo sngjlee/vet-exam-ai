@@ -19,7 +19,7 @@ export type AdminNavItem = {
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "대시보드", href: "/admin",             icon: LayoutDashboard },
   { label: "문제",      href: "/admin/questions",   icon: FileText },
-  { label: "회원",      href: "/admin/users",       icon: Users,           disabled: true },
+  { label: "회원",      href: "/admin/users",       icon: Users },
   { label: "시험",      href: "/admin/exams",       icon: GraduationCap,   disabled: true },
   { label: "신고",      href: "/admin/reports",     icon: Flag },
   { label: "정정",      href: "/admin/corrections", icon: GitPullRequest },

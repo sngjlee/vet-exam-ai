@@ -527,6 +527,42 @@ export interface Database {
         };
         Returns: boolean;
       };
+      set_user_role: {
+        Args: {
+          p_user_id:  string;
+          p_new_role: Database["public"]["Enums"]["user_role"];
+          p_note?:    string | null;
+        };
+        Returns: void;
+      };
+      set_user_active: {
+        Args: {
+          p_user_id:    string;
+          p_new_active: boolean;
+          p_note?:      string | null;
+        };
+        Returns: void;
+      };
+      grant_badge: {
+        Args: {
+          p_user_id:    string;
+          p_badge_type: Database["public"]["Enums"]["badge_type"];
+          p_reason?:    string | null;
+        };
+        Returns: void;
+      };
+      revoke_badge: {
+        Args: {
+          p_user_id:    string;
+          p_badge_type: Database["public"]["Enums"]["badge_type"];
+          p_note?:      string | null;
+        };
+        Returns: void;
+      };
+      list_admin_user_emails: {
+        Args: { p_user_ids: string[] };
+        Returns: { user_id: string; email: string }[];
+      };
     };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
