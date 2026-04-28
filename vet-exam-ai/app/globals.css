@@ -116,7 +116,7 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     margin: 1.5rem 0;
   }
 
-  /* Buttons */
+  /* Buttons — 44px minimum touch target (P1-2a) */
   .kvle-btn-primary {
     display: inline-flex;
     align-items: center;
@@ -127,6 +127,7 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     border: none;
     border-radius: 9999px;
     padding: 0.625rem 1.5rem;
+    min-height: 44px;
     font-weight: 600;
     cursor: pointer;
     transition: opacity 300ms cubic-bezier(0.32, 0.72, 0, 1),
@@ -153,6 +154,7 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     background: transparent;
     border-radius: 9999px;
     padding: 0.625rem 1.5rem;
+    min-height: 44px;
     font-weight: 500;
     transition: color 300ms cubic-bezier(0.32, 0.72, 0, 1),
                 border-color 300ms cubic-bezier(0.32, 0.72, 0, 1),
@@ -181,6 +183,7 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     background: transparent;
     border-radius: 9999px;
     padding: 0.625rem 1.5rem;
+    min-height: 44px;
     font-weight: 500;
     transition: background 150ms;
     cursor: pointer;
@@ -189,16 +192,31 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     background: var(--wrong-dim);
   }
 
-  /* Input */
+  /* Input — 44px minimum touch target (P1-2a) */
   .kvle-input {
     width: 100%;
     background: var(--surface-raised);
     border: 1px solid var(--teal-border);
     border-radius: 8px;
     padding: 0.625rem 0.875rem;
+    min-height: 44px;
     color: var(--text);
     outline: none;
     transition: border-color 150ms, box-shadow 150ms;
+  }
+
+  /* Touch-target shim — apply to inline buttons that don't use kvle-btn-*.
+     Guarantees 44×44 minimum without changing visual padding. */
+  .kvle-touch {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Selectable content — buttons inherit user-select:none.
+     Apply to inner spans (e.g., choice text) so users can long-press to copy. */
+  .kvle-selectable-text {
+    -webkit-user-select: text;
+    user-select: text;
   }
   .kvle-input:focus {
     border-color: var(--teal);

@@ -138,9 +138,10 @@ export default function QuestionCard({
             background: "transparent",
             border: "1px solid var(--border)",
             color: "var(--text-muted)",
-            padding: "6px 12px",
+            padding: "10px 16px",
+            minHeight: 44,
             borderRadius: 999,
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 600,
             cursor: "pointer",
             display: "inline-flex",
@@ -277,7 +278,12 @@ export default function QuestionCard({
                 >
                   {letter}
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>{choice}</span>
+                <span
+                  className="kvle-selectable-text"
+                  style={{ fontSize: 14, fontWeight: 500, flex: 1 }}
+                >
+                  {choice}
+                </span>
                 {showCorrect && (
                   <CheckCircle2 size={18} style={{ color: "var(--correct)", flexShrink: 0 }} />
                 )}
@@ -300,7 +306,8 @@ export default function QuestionCard({
                   background: "var(--teal)",
                   color: "#061218",
                   border: "none",
-                  padding: "10px 20px",
+                  padding: "12px 22px",
+                  minHeight: 44,
                   borderRadius: 999,
                   fontSize: 13,
                   fontWeight: 700,
@@ -375,7 +382,8 @@ export default function QuestionCard({
                       background: "transparent",
                       border: "none",
                       borderBottom: activeTab === "official" ? "2px solid var(--text)" : "2px solid transparent",
-                      padding: "8px 12px",
+                      padding: "12px 14px",
+                      minHeight: 44,
                       fontSize: 13,
                       fontWeight: activeTab === "official" ? 700 : 500,
                       color: activeTab === "official" ? "var(--text)" : "var(--text-faint)",
@@ -393,7 +401,8 @@ export default function QuestionCard({
                       background: "transparent",
                       border: "none",
                       borderBottom: activeTab === "community" ? "2px solid var(--text)" : "2px solid transparent",
-                      padding: "8px 12px",
+                      padding: "12px 14px",
+                      minHeight: 44,
                       fontSize: 13,
                       fontWeight: activeTab === "community" ? 700 : 500,
                       color: activeTab === "community" ? "var(--text)" : "var(--text-faint)",
@@ -466,7 +475,8 @@ export default function QuestionCard({
                       background: "transparent",
                       border: "1px solid var(--border)",
                       color: "var(--text-muted)",
-                      padding: "10px 16px",
+                      padding: "12px 18px",
+                      minHeight: 44,
                       borderRadius: 999,
                       fontSize: 12,
                       fontWeight: 600,
@@ -484,7 +494,8 @@ export default function QuestionCard({
                     background: "var(--teal)",
                     color: "#061218",
                     border: "none",
-                    padding: "10px 18px 10px 22px",
+                    padding: "12px 20px 12px 24px",
+                    minHeight: 44,
                     borderRadius: 999,
                     fontSize: 13,
                     fontWeight: 700,
