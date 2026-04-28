@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Pin, PinOff } from "lucide-react";
 import type { CommentType } from "../../lib/comments/schema";
 import CommentVoteButton from "./CommentVoteButton";
 import CommentMenuOverflow from "./CommentMenuOverflow";
@@ -25,11 +25,13 @@ type Props = {
   isAuthed: boolean;
   isReported: boolean;
   canDelete: boolean;
+  isPinned?: boolean;
   onDelete: (id: string) => void;
   onReport: (id: string) => void;
   onVoteChange: (commentId: string, value: VoteValue, prev: VoteValue | null) => void;
   onUnauthedAttempt?: () => void;
   onStartReply?: (id: string) => void;
+  onTogglePin?: (id: string) => void;
   isReply?: boolean;
   isPlaceholder?: boolean;
 };
@@ -63,11 +65,13 @@ export default function CommentItem({
   isAuthed,
   isReported,
   canDelete,
+  isPinned,
   onDelete,
   onReport,
   onVoteChange,
   onUnauthedAttempt,
   onStartReply,
+  onTogglePin,
   isReply,
   isPlaceholder,
 }: Props) {
@@ -173,6 +177,29 @@ export default function CommentItem({
             >
               <MessageCircle size={14} />
               답글
+            </button>
+          )}
+          {isAuthed && onTogglePin && status !== "blinded_by_report" && (
+            <button
+              type="button"
+              onClick={() => onTogglePin(comment.id)}
+              aria-label={isPinned ? "암기팁 고정 해제" : "내 암기팁으로 고정"}
+              aria-pressed={!!isPinned}
+              title={isPinned ? "암기팁 고정 해제" : "내 암기팁으로 고정"}
+              style={{
+                background: isPinned ? "var(--teal-dim)" : "transparent",
+                border: isPinned ? "1px solid var(--teal-border)" : "none",
+                color: isPinned ? "var(--teal)" : "var(--text-faint)",
+                cursor: "pointer",
+                padding: 4,
+                borderRadius: 6,
+                display: "inline-flex",
+                alignItems: "center",
+                fontSize: 11,
+                fontWeight: 600,
+              }}
+            >
+              {isPinned ? <PinOff size={14} /> : <Pin size={14} />}
             </button>
           )}
           <CommentMenuOverflow

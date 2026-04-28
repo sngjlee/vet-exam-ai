@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Pin } from "lucide-react";
 import { createClient } from "../../lib/supabase/client";
 import CommentList, { type RootWithReplies } from "./CommentList";
 import type { ReplyRow } from "./CommentReplyGroup";
 import CommentComposer from "./CommentComposer";
+import CommentItem, { type CommentItemData } from "./CommentItem";
 import CommentReportModal from "./CommentReportModal";
-import type { CommentItemData } from "./CommentItem";
 import type { CommentType } from "../../lib/comments/schema";
 import type { SortMode } from "../../lib/comments/voteSchema";
 
@@ -50,6 +51,12 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const [reportingId, setReportingId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [pinnedCommentId, setPinnedCommentId] = useState<string | null>(null);
+  const [pinnedFallback, setPinnedFallback] = useState<{
+    item: CommentItemData;
+    status: CommentStatus;
+    score: number;
+  } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
 
@@ -234,6 +241,31 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       }
     }
     loadVotes();
+    return () => {
+      cancelled = true;
+    };
+  }, [questionId, currentUserId, reloadKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadPin() {
+      if (!currentUserId) {
+        setPinnedCommentId(null);
+        return;
+      }
+      try {
+        const res = await fetch(
+          `/api/comments/pins?question_id=${encodeURIComponent(questionId)}`,
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as { comment_id: string | null };
+        if (cancelled) return;
+        setPinnedCommentId(data.comment_id);
+      } catch {
+        /* silent */
+      }
+    }
+    loadPin();
     return () => {
       cancelled = true;
     };
@@ -457,6 +489,126 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     });
   }
 
+  async function handleTogglePin(commentId: string) {
+    if (!currentUserId) {
+      showToast("로그인하면 고정할 수 있습니다");
+      return;
+    }
+    const prevPinned = pinnedCommentId;
+    const nextPinned = prevPinned === commentId ? null : commentId;
+    setPinnedCommentId(nextPinned);
+    try {
+      const res = await fetch("/api/comments/pins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question_id: questionId,
+          comment_id: commentId,
+        }),
+      });
+      if (!res.ok) throw new Error("pin failed");
+      const data = (await res.json()) as {
+        pinned: boolean;
+        comment_id: string | null;
+      };
+      setPinnedCommentId(data.comment_id);
+      showToast(data.pinned ? "내 암기팁으로 고정했습니다" : "고정을 해제했습니다");
+    } catch {
+      setPinnedCommentId(prevPinned);
+      showToast("고정 상태 변경에 실패했습니다");
+    }
+  }
+
+  // Locate the pinned comment within already-loaded roots/replies. If absent,
+  // we lazy-fetch it as fallback so old/scrolled-out comments still appear at
+  // the top. Plain expression — React Compiler memoizes automatically.
+  const pinnedFromList: typeof pinnedFallback = (() => {
+    if (!pinnedCommentId) return null;
+    for (const root of roots) {
+      if (root.id === pinnedCommentId && !root.isPlaceholder) {
+        const item: CommentItemData = {
+          id: root.id,
+          user_id: root.user_id,
+          type: root.type,
+          body_html: root.body_html,
+          created_at: root.created_at,
+          authorNickname: root.authorNickname,
+        };
+        return { item, status: root.status, score: scoreById.get(root.id) ?? 0 };
+      }
+      for (const reply of root.replies) {
+        if (reply.id === pinnedCommentId) {
+          const item: CommentItemData = {
+            id: reply.id,
+            user_id: reply.user_id,
+            type: reply.type,
+            body_html: reply.body_html,
+            created_at: reply.created_at,
+            authorNickname: reply.authorNickname,
+          };
+          return {
+            item,
+            status: reply.status,
+            score: scoreById.get(reply.id) ?? 0,
+          };
+        }
+      }
+    }
+    return null;
+  })();
+
+  // Fallback: pinned comment exists but isn't in the current roots window.
+  const pinnedInListSentinel = pinnedFromList !== null;
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!pinnedCommentId || pinnedInListSentinel) {
+        setPinnedFallback(null);
+        return;
+      }
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("comments")
+        .select("id, user_id, type, body_html, created_at, status, vote_score")
+        .eq("id", pinnedCommentId)
+        .maybeSingle();
+      if (cancelled || error || !data) {
+        if (!cancelled) {
+          setPinnedFallback(null);
+        }
+        return;
+      }
+      let nickname: string | null = null;
+      if (data.user_id) {
+        const { data: profile } = await supabase
+          .from("user_profiles_public")
+          .select("nickname")
+          .eq("user_id", data.user_id)
+          .maybeSingle();
+        if (cancelled) return;
+        nickname = profile?.nickname ?? null;
+      }
+      setPinnedFallback({
+        item: {
+          id: data.id,
+          user_id: data.user_id,
+          type: data.type as CommentType,
+          body_html: data.body_html,
+          created_at: data.created_at,
+          authorNickname: nickname,
+        },
+        status: data.status as CommentStatus,
+        score: data.vote_score ?? 0,
+      });
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [pinnedCommentId, pinnedInListSentinel]);
+
+  const pinnedDisplay = pinnedFromList ?? pinnedFallback;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
       {status === "loading" && (
@@ -512,6 +664,51 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
 
       {status === "ready" && (
         <>
+          {pinnedDisplay && (
+            <section
+              aria-label="내 암기팁"
+              style={{
+                background: "var(--teal-dim)",
+                border: "1px solid var(--teal-border)",
+                borderRadius: 12,
+                padding: "12px 14px 14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.04em",
+                  color: "var(--teal)",
+                }}
+              >
+                <Pin size={12} />
+                내 암기팁
+              </div>
+              <CommentItem
+                comment={pinnedDisplay.item}
+                score={pinnedDisplay.score}
+                myVote={myVoteById.get(pinnedDisplay.item.id) ?? null}
+                status={pinnedDisplay.status}
+                isOwner={pinnedDisplay.item.user_id === currentUserId}
+                isAuthed={currentUserId !== null}
+                isReported={reportedIds.has(pinnedDisplay.item.id)}
+                canDelete={pinnedDisplay.item.user_id === currentUserId}
+                isPinned
+                onDelete={handleDelete}
+                onReport={handleReport}
+                onVoteChange={handleVoteChange}
+                onUnauthedAttempt={handleUnauthedAttempt}
+                onTogglePin={handleTogglePin}
+              />
+            </section>
+          )}
           <CommentList
             questionId={questionId}
             roots={roots}
@@ -531,6 +728,8 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             onVoteChange={handleVoteChange}
             onUnauthedAttempt={handleUnauthedAttempt}
             onExpand={handleExpand}
+            pinnedCommentId={pinnedCommentId}
+            onTogglePin={handleTogglePin}
           />
           {currentUserId ? (
             <CommentComposer questionId={questionId} onSubmitted={handleRootSubmitted} />
