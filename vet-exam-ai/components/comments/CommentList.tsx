@@ -34,6 +34,8 @@ type Props = {
   onVoteChange: (commentId: string, value: VoteValue, prev: VoteValue | null) => void;
   onUnauthedAttempt?: () => void;
   onExpand: (id: string) => void;
+  pinnedCommentId?: string | null;
+  onTogglePin?: (id: string) => void;
 };
 
 export default function CommentList({
@@ -55,6 +57,8 @@ export default function CommentList({
   onVoteChange,
   onUnauthedAttempt,
   onExpand,
+  pinnedCommentId,
+  onTogglePin,
 }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -142,6 +146,7 @@ export default function CommentList({
                 isAuthed={currentUserId !== null}
                 isReported={reportedIds.has(root.id)}
                 canDelete={canDeleteRoot}
+                isPinned={pinnedCommentId === root.id}
                 onDelete={onDelete}
                 onReport={onReport}
                 onVoteChange={onVoteChange}
@@ -149,6 +154,7 @@ export default function CommentList({
                 onStartReply={
                   currentUserId === null ? undefined : onStartReply
                 }
+                onTogglePin={onTogglePin}
               />
             );
           }

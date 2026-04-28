@@ -339,6 +339,27 @@ export interface Database {
         Relationships: [];
       };
 
+      comment_pins: {
+        Row: {
+          id: string;
+          user_id: string;
+          question_id: string;
+          comment_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          question_id: string;
+          comment_id: string;
+          created_at?: string;
+        };
+        Update: {
+          comment_id?: string;
+        };
+        Relationships: [];
+      };
+
       comment_edit_history: {
         Row: {
           id: string;
@@ -519,6 +540,7 @@ export type BadgeRow               = Database["public"]["Tables"]["badges"]["Row
 export type CommentRow             = Database["public"]["Tables"]["comments"]["Row"];
 export type CommentVoteRow         = Database["public"]["Tables"]["comment_votes"]["Row"];
 export type CommentReportRow       = Database["public"]["Tables"]["comment_reports"]["Row"];
+export type CommentPinRow          = Database["public"]["Tables"]["comment_pins"]["Row"];
 export type CommentEditHistoryRow  = Database["public"]["Tables"]["comment_edit_history"]["Row"];
 export type NotificationRow        = Database["public"]["Tables"]["notifications"]["Row"];
 export type QuestionCorrectionRow  = Database["public"]["Tables"]["question_corrections"]["Row"];
