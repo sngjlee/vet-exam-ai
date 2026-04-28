@@ -11,12 +11,12 @@
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.1",
-    "isomorphic-dompurify": "^3.10.0",
     "lucide-react": "^0.577.0",
     "marked": "^18.0.2",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "sanitize-html": "^2.17.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -25,6 +25,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sanitize-html": "^2.16.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
