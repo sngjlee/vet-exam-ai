@@ -5,6 +5,7 @@ import CommentReplyGroup, { type ReplyRow } from "./CommentReplyGroup";
 import CommentSortToggle from "./CommentSortToggle";
 import CommentCollapsedRow from "./CommentCollapsedRow";
 import type { SortMode } from "../../lib/comments/voteSchema";
+import type { BadgeType } from "../../lib/profile/badgeMeta";
 
 type VoteValue = 1 | -1;
 type CommentStatus = "visible" | "hidden_by_votes" | "blinded_by_report";
@@ -36,6 +37,7 @@ type Props = {
   onExpand: (id: string) => void;
   pinnedCommentId?: string | null;
   onTogglePin?: (id: string) => void;
+  authorBadgesById: Map<string, BadgeType[]>;
 };
 
 export default function CommentList({
@@ -59,6 +61,7 @@ export default function CommentList({
   onExpand,
   pinnedCommentId,
   onTogglePin,
+  authorBadgesById,
 }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -108,6 +111,9 @@ export default function CommentList({
                 isAuthed={currentUserId !== null}
                 isReported={false}
                 canDelete={false}
+                authorBadges={
+                  root.user_id ? authorBadgesById.get(root.user_id) ?? [] : []
+                }
                 onDelete={onDelete}
                 onReport={onReport}
                 onVoteChange={onVoteChange}
@@ -147,6 +153,9 @@ export default function CommentList({
                 isReported={reportedIds.has(root.id)}
                 canDelete={canDeleteRoot}
                 isPinned={pinnedCommentId === root.id}
+                authorBadges={
+                  root.user_id ? authorBadgesById.get(root.user_id) ?? [] : []
+                }
                 onDelete={onDelete}
                 onReport={onReport}
                 onVoteChange={onVoteChange}
@@ -183,6 +192,7 @@ export default function CommentList({
                   onVoteChange={onVoteChange}
                   onUnauthedAttempt={onUnauthedAttempt}
                   onExpand={onExpand}
+                  authorBadgesById={authorBadgesById}
                 />
               )}
             </div>
