@@ -486,6 +486,20 @@ export interface Database {
         Args: { uid: string };
         Returns: number;
       };
+      count_questions_distinct: {
+        Args: { col: string };
+        Returns: number;
+      };
+      get_questions_filter_options: {
+        Args: Record<string, never>;
+        Returns: {
+          rounds: number[];
+          years: number[];
+          sessions: number[];
+          subjects: string[];
+          categories: string[];
+        };
+      };
     };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
