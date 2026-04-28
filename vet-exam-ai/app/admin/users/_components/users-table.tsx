@@ -12,6 +12,7 @@ import { UserRoleForm } from "./user-role-form";
 import { UserActiveForm } from "./user-active-form";
 import { UserBadgeGrantForm } from "./user-badge-grant-form";
 import { UserBadgeRevokeForm } from "./user-badge-revoke-form";
+import { UserPasswordResetForm } from "./user-password-reset-form";
 
 export type UserRow = {
   id:         string;
@@ -124,6 +125,12 @@ export function UsersTable({
                     뱃지 회수
                   </h3>
                   <UserBadgeRevokeForm userId={r.id} badges={badges} />
+                </section>
+                <section className="sm:col-span-2">
+                  <h3 className="mb-2 text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+                    비밀번호 재설정
+                  </h3>
+                  <UserPasswordResetForm userId={r.id} isSelf={isSelf} />
                 </section>
               </div>
             </details>
