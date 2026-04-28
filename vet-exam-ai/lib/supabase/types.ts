@@ -500,6 +500,17 @@ export interface Database {
           categories: string[];
         };
       };
+      log_admin_action: {
+        Args: {
+          p_action:      Database["public"]["Enums"]["audit_action"];
+          p_target_type: string;
+          p_target_id:   string;
+          p_before?:     Record<string, unknown> | null;
+          p_after?:      Record<string, unknown> | null;
+          p_note?:       string | null;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
@@ -551,7 +562,8 @@ export interface Database {
         | "correction_reject"
         | "report_uphold"
         | "report_dismiss"
-        | "role_change";
+        | "role_change"
+        | "question_update";
     };
   };
 }
