@@ -66,6 +66,8 @@ export function formatNotification(
     // trigger additions render without code changes.
     case "comment_blinded":
       return { text: "회원님의 댓글이 블라인드 처리되었어요", href: NO_HREF };
+    case "correction_resolved":
+      return { text: "신고하신 문제 정정이 검토 완료되었어요", href: NO_HREF };
     case "mention": {
       const nickname = stringField(payload, "actor_nickname") ?? "누군가";
       return { text: `${nickname}님이 회원님을 멘션했어요`, href: NO_HREF };
@@ -94,6 +96,8 @@ function textOnlyFallback(
       return "신고하신 댓글의 검토가 완료되었어요";
     case "comment_blinded":
       return "회원님의 댓글이 블라인드 처리되었어요";
+    case "correction_resolved":
+      return "신고하신 문제 정정이 검토 완료되었어요";
     case "mention":
       return `${stringField(payload, "actor_nickname") ?? "누군가"}님이 회원님을 멘션했어요`;
   }
