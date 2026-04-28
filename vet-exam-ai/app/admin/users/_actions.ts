@@ -98,7 +98,9 @@ export async function issuePasswordResetLink(formData: FormData): Promise<void> 
 
   if (!userId) redirectWithError("필수 입력이 누락되었습니다.");
 
-  // 1) guard + audit (RLS context — runs as the requesting admin)
+  // 1) guard + audit (RLS context — runs as the requesting admin).
+  //    Audit precedes link generation: a stranded audit row recording an
+  //    attempt is preferable to an unaudited issuance.
   const supabase = await createClient();
   const { error: rpcErr } = await supabase.rpc("log_password_reset_issued", {
     p_user_id: userId,
@@ -124,6 +126,7 @@ export async function issuePasswordResetLink(formData: FormData): Promise<void> 
 
   // 4) display via redirect query — short-lived, admin should copy immediately.
   //    Not stored in DB. URL = credential.
+  revalidatePath("/admin/users");
   redirect(
     `/admin/users?reset_link=${encodeURIComponent(link!.properties.action_link)}` +
       `&reset_for=${encodeURIComponent(userId)}`,
