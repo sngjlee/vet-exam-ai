@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Pencil } from "lucide-react";
 
 export type AdminQuestionRow = {
   id: string;
@@ -89,6 +90,7 @@ export function AdminQuestionsTable({ rows }: { rows: AdminQuestionRow[] }) {
             <th style={head}>정답</th>
             <th style={head}>활성</th>
             <th style={head}>등록일</th>
+            <th style={{ ...head, width: 48, textAlign: "center" }} aria-label="작업"></th>
           </tr>
         </thead>
         <tbody>
@@ -131,6 +133,23 @@ export function AdminQuestionsTable({ rows }: { rows: AdminQuestionRow[] }) {
               </td>
               <td style={{ ...cell, whiteSpace: "nowrap", color: "var(--text-muted)" }}>
                 {formatKoreanDate(r.created_at)}
+              </td>
+              <td style={{ ...cell, whiteSpace: "nowrap", textAlign: "center" }}>
+                <Link
+                  href={`/admin/questions/${encodeURIComponent(r.id)}/edit`}
+                  aria-label={`${r.public_id} 수정`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 28,
+                    height: 28,
+                    borderRadius: 6,
+                    color: "var(--teal)",
+                  }}
+                >
+                  <Pencil size={13} />
+                </Link>
               </td>
             </tr>
           ))}
