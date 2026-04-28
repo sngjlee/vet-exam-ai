@@ -10,6 +10,7 @@ import {
   applyQuestionFilters,
   formatPublicId,
   getCategories,
+  saveQuestionsListContext,
   type RecentYearsWindow,
 } from "../../lib/questions";
 import LoadingSpinner from "../../components/LoadingSpinner";
@@ -188,6 +189,7 @@ export default function QuestionsListPage() {
             <Link
               key={q.id}
               href={`/questions/${encodeURIComponent(q.id)}`}
+              onClick={() => saveQuestionsListContext(filtered.map((f) => f.id))}
               style={{
                 display: "flex",
                 alignItems: "center",

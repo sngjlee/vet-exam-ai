@@ -10,3 +10,9 @@ export {
   type QuestionFilterOptions,
   type RecentYearsWindow,
 } from "./filter";
+export {
+  saveQuestionsListContext,
+  readQuestionsListContext,
+  clearQuestionsListContext,
+  type QuestionsListContext,
+} from "./listContext";
