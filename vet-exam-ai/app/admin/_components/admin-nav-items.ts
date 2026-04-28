@@ -21,7 +21,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "회원",      href: "/admin/users",      icon: Users,         disabled: true },
   { label: "시험",      href: "/admin/exams",      icon: GraduationCap, disabled: true },
   { label: "신고",      href: "/admin/moderation", icon: Flag,          disabled: true },
-  { label: "감사",      href: "/admin/audit",      icon: History,       disabled: true },
+  { label: "감사",      href: "/admin/audit",      icon: History },
 ];
 
 export function isAdminNavActive(activeHref: string, itemHref: string): boolean {

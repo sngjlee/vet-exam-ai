@@ -153,7 +153,7 @@ export default async function AdminDashboardPage() {
           <HubCard href="#" label="회원 관리" desc="역할/활성 상태 변경, 뱃지 부여." icon={Users} disabled />
           <HubCard href="#" label="시험 회차" desc="회차별 문제 수/공개 상태 집계." icon={GraduationCap} disabled />
           <HubCard href="#" label="신고/정정" desc="댓글 신고 큐, 문제 정정 제안 처리." icon={Flag} disabled />
-          <HubCard href="#" label="감사 로그" desc="모든 운영 작업 기록." icon={History} disabled />
+          <HubCard href="/admin/audit" label="감사 로그" desc="모든 운영 작업 기록." icon={History} />
         </div>
       </section>
     </div>
