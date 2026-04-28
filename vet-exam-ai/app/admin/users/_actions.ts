@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../../../lib/supabase/server";
+import { createAdminClient } from "../../../lib/supabase/admin";
 import type { Database } from "../../../lib/supabase/types";
 
 type UserRole  = Database["public"]["Enums"]["user_role"];
@@ -89,4 +90,42 @@ export async function revokeBadge(formData: FormData): Promise<void> {
   if (error) redirectWithError(userErrorMessage(error.message));
 
   revalidatePath("/admin/users");
+}
+
+export async function issuePasswordResetLink(formData: FormData): Promise<void> {
+  const userId = String(formData.get("user_id") ?? "");
+  const note   = String(formData.get("note") ?? "").trim() || null;
+
+  if (!userId) redirectWithError("필수 입력이 누락되었습니다.");
+
+  // 1) guard + audit (RLS context — runs as the requesting admin)
+  const supabase = await createClient();
+  const { error: rpcErr } = await supabase.rpc("log_password_reset_issued", {
+    p_user_id: userId,
+    p_note:    note,
+  });
+  if (rpcErr) redirectWithError(userErrorMessage(rpcErr.message));
+
+  // 2) email lookup via service role (auth.users not exposed via REST)
+  const admin = createAdminClient();
+  const { data: u, error: getErr } = await admin.auth.admin.getUserById(userId);
+  if (getErr || !u?.user?.email) {
+    redirectWithError("대상 회원의 이메일을 찾을 수 없습니다.");
+  }
+
+  // 3) generate one-time recovery link
+  const { data: link, error: linkErr } = await admin.auth.admin.generateLink({
+    type:  "recovery",
+    email: u!.user!.email!,
+  });
+  if (linkErr || !link?.properties?.action_link) {
+    redirectWithError("링크 발급에 실패했습니다.");
+  }
+
+  // 4) display via redirect query — short-lived, admin should copy immediately.
+  //    Not stored in DB. URL = credential.
+  redirect(
+    `/admin/users?reset_link=${encodeURIComponent(link!.properties.action_link)}` +
+      `&reset_for=${encodeURIComponent(userId)}`,
+  );
 }
