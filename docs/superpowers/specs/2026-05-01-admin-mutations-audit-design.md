@@ -51,6 +51,7 @@ vet-exam-ai/
   app/
     admin/
       page.tsx                                ← 수정: "감사 로그" 카드 disabled → 활성
+      _components/admin-nav-items.ts          ← 수정: "감사" 사이드바 nav disabled 해제
       questions/
         [id]/
           page.tsx                            ← 수정: 헤더에 "수정" 링크 추가
@@ -72,7 +73,7 @@ vet-exam-ai/
     20260501000000_admin_pr_b.sql             ← 신규
 ```
 
-신규 8 + 수정 3 + 마이그 1.
+신규 8 + 수정 4 + 마이그 1.
 
 ### 진입 흐름 (edit)
 
@@ -417,7 +418,7 @@ PR-B 자동 테스트 0. 머지 전 다음 시나리오 통과 확인:
 
 추정 ~14 task (writing-plans에서 세분화). PR-A(16 commit)와 비슷한 사이즈.
 
-신규 8 / 수정 3 (`app/admin/page.tsx`, `app/admin/questions/[id]/page.tsx`, `lib/supabase/types.ts`) / 마이그 1.
+신규 8 / 수정 4 (`app/admin/page.tsx`, `app/admin/questions/[id]/page.tsx`, `app/admin/_components/admin-nav-items.ts`, `lib/supabase/types.ts`) / 마이그 1.
 
 ## Out of scope (PR-C 이후 예고)
 
