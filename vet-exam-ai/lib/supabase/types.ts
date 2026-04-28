@@ -184,6 +184,7 @@ export interface Database {
           university: string | null;
           target_round_visible: boolean;
           university_visible: boolean;
+          nickname_changed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -195,6 +196,7 @@ export interface Database {
           university?: string | null;
           target_round_visible?: boolean;
           university_visible?: boolean;
+          nickname_changed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -205,6 +207,7 @@ export interface Database {
           university?: string | null;
           target_round_visible?: boolean;
           university_visible?: boolean;
+          nickname_changed_at?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -474,7 +477,16 @@ export interface Database {
     };
 
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      is_temp_nickname: {
+        Args: { n: string };
+        Returns: boolean;
+      };
+      get_user_total_vote_score: {
+        Args: { uid: string };
+        Returns: number;
+      };
+    };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
       question_source: "manual" | "past_exam" | "ai_generated";
