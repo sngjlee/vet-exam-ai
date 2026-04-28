@@ -28,7 +28,13 @@ export default function QuestionDetailPage() {
     error: questionsError,
   } = useQuestions();
 
-  const questionId = params?.id ?? "";
+  // Next 16 useParams returns the URL segment without decoding non-ASCII —
+  // `2.4_공보_57회_q001` arrives as `2.4_%EA%B3%B5%EB%B3%B4_57%ED%9A%8C_q001`.
+  // Decode here so the lookup matches stored ids regardless of caller (KVLE
+  // public ids are ASCII and are no-ops; legacy raw ids in notification/profile
+  // links are restored).
+  const rawId = params?.id ?? "";
+  const questionId = decodeMaybe(rawId);
   const highlightCommentId = search?.get("comment") ?? undefined;
 
   const [status, setStatus] = useState<Status>("loading");
@@ -45,9 +51,17 @@ export default function QuestionDetailPage() {
   }, [questionId]);
 
   const navInfo = useMemo(() => {
-    const activeId = question?.id ?? questionId;
-    if (!listContext || !activeId) return null;
-    const idx = listContext.ids.indexOf(activeId);
+    if (!listContext) return null;
+    // List saves publicId-preferred ids; URL may carry either. Try both keys
+    // so legacy raw-id URLs still find their slot in the saved context.
+    const candidates = [question?.publicId, question?.id, questionId].filter(
+      (v): v is string => Boolean(v),
+    );
+    let idx = -1;
+    for (const candidate of candidates) {
+      idx = listContext.ids.indexOf(candidate);
+      if (idx >= 0) break;
+    }
     if (idx < 0) return null;
     return {
       prevId: idx > 0 ? listContext.ids[idx - 1] : null,
@@ -56,7 +70,7 @@ export default function QuestionDetailPage() {
       position: idx + 1,
       total: listContext.ids.length,
     };
-  }, [listContext, question?.id, questionId]);
+  }, [listContext, question?.id, question?.publicId, questionId]);
 
   // Auth gate (UX only — RLS is the real boundary).
   useEffect(() => {
@@ -180,6 +194,14 @@ export default function QuestionDetailPage() {
       )}
     </main>
   );
+}
+
+function decodeMaybe(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
 }
 
 type NavInfo = {
