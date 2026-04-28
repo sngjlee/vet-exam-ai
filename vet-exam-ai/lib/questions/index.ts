@@ -4,3 +4,9 @@
 export type { Question, Difficulty, QuestionSource } from "./types";
 export { getCategories, shuffleArray, createSessionQuestions } from "./utils";
 export { formatPublicId } from "./formatId";
+export {
+  applyQuestionFilters,
+  getLatestYear,
+  type QuestionFilterOptions,
+  type RecentYearsWindow,
+} from "./filter";
