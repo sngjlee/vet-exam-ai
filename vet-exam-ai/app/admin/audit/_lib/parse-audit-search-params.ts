@@ -15,6 +15,7 @@ export const ALL_AUDIT_ACTIONS: ReadonlyArray<AuditAction> = [
   "report_dismiss",
   "role_change",
   "question_update",
+  "password_reset_issued",
 ];
 
 export const ALL_TARGET_TYPES: ReadonlyArray<string> = [
@@ -107,18 +108,19 @@ export function buildAuditSearchString(
 }
 
 export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
-  comment_remove:    "댓글 삭제",
-  comment_unblind:   "댓글 블라인드 해제",
-  user_suspend:      "회원 정지",
-  user_unsuspend:    "회원 정지 해제",
-  badge_grant:       "뱃지 부여",
-  badge_revoke:      "뱃지 회수",
-  correction_accept: "정정 채택",
-  correction_reject: "정정 반려",
-  report_uphold:     "신고 승인",
-  report_dismiss:    "신고 기각",
-  role_change:       "역할 변경",
-  question_update:   "문제 수정",
+  comment_remove:         "댓글 삭제",
+  comment_unblind:        "댓글 블라인드 해제",
+  user_suspend:           "회원 정지",
+  user_unsuspend:         "회원 정지 해제",
+  badge_grant:            "뱃지 부여",
+  badge_revoke:           "뱃지 회수",
+  correction_accept:      "정정 채택",
+  correction_reject:      "정정 반려",
+  report_uphold:          "신고 승인",
+  report_dismiss:         "신고 기각",
+  role_change:            "역할 변경",
+  question_update:        "문제 수정",
+  password_reset_issued:  "비밀번호 초기화",
 };
 
 export const TARGET_TYPE_LABEL: Record<string, string> = {

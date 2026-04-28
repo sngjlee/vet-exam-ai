@@ -563,6 +563,13 @@ export interface Database {
         Args: { p_user_ids: string[] };
         Returns: { user_id: string; email: string }[];
       };
+      log_password_reset_issued: {
+        Args: {
+          p_user_id: string;
+          p_note?:   string | null;
+        };
+        Returns: void;
+      };
     };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
@@ -616,7 +623,8 @@ export interface Database {
         | "report_uphold"
         | "report_dismiss"
         | "role_change"
-        | "question_update";
+        | "question_update"
+        | "password_reset_issued";
     };
   };
 }
