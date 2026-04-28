@@ -511,6 +511,22 @@ export interface Database {
         };
         Returns: string;
       };
+      resolve_comment_report: {
+        Args: {
+          p_comment_id: string;
+          p_resolution: string;
+          p_note?:      string | null;
+        };
+        Returns: number;
+      };
+      resolve_question_correction: {
+        Args: {
+          p_correction_id: string;
+          p_resolution:    string;
+          p_note?:         string | null;
+        };
+        Returns: boolean;
+      };
     };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
@@ -549,7 +565,8 @@ export interface Database {
         | "vote_milestone"
         | "mention"
         | "report_resolved"
-        | "comment_blinded";
+        | "comment_blinded"
+        | "correction_resolved";
       correction_status: "proposed" | "reviewing" | "accepted" | "rejected";
       audit_action:
         | "comment_remove"

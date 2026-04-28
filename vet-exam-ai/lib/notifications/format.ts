@@ -23,13 +23,33 @@ function buildCommentHref(rel: NonNullable<RelatedCommentLite>): string {
   return `/questions/${encodeURIComponent(rel.question_id)}?comment=${encodeURIComponent(rel.id)}`;
 }
 
+function buildQuestionHref(payload: Record<string, unknown>): string {
+  const pub = stringField(payload, "question_public_id");
+  if (pub) return `/questions/${encodeURIComponent(pub)}`;
+  const qid = stringField(payload, "question_id");
+  if (qid) return `/questions/${encodeURIComponent(qid)}`;
+  return NO_HREF;
+}
+
 export function formatNotification(
   type: NotificationType,
   payload: Record<string, unknown>,
   related: RelatedCommentLite,
 ): FormattedNotification {
-  // If the underlying comment is gone (cascade-deleted), every type degrades
-  // to text-only — clicking the row does nothing.
+  // correction_resolved is independent of comments — handle first.
+  if (type === "correction_resolved") {
+    const resolution = stringField(payload, "resolution");
+    const text =
+      resolution === "accepted"
+        ? "정정 제안이 수락되었어요"
+        : resolution === "rejected"
+          ? "정정 제안이 거절되었어요"
+          : "정정 제안의 검토가 완료되었어요";
+    return { text, href: buildQuestionHref(payload) };
+  }
+
+  // If the underlying comment is gone (cascade-deleted), every comment-bound
+  // type degrades to text-only.
   if (related == null) {
     return { text: textOnlyFallback(type, payload), href: NO_HREF };
   }
@@ -56,14 +76,12 @@ export function formatNotification(
       const resolution = stringField(payload, "resolution");
       const text =
         resolution === "upheld"
-          ? "신고하신 댓글이 처리되었어요"
+          ? "신고하신 댓글이 운영자 검토 후 제거되었어요"
           : resolution === "dismissed"
-            ? "신고하신 댓글이 검토 결과 유지되었어요"
+            ? "신고하신 댓글이 검토 결과 위반이 아닌 것으로 판단되었어요"
             : "신고하신 댓글의 검토가 완료되었어요";
       return { text, href };
     }
-    // Triggers for these types do not exist yet — safe fallback so future
-    // trigger additions render without code changes.
     case "comment_blinded":
       return { text: "회원님의 댓글이 블라인드 처리되었어요", href: NO_HREF };
     case "mention": {
@@ -71,7 +89,6 @@ export function formatNotification(
       return { text: `${nickname}님이 회원님을 멘션했어요`, href: NO_HREF };
     }
     default: {
-      // Exhaustiveness — TS surfaces this if a new enum value is added.
       const _exhaustive: never = type;
       void _exhaustive;
       return { text: "새 알림", href: NO_HREF };
@@ -80,7 +97,7 @@ export function formatNotification(
 }
 
 function textOnlyFallback(
-  type: NotificationType,
+  type: Exclude<NotificationType, "correction_resolved">,
   payload: Record<string, unknown>,
 ): string {
   switch (type) {
@@ -90,8 +107,14 @@ function textOnlyFallback(
       const milestone = numberField(payload, "milestone");
       return `회원님의 댓글이 ${milestone != null ? String(milestone) : "여러"} 추천을 받았어요 🎉`;
     }
-    case "report_resolved":
-      return "신고하신 댓글의 검토가 완료되었어요";
+    case "report_resolved": {
+      const resolution = stringField(payload, "resolution");
+      return resolution === "upheld"
+        ? "신고하신 댓글이 운영자 검토 후 제거되었어요"
+        : resolution === "dismissed"
+          ? "신고하신 댓글이 검토 결과 위반이 아닌 것으로 판단되었어요"
+          : "신고하신 댓글의 검토가 완료되었어요";
+    }
     case "comment_blinded":
       return "회원님의 댓글이 블라인드 처리되었어요";
     case "mention":
