@@ -94,7 +94,7 @@ vet-exam-ai/
     20260502000000_admin_pr_c.sql                ← 신규
 ```
 
-신규 12 + 수정 5 + 마이그 1.
+신규 16 + 수정 5 + 마이그 1 = 22.
 
 ### 진입 흐름 — 신고 처리
 
@@ -441,7 +441,7 @@ export const CORRECTION_RESOLUTION_KO: Record<string, string> = {
 
 - 알림 클릭 라우팅 분기에 두 type 추가:
   - `report_resolved`: `payload.related_comment_id`로 해당 댓글 위치 → `/questions/{public_id ?? id}#comment-{comment_id}` (댓글이 `removed_by_admin`이어도 question 페이지 fallback)
-  - `correction_resolved`: `payload.question_id` → questions lookup → `/questions/{public_id ?? id}`
+  - `correction_resolved`: `payload.question_public_id ?? payload.question_id` → `/questions/{...}` (RPC가 alert insert 시 KVLE까지 회수해 payload에 박아 넣음 → 클라이언트에서 추가 lookup 0)
 - 라벨 카피: report_resolved는 `payload.resolution`에 따라 "신고하신 댓글이 운영자 검토 후 제거되었습니다" / "신고하신 댓글이 검토 결과 위반이 아닌 것으로 판단되었습니다", correction_resolved는 "정정 제안이 수락되었습니다" / "정정 제안이 거절되었습니다"
 - 본 PR은 dropdown 한 곳만 수정. `/notifications` 풀 페이지에 추가 분기는 P1 (현재 동선상 dropdown 클릭이 주 경로)
 
@@ -629,16 +629,19 @@ begin
      and status in ('proposed', 'reviewing');
 
   if v_proposer_id is not null then
+    -- payload에 question public_id까지 미리 회수 → dropdown 클라에서 추가 lookup 0
     insert into public.notifications (user_id, type, payload, actor_id)
-    values
-      (v_proposer_id,
-       'correction_resolved',
-       jsonb_build_object(
-         'resolution',  p_resolution,
-         'note',        coalesce(p_note, ''),
-         'question_id', v_question_id::text
-       ),
-       v_admin_id);
+    select v_proposer_id,
+           'correction_resolved',
+           jsonb_build_object(
+             'resolution',         p_resolution,
+             'note',               coalesce(p_note, ''),
+             'question_id',        v_question_id::text,
+             'question_public_id', q.public_id
+           ),
+           v_admin_id
+      from public.questions q
+     where q.id = v_question_id;
   end if;
 
   insert into public.admin_audit_logs
@@ -717,7 +720,7 @@ grant  execute on function public.resolve_question_correction(uuid, text, text) 
 ### 알림 클릭 라우팅
 
 - `report_resolved`: 댓글이 제거됐어도 question 페이지로 fallback (상세 페이지가 댓글 anchor 처리)
-- `correction_resolved`: questions lookup으로 `public_id` 회수 → KVLE 라우팅
+- `correction_resolved`: payload에 RPC가 박아둔 `question_public_id` 직접 사용 → 클라이언트 lookup 0
 - dropdown에 분기 누락 시: 본 PR에서 추가 (`components/notifications/notifications-dropdown.tsx`)
 
 ### 저작권 가드
