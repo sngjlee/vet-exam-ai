@@ -187,11 +187,8 @@ export default function CommentItem({
       </div>
 
       <div
-        style={{
-          fontSize: 13,
-          color: "var(--text)",
-          lineHeight: 1.7,
-        }}
+        className="kvle-prose kvle-selectable-text"
+        style={{ color: "var(--text)" }}
         dangerouslySetInnerHTML={{ __html: comment.body_html }}
       />
     </div>
