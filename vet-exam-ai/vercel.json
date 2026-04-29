@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/comment-image-sweep",
+      "schedule": "0 4 * * *"
+    }
+  ]
+}
