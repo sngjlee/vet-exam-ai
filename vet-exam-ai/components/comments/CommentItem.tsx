@@ -5,6 +5,8 @@ import type { CommentType } from "../../lib/comments/schema";
 import CommentVoteButton from "./CommentVoteButton";
 import CommentMenuOverflow from "./CommentMenuOverflow";
 import CommentAuthorInline from "./CommentAuthorInline";
+import CommentEditComposer, { type EditedCommentRow } from "./CommentEditComposer";
+import CommentReplyComposer from "./CommentReplyComposer";
 import type { BadgeType } from "../../lib/profile/badgeMeta";
 
 type VoteValue = 1 | -1;
@@ -13,8 +15,10 @@ export type CommentItemData = {
   id: string;
   user_id: string | null;
   type: CommentType;
+  body_text: string;
   body_html: string;
   created_at: string;
+  edit_count: number;
   authorNickname: string | null;
 };
 
@@ -29,12 +33,18 @@ type Props = {
   canDelete: boolean;
   isPinned?: boolean;
   authorBadges: BadgeType[];
+  isEditing?: boolean;
   onDelete: (id: string) => void;
   onReport: (id: string) => void;
   onVoteChange: (commentId: string, value: VoteValue, prev: VoteValue | null) => void;
   onUnauthedAttempt?: () => void;
   onStartReply?: (id: string) => void;
   onTogglePin?: (id: string) => void;
+  onStartEdit?: (id: string) => void;
+  onCancelEdit?: () => void;
+  onSaved?: (row: EditedCommentRow) => void;
+  onShowHistory?: (id: string, editCount: number) => void;
+  onConflict?: () => void;
   isReply?: boolean;
   isPlaceholder?: boolean;
 };
@@ -70,12 +80,18 @@ export default function CommentItem({
   canDelete,
   isPinned,
   authorBadges,
+  isEditing,
   onDelete,
   onReport,
   onVoteChange,
   onUnauthedAttempt,
   onStartReply,
   onTogglePin,
+  onStartEdit,
+  onCancelEdit,
+  onSaved,
+  onShowHistory,
+  onConflict,
   isReply,
   isPlaceholder,
 }: Props) {
@@ -105,6 +121,7 @@ export default function CommentItem({
       : comment.authorNickname ?? `익명-${comment.user_id.slice(-4)}`;
 
   const voteDisabled = status === "blinded_by_report";
+  const showEditMode = !!isEditing && !isPlaceholder && !!onCancelEdit && !!onSaved;
 
   return (
     <div
@@ -141,6 +158,25 @@ export default function CommentItem({
           size={isReply ? "small" : "normal"}
         />
         <span style={{ color: "var(--text-faint)" }}>· {formatRelative(comment.created_at)}</span>
+        {comment.edit_count > 0 && onShowHistory && (
+          <button
+            type="button"
+            onClick={() => onShowHistory(comment.id, comment.edit_count)}
+            aria-label={`수정 이력 보기 (총 ${comment.edit_count}회 수정됨)`}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "var(--text-faint)",
+              cursor: "pointer",
+              fontSize: 11,
+              padding: 0,
+              textDecoration: "underline",
+              textUnderlineOffset: 2,
+            }}
+          >
+            · 수정됨
+          </button>
+        )}
         {status === "blinded_by_report" && isOwner && (
           <span
             style={{
@@ -214,21 +250,42 @@ export default function CommentItem({
           <CommentMenuOverflow
             isOwner={isOwner}
             isReported={isReported}
-            canEdit={false}
+            canEdit={isOwner && status === "visible" && !isEditing && !!onStartEdit}
             canDelete={canDelete}
             canReport={isAuthed && status !== "blinded_by_report"}
-            onEdit={() => {}}
+            onEdit={() => onStartEdit && onStartEdit(comment.id)}
             onDelete={() => onDelete(comment.id)}
             onReport={() => onReport(comment.id)}
           />
         </div>
       </div>
 
-      <div
-        className="kvle-prose kvle-selectable-text"
-        style={{ color: "var(--text)" }}
-        dangerouslySetInnerHTML={{ __html: comment.body_html }}
-      />
+      {showEditMode ? (
+        isReply ? (
+          <CommentReplyComposer
+            mode="edit"
+            commentId={comment.id}
+            initialText={comment.body_text}
+            onSaved={onSaved!}
+            onCancel={onCancelEdit!}
+            onConflict={onConflict}
+          />
+        ) : (
+          <CommentEditComposer
+            commentId={comment.id}
+            initialText={comment.body_text}
+            onSaved={onSaved!}
+            onCancel={onCancelEdit!}
+            onConflict={onConflict}
+          />
+        )
+      ) : (
+        <div
+          className="kvle-prose kvle-selectable-text"
+          style={{ color: "var(--text)" }}
+          dangerouslySetInnerHTML={{ __html: comment.body_html }}
+        />
+      )}
     </div>
   );
 }

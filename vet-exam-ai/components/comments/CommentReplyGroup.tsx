@@ -3,6 +3,7 @@
 import CommentItem, { type CommentItemData } from "./CommentItem";
 import CommentReplyComposer from "./CommentReplyComposer";
 import CommentCollapsedRow from "./CommentCollapsedRow";
+import type { EditedCommentRow } from "./CommentEditComposer";
 import type { BadgeType } from "../../lib/profile/badgeMeta";
 
 type VoteValue = 1 | -1;
@@ -28,6 +29,12 @@ type Props = {
   onUnauthedAttempt?: () => void;
   onExpand: (id: string) => void;
   authorBadgesById: Map<string, BadgeType[]>;
+  editingId: string | null;
+  onStartEdit: (id: string) => void;
+  onCancelEdit: () => void;
+  onSaved: (row: EditedCommentRow) => void;
+  onShowHistory: (id: string, editCount: number) => void;
+  onConflict?: () => void;
 };
 
 export default function CommentReplyGroup({
@@ -48,6 +55,12 @@ export default function CommentReplyGroup({
   onUnauthedAttempt,
   onExpand,
   authorBadgesById,
+  editingId,
+  onStartEdit,
+  onCancelEdit,
+  onSaved,
+  onShowHistory,
+  onConflict,
 }: Props) {
   return (
     <div
@@ -101,10 +114,16 @@ export default function CommentReplyGroup({
             authorBadges={
               r.user_id ? authorBadgesById.get(r.user_id) ?? [] : []
             }
+            isEditing={editingId === r.id}
             onDelete={onDelete}
             onReport={onReport}
             onVoteChange={onVoteChange}
             onUnauthedAttempt={onUnauthedAttempt}
+            onStartEdit={isOwner ? onStartEdit : undefined}
+            onCancelEdit={onCancelEdit}
+            onSaved={onSaved}
+            onShowHistory={onShowHistory}
+            onConflict={onConflict}
             isReply
           />
         );

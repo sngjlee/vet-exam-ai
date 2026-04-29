@@ -8,6 +8,8 @@ import type { ReplyRow } from "./CommentReplyGroup";
 import CommentComposer from "./CommentComposer";
 import CommentItem, { type CommentItemData } from "./CommentItem";
 import CommentReportModal from "./CommentReportModal";
+import CommentEditHistoryModal from "./CommentEditHistoryModal";
+import type { EditedCommentRow } from "./CommentEditComposer";
 import type { CommentType } from "../../lib/comments/schema";
 import type { SortMode } from "../../lib/comments/voteSchema";
 import type { BadgeType } from "../../lib/profile/badgeMeta";
@@ -27,8 +29,11 @@ type CommentRow = {
   user_id: string | null;
   parent_id: string | null;
   type: CommentType;
+  body_text: string;
   body_html: string;
   created_at: string;
+  updated_at: string;
+  edit_count: number;
   status: CommentStatus;
   vote_score: number;
 };
@@ -50,6 +55,9 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserNickname, setCurrentUserNickname] = useState<string | null>(null);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [historyForId, setHistoryForId] = useState<string | null>(null);
+  const [historyEditCount, setHistoryEditCount] = useState<number>(0);
   const [reportingId, setReportingId] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [pinnedCommentId, setPinnedCommentId] = useState<string | null>(null);
@@ -96,7 +104,9 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
 
       let query = supabase
         .from("comments")
-        .select("id, user_id, parent_id, type, body_html, created_at, status, vote_score")
+        .select(
+          "id, user_id, parent_id, type, body_text, body_html, created_at, updated_at, edit_count, status, vote_score"
+        )
         .eq("question_id", questionId)
         .in("status", VISIBLE_STATUSES)
         .limit(50);
@@ -162,8 +172,10 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         id: row.id,
         user_id: row.user_id,
         type: row.type,
+        body_text: row.body_text,
         body_html: row.body_html,
         created_at: row.created_at,
+        edit_count: row.edit_count,
         authorNickname: row.user_id ? nicknameById.get(row.user_id) ?? null : null,
       });
 
@@ -202,8 +214,10 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             id: pid,
             user_id: null,
             type: "discussion",
+            body_text: "",
             body_html: "",
             created_at: oldestReply.created_at,
+            edit_count: 0,
             authorNickname: null,
             status: "visible",
             replies: arr.map<ReplyRow>((rr) => ({
@@ -387,10 +401,77 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
   }
 
   function handleStartReply(id: string) {
+    setEditingId(null);
     setReplyingToId(id);
   }
   function handleCancelReply() {
     setReplyingToId(null);
+  }
+
+  function handleStartEdit(id: string) {
+    setReplyingToId(null);
+    setEditingId(id);
+  }
+  function handleCancelEdit() {
+    setEditingId(null);
+  }
+
+  function handleSaved(row: EditedCommentRow) {
+    setRoots((prev) =>
+      prev.map((root) => {
+        if (root.id === row.id && !root.isPlaceholder) {
+          return {
+            ...root,
+            body_text: row.body_text,
+            body_html: row.body_html,
+            edit_count: row.edit_count,
+          };
+        }
+        if (root.replies.some((r) => r.id === row.id)) {
+          return {
+            ...root,
+            replies: root.replies.map((r) =>
+              r.id === row.id
+                ? {
+                    ...r,
+                    body_text: row.body_text,
+                    body_html: row.body_html,
+                    edit_count: row.edit_count,
+                  }
+                : r
+            ),
+          };
+        }
+        return root;
+      })
+    );
+    setPinnedFallback((prev) => {
+      if (!prev || prev.item.id !== row.id) return prev;
+      return {
+        ...prev,
+        item: {
+          ...prev.item,
+          body_text: row.body_text,
+          body_html: row.body_html,
+          edit_count: row.edit_count,
+        },
+      };
+    });
+    setEditingId(null);
+  }
+
+  function handleEditConflict() {
+    setEditingId(null);
+    showToast("이 댓글은 더 이상 수정할 수 없습니다");
+    setReloadKey((k) => k + 1);
+  }
+
+  function handleShowHistory(id: string, editCount: number) {
+    setHistoryForId(id);
+    setHistoryEditCount(editCount);
+  }
+  function handleCloseHistory() {
+    setHistoryForId(null);
   }
 
   async function handleDelete(id: string) {
@@ -552,8 +633,10 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           id: root.id,
           user_id: root.user_id,
           type: root.type,
+          body_text: root.body_text,
           body_html: root.body_html,
           created_at: root.created_at,
+          edit_count: root.edit_count,
           authorNickname: root.authorNickname,
         };
         return { item, status: root.status, score: scoreById.get(root.id) ?? 0 };
@@ -564,8 +647,10 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             id: reply.id,
             user_id: reply.user_id,
             type: reply.type,
+            body_text: reply.body_text,
             body_html: reply.body_html,
             created_at: reply.created_at,
+            edit_count: reply.edit_count,
             authorNickname: reply.authorNickname,
           };
           return {
@@ -591,7 +676,9 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       const supabase = createClient();
       const { data, error } = await supabase
         .from("comments")
-        .select("id, user_id, type, body_html, created_at, status, vote_score")
+        .select(
+          "id, user_id, type, body_text, body_html, created_at, edit_count, status, vote_score"
+        )
         .eq("id", pinnedCommentId)
         .maybeSingle();
       if (cancelled || error || !data) {
@@ -615,8 +702,10 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           id: data.id,
           user_id: data.user_id,
           type: data.type as CommentType,
+          body_text: data.body_text,
           body_html: data.body_html,
           created_at: data.created_at,
+          edit_count: data.edit_count,
           authorNickname: nickname,
         },
         status: data.status as CommentStatus,
@@ -728,11 +817,19 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
                     ? authorBadgesById.get(pinnedDisplay.item.user_id) ?? []
                     : []
                 }
+                isEditing={editingId === pinnedDisplay.item.id}
                 onDelete={handleDelete}
                 onReport={handleReport}
                 onVoteChange={handleVoteChange}
                 onUnauthedAttempt={handleUnauthedAttempt}
                 onTogglePin={handleTogglePin}
+                onStartEdit={
+                  pinnedDisplay.item.user_id === currentUserId ? handleStartEdit : undefined
+                }
+                onCancelEdit={handleCancelEdit}
+                onSaved={handleSaved}
+                onShowHistory={handleShowHistory}
+                onConflict={handleEditConflict}
               />
             </section>
           )}
@@ -758,6 +855,12 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             pinnedCommentId={pinnedCommentId}
             onTogglePin={handleTogglePin}
             authorBadgesById={authorBadgesById}
+            editingId={editingId}
+            onStartEdit={handleStartEdit}
+            onCancelEdit={handleCancelEdit}
+            onSaved={handleSaved}
+            onShowHistory={handleShowHistory}
+            onConflict={handleEditConflict}
           />
           {currentUserId ? (
             <CommentComposer questionId={questionId} onSubmitted={handleRootSubmitted} />
@@ -786,6 +889,14 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           onClose={() => setReportingId(null)}
           onSubmitted={handleReportSubmitted}
           onAlreadyReported={handleAlreadyReported}
+        />
+      )}
+
+      {historyForId && (
+        <CommentEditHistoryModal
+          commentId={historyForId}
+          editCount={historyEditCount}
+          onClose={handleCloseHistory}
         />
       )}
 
