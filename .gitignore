@@ -20,3 +20,5 @@ raw-exams/
 pipeline/output/
 pipeline/.env
 pipeline/.venv/
+
+.vercel
