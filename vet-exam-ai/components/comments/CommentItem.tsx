@@ -17,6 +17,7 @@ export type CommentItemData = {
   type: CommentType;
   body_text: string;
   body_html: string;
+  image_urls: string[];
   created_at: string;
   edit_count: number;
   authorNickname: string | null;

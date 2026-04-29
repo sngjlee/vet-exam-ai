@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { COMMENT_TYPES, type CommentType } from "../../lib/comments/schema";
 import type { CommentItemData } from "./CommentItem";
+import CommentImageAttacher from "./CommentImageAttacher";
 
 const TYPE_LABEL: Record<CommentType, string> = {
   memorization: "💡 암기법",
@@ -23,6 +24,7 @@ type Props = {
 export default function CommentComposer({ questionId, onSubmitted }: Props) {
   const [type, setType] = useState<CommentType | null>(null);
   const [body, setBody] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +33,8 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
   const counterColor =
     overLimit ? "var(--wrong)" : len > WARN ? "var(--blue)" : "var(--text-faint)";
 
-  const canSubmit = !!type && len > 0 && !overLimit && !submitting;
+  const canSubmit =
+    !!type && (len > 0 || imageUrls.length > 0) && !overLimit && !submitting;
 
   async function handleSubmit() {
     if (!canSubmit || !type) return;
@@ -41,7 +44,12 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
       const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question_id: questionId, type, body_text: body }),
+        body: JSON.stringify({
+          question_id: questionId,
+          type,
+          body_text: body,
+          image_urls: imageUrls,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -54,12 +62,14 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
         type: created.type,
         body_text: created.body_text,
         body_html: created.body_html,
+        image_urls: created.image_urls ?? [],
         created_at: created.created_at,
         edit_count: created.edit_count ?? 0,
         authorNickname: null,
       });
       setBody("");
       setType(null);
+      setImageUrls([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "전송 실패");
     } finally {
@@ -121,6 +131,8 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
           minHeight: 80,
         }}
       />
+
+      <CommentImageAttacher value={imageUrls} onChange={setImageUrls} disabled={submitting} />
 
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span style={{ fontSize: 11, color: counterColor, fontFamily: "var(--font-mono)" }}>
