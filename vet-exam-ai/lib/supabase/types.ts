@@ -256,6 +256,7 @@ export interface Database {
           is_anonymized: boolean;
           created_at: string;
           updated_at: string;
+          edit_count: number;
         };
         Insert: {
           id?: string;
@@ -276,6 +277,7 @@ export interface Database {
           is_anonymized?: boolean;
           created_at?: string;
           updated_at?: string;
+          edit_count?: number;
         };
         Update: {
           body_text?: string;
