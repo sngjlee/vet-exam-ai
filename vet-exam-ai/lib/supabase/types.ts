@@ -371,6 +371,7 @@ export interface Database {
           comment_id: string;
           body_text: string;
           body_html: string;
+          image_urls: string[];
           edited_at: string;
         };
         Insert: {
@@ -378,12 +379,43 @@ export interface Database {
           comment_id: string;
           body_text: string;
           body_html: string;
+          image_urls?: string[];
           edited_at?: string;
         };
         Update: {
           // edit history is immutable
         };
         Relationships: [];
+      };
+
+      comment_image_upload_log: {
+        Row: {
+          id: number;
+          user_id: string;
+          created_at: string;
+          storage_path: string;
+        };
+        Insert: {
+          id?: number;
+          user_id: string;
+          created_at?: string;
+          storage_path: string;
+        };
+        Update: {
+          id?: number;
+          user_id?: string;
+          created_at?: string;
+          storage_path?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "comment_image_upload_log_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
       };
 
       notifications: {
