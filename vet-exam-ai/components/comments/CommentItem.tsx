@@ -214,8 +214,10 @@ export default function CommentItem({
           <CommentMenuOverflow
             isOwner={isOwner}
             isReported={isReported}
+            canEdit={false}
             canDelete={canDelete}
             canReport={isAuthed && status !== "blinded_by_report"}
+            onEdit={() => {}}
             onDelete={() => onDelete(comment.id)}
             onReport={() => onReport(comment.id)}
           />

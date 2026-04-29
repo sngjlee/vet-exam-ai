@@ -6,8 +6,10 @@ import { MoreHorizontal } from "lucide-react";
 type Props = {
   isOwner: boolean;
   isReported: boolean;
+  canEdit: boolean;
   canDelete: boolean;
   canReport: boolean;
+  onEdit: () => void;
   onDelete: () => void;
   onReport: () => void;
 };
@@ -15,8 +17,10 @@ type Props = {
 export default function CommentMenuOverflow({
   isOwner,
   isReported,
+  canEdit,
   canDelete,
   canReport,
+  onEdit,
   onDelete,
   onReport,
 }: Props) {
@@ -40,10 +44,11 @@ export default function CommentMenuOverflow({
     };
   }, [open]);
 
+  const showEdit = canEdit;
   const showDelete = canDelete;
   const showReport = !isOwner && canReport && !isReported;
   const showReportedBadge = !isOwner && isReported;
-  if (!showDelete && !showReport && !showReportedBadge) return null;
+  if (!showEdit && !showDelete && !showReport && !showReportedBadge) return null;
 
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-flex" }}>
@@ -82,6 +87,29 @@ export default function CommentMenuOverflow({
             overflow: "hidden",
           }}
         >
+          {showEdit && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onEdit();
+              }}
+              style={{
+                display: "block",
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                padding: "8px 12px",
+                textAlign: "left",
+                fontSize: 12,
+                color: "var(--text)",
+                cursor: "pointer",
+              }}
+            >
+              수정
+            </button>
+          )}
           {showDelete && (
             <button
               type="button"
