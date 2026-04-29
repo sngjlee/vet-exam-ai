@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CommentImageAttacher from "./CommentImageAttacher";
 
 const MAX = 5000;
 const WARN = 4500;
@@ -9,6 +10,7 @@ export type EditedCommentRow = {
   id: string;
   body_text: string;
   body_html: string;
+  image_urls: string[];
   edit_count: number;
   updated_at: string;
   created_at: string;
@@ -17,6 +19,7 @@ export type EditedCommentRow = {
 type Props = {
   commentId: string;
   initialText: string;
+  initialImageUrls: string[];
   onSaved: (row: EditedCommentRow) => void;
   onCancel: () => void;
   onConflict?: () => void;
@@ -25,20 +28,30 @@ type Props = {
 export default function CommentEditComposer({
   commentId,
   initialText,
+  initialImageUrls,
   onSaved,
   onCancel,
   onConflict,
 }: Props) {
   const [text, setText] = useState(initialText);
+  const [imageUrls, setImageUrls] = useState<string[]>(initialImageUrls);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const arraysDiffer = (a: string[], b: string[]) => {
+    if (a.length !== b.length) return true;
+    for (let i = 0; i < a.length; i += 1) if (a[i] !== b[i]) return true;
+    return false;
+  };
 
   const len = text.length;
   const overLimit = len > MAX;
   const counterColor =
     overLimit ? "var(--wrong)" : len > WARN ? "var(--blue)" : "var(--text-faint)";
-  const dirty = text !== initialText;
-  const canSubmit = dirty && len > 0 && !overLimit && !submitting;
+  const dirty =
+    text !== initialText || arraysDiffer(imageUrls, initialImageUrls);
+  const canSubmit =
+    dirty && (text.length > 0 || imageUrls.length > 0) && !overLimit && !submitting;
 
   function attemptCancel() {
     if (dirty) {
@@ -62,10 +75,13 @@ export default function CommentEditComposer({
     setSubmitting(true);
     setError(null);
     try {
+      const payload: { body_text?: string; image_urls?: string[] } = {};
+      if (text !== initialText) payload.body_text = text;
+      if (arraysDiffer(imageUrls, initialImageUrls)) payload.image_urls = imageUrls;
       const res = await fetch(`/api/comments/${commentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body_text: text }),
+        body: JSON.stringify(payload),
       });
       if (res.status === 409) {
         if (onConflict) onConflict();
@@ -113,6 +129,12 @@ export default function CommentEditComposer({
           resize: "vertical",
           minHeight: 80,
         }}
+      />
+
+      <CommentImageAttacher
+        value={imageUrls}
+        onChange={setImageUrls}
+        disabled={submitting}
       />
 
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
