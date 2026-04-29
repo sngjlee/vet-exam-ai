@@ -50,6 +50,7 @@ type StoredFilter = {
   recentYears: RecentYearsWindow | "all";
   onlyWrong: boolean;
   skipEasy: boolean;
+  forceAll: boolean;
   savedAt: number;
 };
 
@@ -103,6 +104,7 @@ export default function QuestionsListPage() {
   );
   const [onlyWrong, setOnlyWrong] = useState(false);
   const [skipEasy, setSkipEasy] = useState(false);
+  const [forceAll, setForceAll] = useState(false);
   const [page, setPage] = useState(0);
   const [hydrated, setHydrated] = useState(false);
 
@@ -114,29 +116,32 @@ export default function QuestionsListPage() {
       setRecentYears(stored.recentYears);
       setOnlyWrong(stored.onlyWrong);
       setSkipEasy(stored.skipEasy);
+      setForceAll(stored.forceAll ?? false);
     }
     setHydrated(true);
   }, []);
 
-  // 게이트 판정 — 사용자 의미있는 필터 1개 이상 선택 시 fetch
   const hasMeaningfulFilter =
     recentYears !== "all" ||
     selectedCategory !== "All" ||
     onlyWrong ||
     skipEasy;
 
+  // 게이트 통과 = 의미있는 필터가 있거나, 사용자가 명시적으로 "전체 보기"를 눌렀거나
+  const shouldFetch = hasMeaningfulFilter || forceAll;
+
   // 서버 필터: recentYears + category만 서버에 보냄 (onlyWrong/skipEasy는 클라)
   const serverFilter = useMemo(() => {
-    if (!hydrated || !hasMeaningfulFilter) return null;
+    if (!hydrated || !shouldFetch) return null;
     if (recentYears === "all" && selectedCategory === "All") {
-      // onlyWrong/skipEasy만 켜진 경우 — 전체 fetch 필요 (서버 필터 없음)
+      // forceAll 또는 onlyWrong/skipEasy만 켜진 경우 — 전체 fetch
       return { recentYears: undefined, category: undefined };
     }
     return {
       recentYears: recentYears === "all" ? undefined : recentYears,
       category: selectedCategory === "All" ? undefined : selectedCategory,
     };
-  }, [hydrated, hasMeaningfulFilter, recentYears, selectedCategory, onlyWrong, skipEasy]);
+  }, [hydrated, shouldFetch, recentYears, selectedCategory]);
 
   const {
     questions,
@@ -147,13 +152,27 @@ export default function QuestionsListPage() {
   // 필터 변경 시 sessionStorage 갱신 + 페이지 0
   useEffect(() => {
     if (!hydrated) return;
-    if (hasMeaningfulFilter) {
-      saveStoredFilter({ selectedCategory, recentYears, onlyWrong, skipEasy });
+    if (shouldFetch) {
+      saveStoredFilter({
+        selectedCategory,
+        recentYears,
+        onlyWrong,
+        skipEasy,
+        forceAll,
+      });
     } else {
       clearStoredFilter();
     }
     setPage(0);
-  }, [hydrated, hasMeaningfulFilter, selectedCategory, recentYears, onlyWrong, skipEasy]);
+  }, [
+    hydrated,
+    shouldFetch,
+    selectedCategory,
+    recentYears,
+    onlyWrong,
+    skipEasy,
+    forceAll,
+  ]);
 
   // Auth gate (UX only — RLS is the real boundary).
   useEffect(() => {
@@ -168,7 +187,7 @@ export default function QuestionsListPage() {
 
   // 클라사이드 후처리: onlyWrong / skipEasy
   const filtered = useMemo(() => {
-    if (!hasMeaningfulFilter) return [];
+    if (!shouldFetch) return [];
     return applyQuestionFilters(questions, {
       categories:
         selectedCategory === "All" ? undefined : [selectedCategory],
@@ -178,7 +197,7 @@ export default function QuestionsListPage() {
       wrongQuestionIds: wrongIdSet,
     });
   }, [
-    hasMeaningfulFilter,
+    shouldFetch,
     questions,
     selectedCategory,
     recentYears,
@@ -221,7 +240,7 @@ export default function QuestionsListPage() {
             color: "var(--text)",
           }}
         >
-          {hasMeaningfulFilter ? (
+          {shouldFetch ? (
             <>
               전체 문제{" "}
               <span style={{ color: "var(--teal)" }}>{filtered.length}</span>
@@ -250,6 +269,32 @@ export default function QuestionsListPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)" }}>
           <Filter size={14} />
           <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em" }}>필터</span>
+          {shouldFetch && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCategory("All");
+                setRecentYears("all");
+                setOnlyWrong(false);
+                setSkipEasy(false);
+                setForceAll(false);
+                setPage(0);
+              }}
+              style={{
+                marginLeft: "auto",
+                background: "transparent",
+                border: "none",
+                color: "var(--text-faint)",
+                cursor: "pointer",
+                fontSize: 11,
+                padding: 0,
+                textDecoration: "underline",
+                textUnderlineOffset: 2,
+              }}
+            >
+              초기화
+            </button>
+          )}
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
@@ -310,7 +355,7 @@ export default function QuestionsListPage() {
       </section>
 
       {/* Body */}
-      {!hasMeaningfulFilter ? (
+      {!shouldFetch ? (
         <section
           className="kvle-card text-center"
           style={{ padding: "3rem 1.5rem" }}
@@ -336,11 +381,23 @@ export default function QuestionsListPage() {
             style={{
               color: "var(--text-faint)",
               fontSize: 12,
-              margin: 0,
+              margin: "0 0 16px",
             }}
           >
             전체를 한 번에 불러오면 로딩이 길어집니다.
           </p>
+          <button
+            type="button"
+            onClick={() => setForceAll(true)}
+            className="kvle-btn-ghost text-sm"
+            style={{
+              minHeight: 40,
+              padding: "10px 18px",
+              fontSize: 13,
+            }}
+          >
+            그래도 전체 문제 보기
+          </button>
         </section>
       ) : questionsLoading || notesLoading ? (
         <section
