@@ -575,6 +575,7 @@ create table public.comments (
 
   created_at      timestamptz            not null default now(),
   updated_at      timestamptz            not null default now(),
+  edit_count      integer                not null default 0,
 
   constraint body_length check (char_length(body_text) between 1 and 5000),
   constraint image_count check (cardinality(image_urls) <= 3)
@@ -926,6 +927,7 @@ create trigger comments_after_insert
 create or replace function public.handle_comment_update()
 returns trigger
 language plpgsql
+security definer
 set search_path = public
 as $$
 begin
@@ -933,6 +935,7 @@ begin
     insert into public.comment_edit_history (comment_id, body_text, body_html, edited_at)
     values (old.id, old.body_text, old.body_html, old.updated_at);
     new.updated_at := now();
+    new.edit_count := old.edit_count + 1;
   end if;
   return new;
 end;

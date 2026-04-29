@@ -4,6 +4,7 @@ import CommentItem, { type CommentItemData } from "./CommentItem";
 import CommentReplyGroup, { type ReplyRow } from "./CommentReplyGroup";
 import CommentSortToggle from "./CommentSortToggle";
 import CommentCollapsedRow from "./CommentCollapsedRow";
+import type { EditedCommentRow } from "./CommentEditComposer";
 import type { SortMode } from "../../lib/comments/voteSchema";
 import type { BadgeType } from "../../lib/profile/badgeMeta";
 
@@ -38,6 +39,12 @@ type Props = {
   pinnedCommentId?: string | null;
   onTogglePin?: (id: string) => void;
   authorBadgesById: Map<string, BadgeType[]>;
+  editingId: string | null;
+  onStartEdit: (id: string) => void;
+  onCancelEdit: () => void;
+  onSaved: (row: EditedCommentRow) => void;
+  onShowHistory: (id: string, editCount: number) => void;
+  onConflict?: () => void;
 };
 
 export default function CommentList({
@@ -62,6 +69,12 @@ export default function CommentList({
   pinnedCommentId,
   onTogglePin,
   authorBadgesById,
+  editingId,
+  onStartEdit,
+  onCancelEdit,
+  onSaved,
+  onShowHistory,
+  onConflict,
 }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -156,6 +169,7 @@ export default function CommentList({
                 authorBadges={
                   root.user_id ? authorBadgesById.get(root.user_id) ?? [] : []
                 }
+                isEditing={editingId === root.id}
                 onDelete={onDelete}
                 onReport={onReport}
                 onVoteChange={onVoteChange}
@@ -164,6 +178,11 @@ export default function CommentList({
                   currentUserId === null ? undefined : onStartReply
                 }
                 onTogglePin={onTogglePin}
+                onStartEdit={isOwner ? onStartEdit : undefined}
+                onCancelEdit={onCancelEdit}
+                onSaved={onSaved}
+                onShowHistory={onShowHistory}
+                onConflict={onConflict}
               />
             );
           }
@@ -193,6 +212,12 @@ export default function CommentList({
                   onUnauthedAttempt={onUnauthedAttempt}
                   onExpand={onExpand}
                   authorBadgesById={authorBadgesById}
+                  editingId={editingId}
+                  onStartEdit={onStartEdit}
+                  onCancelEdit={onCancelEdit}
+                  onSaved={onSaved}
+                  onShowHistory={onShowHistory}
+                  onConflict={onConflict}
                 />
               )}
             </div>

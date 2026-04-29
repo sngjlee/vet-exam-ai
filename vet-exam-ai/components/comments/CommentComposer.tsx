@@ -52,8 +52,10 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
         id: created.id,
         user_id: created.user_id,
         type: created.type,
+        body_text: created.body_text,
         body_html: created.body_html,
         created_at: created.created_at,
+        edit_count: created.edit_count ?? 0,
         authorNickname: null,
       });
       setBody("");
