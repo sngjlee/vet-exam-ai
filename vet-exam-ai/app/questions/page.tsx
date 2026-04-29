@@ -22,27 +22,29 @@ const STORAGE_KEY = "kvle:questions-filter:v1";
 const STORAGE_TTL_MS = 30 * 60 * 1000; // 30분
 
 // 기본 카테고리 셀렉트 옵션 — 전체 fetch 없이 정적 목록.
-// `lib/questions/utils.ts:getCategories`가 vet40 회귀 시 늘어날 수 있어
+// 순서는 DB 분포(많은→적은) 기준. 임상병리학·조직학은 raw 재유입 대기 슬롯이라 끝.
 // 운영 시 schema.sql + seed 기준으로 주기적 동기화 권장.
 const FIXED_CATEGORIES = [
   "내과학",
-  "약리학",
-  "병리학",
-  "공중보건학",
+  "외과학",
   "산과학",
-  "독성학",
+  "해부학",
+  "병리학",
+  "생리학",
+  "공중보건학",
   "수의법규",
   "전염병학",
-  "임상병리학",
-  "영상의학",
-  "외과학",
-  "조직학",
-  "기생충학",
+  "약리학",
   "미생물학",
-  "예방수의학",
-  "해부학",
-  "생리학",
-  "윤리학",
+  "생화학",
+  "영상진단의학",
+  "독성학",
+  "기생충학",
+  "조류질병학",
+  "실험동물학",
+  "수생생물의학",
+  "임상병리학",
+  "조직학",
 ] as const;
 
 type StoredFilter = {
@@ -109,11 +111,24 @@ export default function QuestionsListPage() {
   const [hydrated, setHydrated] = useState(false);
 
   // sessionStorage hydrate (1회)
+  // FIXED_CATEGORIES가 바뀌면(예: 카테고리 재명명/제거) 이전 세션의 stored 값이 dropdown에 없을 수 있음.
+  // 그 경우 "All"로 fallback해 invisible-selected 상태 방지.
   useEffect(() => {
     const stored = loadStoredFilter();
     if (stored) {
-      setSelectedCategory(stored.selectedCategory);
-      setRecentYears(stored.recentYears);
+      const allowedCategories = (FIXED_CATEGORIES as readonly string[]);
+      const safeCategory =
+        stored.selectedCategory === "All" ||
+        allowedCategories.includes(stored.selectedCategory)
+          ? stored.selectedCategory
+          : "All";
+      const safeRecent =
+        stored.recentYears === "all" ||
+        (RECENT_OPTIONS as readonly number[]).includes(stored.recentYears as number)
+          ? stored.recentYears
+          : "all";
+      setSelectedCategory(safeCategory);
+      setRecentYears(safeRecent);
       setOnlyWrong(stored.onlyWrong);
       setSkipEasy(stored.skipEasy);
       setForceAll(stored.forceAll ?? false);
