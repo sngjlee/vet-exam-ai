@@ -29,7 +29,7 @@
 
 ### 3.1 마이그레이션 (1개)
 
-`supabase/migrations/20260429000000_comment_edit_count.sql` (timestamp는 push 직전 충돌 확인 후 확정)
+`supabase/migrations/20260429000000_comment_edit_count.sql` (현재 free 슬롯 확인됨; push 직전 재확인)
 
 ```sql
 alter table public.comments
@@ -77,7 +77,7 @@ $$;
 - 422: `EditCommentSchema = z.object({ body_text: z.string().min(1).max(5000) })` 실패
 
 **처리**
-1. body_text가 기존과 동일 → 200 + 기존 row (no-op, history 미생성)
+1. body_text가 기존과 정확히 동일 (`existing.body_text === body_text`) → DB update 호출 skip + 200 + 기존 row (no-op, history 미생성, edit_count 불변)
 2. 다르면: 서버에서 `renderCommentMarkdown(body_text)` → `body_html` 재계산
 3. `update({ body_text, body_html })` 실행. 트리거가 자동으로:
    - `comment_edit_history`에 직전 body snapshot 1행 insert
