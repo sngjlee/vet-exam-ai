@@ -4,12 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/hooks/useAuth";
-import { useQuestions } from "../../lib/hooks/useQuestions";
+import { useFilteredQuestions } from "../../lib/hooks/useFilteredQuestions";
 import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 import {
   applyQuestionFilters,
   formatPublicId,
-  getCategories,
   saveQuestionsListContext,
   type RecentYearsWindow,
 } from "../../lib/questions";
@@ -19,17 +18,142 @@ import { BookOpen, Filter, ChevronRight } from "lucide-react";
 const PAGE_SIZE = 30;
 const RECENT_OPTIONS: ReadonlyArray<RecentYearsWindow> = [5, 7, 10] as const;
 
+const STORAGE_KEY = "kvle:questions-filter:v1";
+const STORAGE_TTL_MS = 30 * 60 * 1000; // 30분
+
+// 기본 카테고리 셀렉트 옵션 — 전체 fetch 없이 정적 목록.
+// `lib/questions/utils.ts:getCategories`가 vet40 회귀 시 늘어날 수 있어
+// 운영 시 schema.sql + seed 기준으로 주기적 동기화 권장.
+const FIXED_CATEGORIES = [
+  "내과학",
+  "약리학",
+  "병리학",
+  "공중보건학",
+  "산과학",
+  "독성학",
+  "수의법규",
+  "전염병학",
+  "임상병리학",
+  "영상의학",
+  "외과학",
+  "조직학",
+  "기생충학",
+  "미생물학",
+  "예방수의학",
+  "해부학",
+  "생리학",
+  "윤리학",
+] as const;
+
+type StoredFilter = {
+  selectedCategory: string;
+  recentYears: RecentYearsWindow | "all";
+  onlyWrong: boolean;
+  skipEasy: boolean;
+  savedAt: number;
+};
+
+function loadStoredFilter(): StoredFilter | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredFilter;
+    if (
+      typeof parsed.savedAt !== "number" ||
+      Date.now() - parsed.savedAt > STORAGE_TTL_MS
+    ) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredFilter(f: Omit<StoredFilter, "savedAt">) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...f, savedAt: Date.now() }),
+    );
+  } catch {
+    /* sessionStorage full or disabled */
+  }
+}
+
+function clearStoredFilter() {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function QuestionsListPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { questions, loading: questionsLoading } = useQuestions();
   const { notes: wrongNotes, loading: notesLoading } = useWrongNotes();
 
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [recentYears, setRecentYears] = useState<RecentYearsWindow | "all">("all");
+  const [recentYears, setRecentYears] = useState<RecentYearsWindow | "all">(
+    "all",
+  );
   const [onlyWrong, setOnlyWrong] = useState(false);
   const [skipEasy, setSkipEasy] = useState(false);
   const [page, setPage] = useState(0);
+  const [hydrated, setHydrated] = useState(false);
+
+  // sessionStorage hydrate (1회)
+  useEffect(() => {
+    const stored = loadStoredFilter();
+    if (stored) {
+      setSelectedCategory(stored.selectedCategory);
+      setRecentYears(stored.recentYears);
+      setOnlyWrong(stored.onlyWrong);
+      setSkipEasy(stored.skipEasy);
+    }
+    setHydrated(true);
+  }, []);
+
+  // 게이트 판정 — 사용자 의미있는 필터 1개 이상 선택 시 fetch
+  const hasMeaningfulFilter =
+    recentYears !== "all" ||
+    selectedCategory !== "All" ||
+    onlyWrong ||
+    skipEasy;
+
+  // 서버 필터: recentYears + category만 서버에 보냄 (onlyWrong/skipEasy는 클라)
+  const serverFilter = useMemo(() => {
+    if (!hydrated || !hasMeaningfulFilter) return null;
+    if (recentYears === "all" && selectedCategory === "All") {
+      // onlyWrong/skipEasy만 켜진 경우 — 전체 fetch 필요 (서버 필터 없음)
+      return { recentYears: undefined, category: undefined };
+    }
+    return {
+      recentYears: recentYears === "all" ? undefined : recentYears,
+      category: selectedCategory === "All" ? undefined : selectedCategory,
+    };
+  }, [hydrated, hasMeaningfulFilter, recentYears, selectedCategory, onlyWrong, skipEasy]);
+
+  const {
+    questions,
+    loading: questionsLoading,
+    error: questionsError,
+  } = useFilteredQuestions(serverFilter);
+
+  // 필터 변경 시 sessionStorage 갱신 + 페이지 0
+  useEffect(() => {
+    if (!hydrated) return;
+    if (hasMeaningfulFilter) {
+      saveStoredFilter({ selectedCategory, recentYears, onlyWrong, skipEasy });
+    } else {
+      clearStoredFilter();
+    }
+    setPage(0);
+  }, [hydrated, hasMeaningfulFilter, selectedCategory, recentYears, onlyWrong, skipEasy]);
 
   // Auth gate (UX only — RLS is the real boundary).
   useEffect(() => {
@@ -37,32 +161,45 @@ export default function QuestionsListPage() {
     if (!user) router.replace("/auth/login");
   }, [user, authLoading, router]);
 
-  const categories = useMemo(() => getCategories(questions), [questions]);
   const wrongIdSet = useMemo(
     () => new Set(wrongNotes.map((n) => n.questionId)),
     [wrongNotes],
   );
 
+  // 클라사이드 후처리: onlyWrong / skipEasy
   const filtered = useMemo(() => {
+    if (!hasMeaningfulFilter) return [];
     return applyQuestionFilters(questions, {
-      categories: selectedCategory === "All" ? undefined : [selectedCategory],
+      categories:
+        selectedCategory === "All" ? undefined : [selectedCategory],
       recentYears: recentYears === "all" ? undefined : recentYears,
       onlyWrong,
       skipEasy,
       wrongQuestionIds: wrongIdSet,
     });
-  }, [questions, selectedCategory, recentYears, onlyWrong, skipEasy, wrongIdSet]);
+  }, [
+    hasMeaningfulFilter,
+    questions,
+    selectedCategory,
+    recentYears,
+    onlyWrong,
+    skipEasy,
+    wrongIdSet,
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
-  const pageItems = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+  const pageItems = filtered.slice(
+    safePage * PAGE_SIZE,
+    (safePage + 1) * PAGE_SIZE,
+  );
 
   function changeFilter(updater: () => void) {
     updater();
     setPage(0);
   }
 
-  if (authLoading || !user || questionsLoading || notesLoading) {
+  if (authLoading || !user) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <LoadingSpinner />
@@ -84,7 +221,14 @@ export default function QuestionsListPage() {
             color: "var(--text)",
           }}
         >
-          전체 문제 <span style={{ color: "var(--teal)" }}>{filtered.length}</span>
+          {hasMeaningfulFilter ? (
+            <>
+              전체 문제{" "}
+              <span style={{ color: "var(--teal)" }}>{filtered.length}</span>
+            </>
+          ) : (
+            "해설보기"
+          )}
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>
           개념별로 살펴보고, 최근 기출만 골라 회독하세요. 정답과 해설은 카드를 열어 확인합니다.
@@ -120,7 +264,7 @@ export default function QuestionsListPage() {
               style={{ minWidth: 160 }}
             >
               <option value="All">전체</option>
-              {categories.map((c) => (
+              {FIXED_CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -165,13 +309,63 @@ export default function QuestionsListPage() {
         </div>
       </section>
 
-      {/* List */}
-      {filtered.length === 0 ? (
+      {/* Body */}
+      {!hasMeaningfulFilter ? (
         <section
           className="kvle-card text-center"
           style={{ padding: "3rem 1.5rem" }}
         >
-          <BookOpen size={36} className="mx-auto mb-3" style={{ color: "var(--text-faint)" }} />
+          <Filter
+            size={36}
+            className="mx-auto mb-3"
+            style={{ color: "var(--text-faint)" }}
+          />
+          <p
+            style={{
+              color: "var(--text-muted)",
+              fontSize: 14,
+              margin: "0 0 8px",
+              lineHeight: 1.6,
+            }}
+          >
+            과목, 최근 기출 연도, 또는 학습 모드 중 하나를 선택해
+            <br />
+            볼 문제 범위를 좁혀 주세요.
+          </p>
+          <p
+            style={{
+              color: "var(--text-faint)",
+              fontSize: 12,
+              margin: 0,
+            }}
+          >
+            전체를 한 번에 불러오면 로딩이 길어집니다.
+          </p>
+        </section>
+      ) : questionsLoading || notesLoading ? (
+        <section
+          className="kvle-card text-center"
+          style={{ padding: "3rem 1.5rem" }}
+        >
+          <LoadingSpinner />
+        </section>
+      ) : questionsError ? (
+        <section
+          className="kvle-card text-center"
+          style={{ padding: "2rem 1.5rem", color: "var(--wrong)" }}
+        >
+          문제를 불러올 수 없습니다. 다시 시도해주세요.
+        </section>
+      ) : filtered.length === 0 ? (
+        <section
+          className="kvle-card text-center"
+          style={{ padding: "3rem 1.5rem" }}
+        >
+          <BookOpen
+            size={36}
+            className="mx-auto mb-3"
+            style={{ color: "var(--text-faint)" }}
+          />
           <p style={{ color: "var(--text-muted)", fontSize: 14, margin: 0 }}>
             현재 필터에 해당하는 문제가 없습니다. 조건을 완화해 보세요.
           </p>
@@ -275,7 +469,7 @@ export default function QuestionsListPage() {
       )}
 
       {/* Pagination */}
-      {filtered.length > PAGE_SIZE && (
+      {hasMeaningfulFilter && filtered.length > PAGE_SIZE && (
         <nav
           aria-label="페이지 이동"
           style={{

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../lib/supabase/server";
 import type { Question } from "../../../lib/questions";
 import type { QuestionRow } from "../../../lib/supabase/types";
@@ -40,8 +40,37 @@ function toQuestion(row: QuestionApiRow): Question {
   };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = await createClient();
+
+  const url = new URL(req.url);
+  const recentYearsRaw = url.searchParams.get("recent_years");
+  const category = url.searchParams.get("category");
+
+  // Resolve year cutoff for `recent_years` if present.
+  let yearCutoff: number | null = null;
+  if (recentYearsRaw) {
+    const n = Number.parseInt(recentYearsRaw, 10);
+    if (Number.isFinite(n) && n > 0 && n < 100) {
+      const { data: latest, error: latestErr } = await supabase
+        .from("questions")
+        .select("year")
+        .eq("is_active", true)
+        .not("year", "is", null)
+        .order("year", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestErr) {
+        return NextResponse.json(
+          { error: "Failed to resolve latest year" },
+          { status: 500 }
+        );
+      }
+      if (latest?.year != null) {
+        yearCutoff = latest.year - n + 1;
+      }
+    }
+  }
 
   // Supabase PostgREST가 db-max-rows=1000으로 응답을 자른다 (.range만으로는 우회 불가).
   // 풀 전체(현재 ~2k+, 추후 증가)를 받기 위해 page 단위 반복.
@@ -49,12 +78,21 @@ export async function GET() {
   const all: QuestionApiRow[] = [];
 
   for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await supabase
+    let query = supabase
       .from("questions")
       .select(
         "id, public_id, question, choices, answer, explanation, category, subject, topic, difficulty, source, year, tags, is_active"
       )
-      .eq("is_active", true)
+      .eq("is_active", true);
+
+    if (yearCutoff !== null) {
+      query = query.gte("year", yearCutoff);
+    }
+    if (category) {
+      query = query.eq("category", category);
+    }
+
+    const { data, error } = await query
       .order("category", { ascending: true })
       .order("id", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
