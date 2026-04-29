@@ -27,3 +27,12 @@ export const CreateCommentSchema = z
   );
 
 export type CreateCommentInput = z.infer<typeof CreateCommentSchema>;
+
+export const EditCommentSchema = z.object({
+  body_text: z
+    .string()
+    .min(1, "내용을 입력해주세요")
+    .max(5000, "5000자를 초과할 수 없습니다"),
+});
+
+export type EditCommentInput = z.infer<typeof EditCommentSchema>;
