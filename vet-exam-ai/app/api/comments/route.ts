@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../lib/supabase/server";
 import { CreateCommentSchema } from "../../../lib/comments/schema";
 import { renderCommentMarkdown } from "../../../lib/comments/sanitize";
+import { findInvalidImageUrl } from "../../../lib/comments/imageUrlValidate";
 
 export async function POST(req: NextRequest) {
   let payload: unknown;
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-  const { question_id, parent_id, type, body_text } = parsed.data;
+  const { question_id, parent_id, type, body_text, image_urls } = parsed.data;
 
   const supabase = await createClient();
   const {
@@ -26,6 +27,14 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
+  const invalidUrl = findInvalidImageUrl(image_urls, user.id);
+  if (invalidUrl) {
+    return NextResponse.json(
+      { error: "invalid_image_url", detail: invalidUrl },
+      { status: 400 }
+    );
   }
 
   // Reply branch: validate parent + force type
@@ -89,9 +98,10 @@ export async function POST(req: NextRequest) {
       type: effectiveType,
       body_text,
       body_html,
+      image_urls,
     })
     .select(
-      "id, question_id, user_id, parent_id, type, body_text, body_html, status, created_at, updated_at"
+      "id, question_id, user_id, parent_id, type, body_text, body_html, image_urls, status, created_at, updated_at, edit_count"
     )
     .single();
 

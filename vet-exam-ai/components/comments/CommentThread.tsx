@@ -31,6 +31,7 @@ type CommentRow = {
   type: CommentType;
   body_text: string;
   body_html: string;
+  image_urls: string[];
   created_at: string;
   updated_at: string;
   edit_count: number;
@@ -105,7 +106,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       let query = supabase
         .from("comments")
         .select(
-          "id, user_id, parent_id, type, body_text, body_html, created_at, updated_at, edit_count, status, vote_score"
+          "id, user_id, parent_id, type, body_text, body_html, image_urls, created_at, updated_at, edit_count, status, vote_score"
         )
         .eq("question_id", questionId)
         .in("status", VISIBLE_STATUSES)
@@ -174,6 +175,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         type: row.type,
         body_text: row.body_text,
         body_html: row.body_html,
+        image_urls: row.image_urls ?? [],
         created_at: row.created_at,
         edit_count: row.edit_count,
         authorNickname: row.user_id ? nicknameById.get(row.user_id) ?? null : null,
@@ -216,6 +218,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             type: "discussion",
             body_text: "",
             body_html: "",
+            image_urls: [],
             created_at: oldestReply.created_at,
             edit_count: 0,
             authorNickname: null,
@@ -424,6 +427,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             ...root,
             body_text: row.body_text,
             body_html: row.body_html,
+            image_urls: row.image_urls ?? [],
             edit_count: row.edit_count,
           };
         }
@@ -436,6 +440,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
                     ...r,
                     body_text: row.body_text,
                     body_html: row.body_html,
+                    image_urls: row.image_urls ?? [],
                     edit_count: row.edit_count,
                   }
                 : r
@@ -453,6 +458,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           ...prev.item,
           body_text: row.body_text,
           body_html: row.body_html,
+          image_urls: row.image_urls ?? [],
           edit_count: row.edit_count,
         },
       };
@@ -635,6 +641,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           type: root.type,
           body_text: root.body_text,
           body_html: root.body_html,
+          image_urls: root.image_urls ?? [],
           created_at: root.created_at,
           edit_count: root.edit_count,
           authorNickname: root.authorNickname,
@@ -649,6 +656,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             type: reply.type,
             body_text: reply.body_text,
             body_html: reply.body_html,
+            image_urls: reply.image_urls ?? [],
             created_at: reply.created_at,
             edit_count: reply.edit_count,
             authorNickname: reply.authorNickname,
@@ -677,7 +685,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       const { data, error } = await supabase
         .from("comments")
         .select(
-          "id, user_id, type, body_text, body_html, created_at, edit_count, status, vote_score"
+          "id, user_id, type, body_text, body_html, image_urls, created_at, edit_count, status, vote_score"
         )
         .eq("id", pinnedCommentId)
         .maybeSingle();
@@ -704,6 +712,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           type: data.type as CommentType,
           body_text: data.body_text,
           body_html: data.body_html,
+          image_urls: (data.image_urls as string[]) ?? [],
           created_at: data.created_at,
           edit_count: data.edit_count,
           authorNickname: nickname,

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { CommentItemData } from "./CommentItem";
 import type { EditedCommentRow } from "./CommentEditComposer";
+import CommentImageAttacher from "./CommentImageAttacher";
 
 const MAX = 5000;
 const WARN = 4500;
@@ -19,6 +20,7 @@ type EditProps = {
   mode: "edit";
   commentId: string;
   initialText: string;
+  initialImageUrls: string[];
   onSaved: (row: EditedCommentRow) => void;
   onCancel: () => void;
   onConflict?: () => void;
@@ -29,20 +31,35 @@ type Props = CreateProps | EditProps;
 export default function CommentReplyComposer(props: Props) {
   const isEdit = props.mode === "edit";
   const initialText = isEdit ? props.initialText : "";
+  const initialImageUrls = isEdit ? props.initialImageUrls : [];
   const [body, setBody] = useState(initialText);
+  const [imageUrls, setImageUrls] = useState<string[]>(initialImageUrls);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const arraysDiffer = (a: string[], b: string[]) => {
+    if (a.length !== b.length) return true;
+    for (let i = 0; i < a.length; i += 1) if (a[i] !== b[i]) return true;
+    return false;
+  };
 
   const len = body.length;
   const overLimit = len > MAX;
   const counterColor =
     overLimit ? "var(--wrong)" : len > WARN ? "var(--blue)" : "var(--text-faint)";
 
-  const dirty = isEdit ? body !== initialText : len > 0;
-  const canSubmit = dirty && len > 0 && !overLimit && !submitting;
+  const imagesChanged = arraysDiffer(imageUrls, initialImageUrls);
+  const dirty = isEdit
+    ? body !== initialText || imagesChanged
+    : len > 0 || imageUrls.length > 0;
+  const canSubmit =
+    dirty && (len > 0 || imageUrls.length > 0) && !overLimit && !submitting;
 
   function attemptCancel() {
-    if (isEdit && body !== initialText) {
+    const isDirtyForCancel = isEdit
+      ? body !== initialText || imagesChanged
+      : len > 0 || imageUrls.length > 0;
+    if (isDirtyForCancel) {
       const ok = window.confirm("작성 중인 내용이 사라집니다. 취소할까요?");
       if (!ok) return;
     }
@@ -55,10 +72,13 @@ export default function CommentReplyComposer(props: Props) {
     setError(null);
     try {
       if (isEdit) {
+        const payload: { body_text?: string; image_urls?: string[] } = {};
+        if (body !== initialText) payload.body_text = body;
+        if (imagesChanged) payload.image_urls = imageUrls;
         const res = await fetch(`/api/comments/${props.commentId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ body_text: body }),
+          body: JSON.stringify(payload),
         });
         if (res.status === 409) {
           if (props.onConflict) props.onConflict();
@@ -79,6 +99,7 @@ export default function CommentReplyComposer(props: Props) {
             question_id: props.questionId,
             parent_id: props.parentId,
             body_text: body,
+            image_urls: imageUrls,
           }),
         });
         if (!res.ok) {
@@ -92,11 +113,13 @@ export default function CommentReplyComposer(props: Props) {
           type: created.type,
           body_text: created.body_text,
           body_html: created.body_html,
+          image_urls: created.image_urls ?? [],
           created_at: created.created_at,
           edit_count: created.edit_count ?? 0,
           authorNickname: null,
         });
         setBody("");
+        setImageUrls([]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : isEdit ? "수정 실패" : "전송 실패");
@@ -134,6 +157,13 @@ export default function CommentReplyComposer(props: Props) {
           resize: "vertical",
           minHeight: 60,
         }}
+      />
+
+      <CommentImageAttacher
+        value={imageUrls}
+        onChange={setImageUrls}
+        size="compact"
+        disabled={submitting}
       />
 
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

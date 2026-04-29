@@ -7,6 +7,7 @@ import CommentMenuOverflow from "./CommentMenuOverflow";
 import CommentAuthorInline from "./CommentAuthorInline";
 import CommentEditComposer, { type EditedCommentRow } from "./CommentEditComposer";
 import CommentReplyComposer from "./CommentReplyComposer";
+import CommentImageGallery from "./CommentImageGallery";
 import type { BadgeType } from "../../lib/profile/badgeMeta";
 
 type VoteValue = 1 | -1;
@@ -17,6 +18,7 @@ export type CommentItemData = {
   type: CommentType;
   body_text: string;
   body_html: string;
+  image_urls: string[];
   created_at: string;
   edit_count: number;
   authorNickname: string | null;
@@ -266,6 +268,7 @@ export default function CommentItem({
             mode="edit"
             commentId={comment.id}
             initialText={comment.body_text}
+            initialImageUrls={comment.image_urls ?? []}
             onSaved={onSaved!}
             onCancel={onCancelEdit!}
             onConflict={onConflict}
@@ -274,17 +277,24 @@ export default function CommentItem({
           <CommentEditComposer
             commentId={comment.id}
             initialText={comment.body_text}
+            initialImageUrls={comment.image_urls ?? []}
             onSaved={onSaved!}
             onCancel={onCancelEdit!}
             onConflict={onConflict}
           />
         )
       ) : (
-        <div
-          className="kvle-prose kvle-selectable-text"
-          style={{ color: "var(--text)" }}
-          dangerouslySetInnerHTML={{ __html: comment.body_html }}
-        />
+        <>
+          <div
+            className="kvle-prose kvle-selectable-text"
+            style={{ color: "var(--text)" }}
+            dangerouslySetInnerHTML={{ __html: comment.body_html }}
+          />
+          <CommentImageGallery
+            urls={comment.image_urls ?? []}
+            size={isReply ? "compact" : "normal"}
+          />
+        </>
       )}
     </div>
   );
