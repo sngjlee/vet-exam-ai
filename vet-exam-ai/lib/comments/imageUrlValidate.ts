@@ -4,12 +4,6 @@
 
 import { z } from "zod";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-if (!SUPABASE_URL) {
-  throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set");
-}
-const PUBLIC_PREFIX = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/comment-images/`;
-
 export const MAX_IMAGES_PER_COMMENT = 3;
 
 export const ImageUrlsSchema = z
@@ -17,11 +11,24 @@ export const ImageUrlsSchema = z
   .max(MAX_IMAGES_PER_COMMENT)
   .default([]);
 
+let cachedPrefix: string | null = null;
+
+function publicPrefix(): string {
+  if (cachedPrefix !== null) return cachedPrefix;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set");
+  }
+  cachedPrefix = `${url.replace(/\/$/, "")}/storage/v1/object/public/comment-images/`;
+  return cachedPrefix;
+}
+
 /**
  * 모든 URL이 본인 prefix(`{userId}/...`)인지 검증.
  * @returns 첫 번째로 발견된 위반 URL (없으면 null)
  */
 export function findInvalidImageUrl(urls: string[], ownerUserId: string): string | null {
+  const PUBLIC_PREFIX = publicPrefix();
   for (const url of urls) {
     if (!url.startsWith(PUBLIC_PREFIX)) return url;
     const remainder = url.slice(PUBLIC_PREFIX.length);
@@ -39,6 +46,7 @@ export function findInvalidImageUrl(urls: string[], ownerUserId: string): string
  * URL이 화이트리스트 prefix일 때만 호출. 아니면 null.
  */
 export function urlToStoragePath(url: string): string | null {
+  const PUBLIC_PREFIX = publicPrefix();
   if (!url.startsWith(PUBLIC_PREFIX)) return null;
   return url.slice(PUBLIC_PREFIX.length);
 }
