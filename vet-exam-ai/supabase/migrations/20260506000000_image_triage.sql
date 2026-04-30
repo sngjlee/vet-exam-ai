@@ -32,7 +32,7 @@ alter type public.audit_action add value if not exists 'image_triage_revert';
 
 -- 3. 분류 상태 테이블
 create table if not exists public.question_image_triage (
-  question_id  uuid primary key references public.questions(id) on delete cascade,
+  question_id  text primary key references public.questions(id) on delete cascade,
   status       public.image_triage_status not null,
   note         text,
   decided_by   uuid not null references auth.users(id),
@@ -100,7 +100,7 @@ create policy "admin signed url access" on storage.objects
 -- RPC 1: 단건 분류 (upsert + activate_no_image면 is_active=true 동시 flip)
 -- =============================================================================
 create or replace function public.triage_question_decide(
-  p_question_id uuid,
+  p_question_id text,
   p_status      public.image_triage_status,
   p_note        text default null
 ) returns void
@@ -145,14 +145,14 @@ begin
   );
 end $$;
 
-revoke all on function public.triage_question_decide(uuid, public.image_triage_status, text) from public;
-grant execute on function public.triage_question_decide(uuid, public.image_triage_status, text) to authenticated;
+revoke all on function public.triage_question_decide(text, public.image_triage_status, text) from public;
+grant execute on function public.triage_question_decide(text, public.image_triage_status, text) to authenticated;
 
 -- =============================================================================
 -- RPC 2: 일괄 활성화 (activate_no_image 전용, 단일 트랜잭션)
 -- =============================================================================
 create or replace function public.triage_questions_bulk_activate(
-  p_ids  uuid[],
+  p_ids  text[],
   p_note text default null
 ) returns int
 language plpgsql
@@ -193,14 +193,14 @@ begin
   return v_count;
 end $$;
 
-revoke all on function public.triage_questions_bulk_activate(uuid[], text) from public;
-grant execute on function public.triage_questions_bulk_activate(uuid[], text) to authenticated;
+revoke all on function public.triage_questions_bulk_activate(text[], text) from public;
+grant execute on function public.triage_questions_bulk_activate(text[], text) to authenticated;
 
 -- =============================================================================
 -- RPC 3: 되돌리기 (triage row 삭제 + is_active 원본 정책으로 원복)
 -- =============================================================================
 create or replace function public.triage_question_revert(
-  p_question_id uuid
+  p_question_id text
 ) returns void
 language plpgsql
 security definer
@@ -237,5 +237,5 @@ begin
   );
 end $$;
 
-revoke all on function public.triage_question_revert(uuid) from public;
-grant execute on function public.triage_question_revert(uuid) to authenticated;
+revoke all on function public.triage_question_revert(text) from public;
+grant execute on function public.triage_question_revert(text) to authenticated;

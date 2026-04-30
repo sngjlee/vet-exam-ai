@@ -37,6 +37,8 @@ from typing import Any
 import httpx
 from dotenv import load_dotenv
 
+from _storage_key import to_storage_key
+
 PIPELINE_ROOT = Path(__file__).parent
 REWRITTEN_ROOT = PIPELINE_ROOT / "output" / "rewritten"
 
@@ -67,8 +69,8 @@ def build_row(doc: dict, q: dict) -> dict[str, Any]:
         "community_notes": q.get("community_notes"),
         "tags":            tags,
         "is_active":       not has_image,
-        "question_image_files":    q.get("question_images", []),
-        "explanation_image_files": q.get("explanation_images", []),
+        "question_image_files":    [to_storage_key(n) for n in (q.get("question_images") or [])],
+        "explanation_image_files": [to_storage_key(n) for n in (q.get("explanation_images") or [])],
     }
 
 

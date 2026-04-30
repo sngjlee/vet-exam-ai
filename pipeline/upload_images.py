@@ -27,6 +27,8 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
+from _storage_key import to_storage_key
+
 PIPELINE_ROOT = Path(__file__).parent
 IMAGES_ROOT   = PIPELINE_ROOT / "output" / "images"
 BUCKET        = "question-images-private"
@@ -53,7 +55,7 @@ def guess_content_type(filename: str) -> str:
 
 
 def upload_one(client: httpx.Client, url: str, key: str, filepath: Path) -> bool:
-    """단일 파일 업로드 (upsert). 성공 시 True."""
+    """단일 파일 업로드 (upsert). 성공 시 True. key 는 이미 ASCII 슬러그."""
     with open(filepath, "rb") as f:
         body = f.read()
 
@@ -118,7 +120,7 @@ def main() -> None:
         "Authorization": f"Bearer {service}",
     }) as client:
         for i, f in enumerate(files, 1):
-            ok = upload_one(client, url, f.name, f)
+            ok = upload_one(client, url, to_storage_key(f.name), f)
             if ok:
                 success += 1
             else:

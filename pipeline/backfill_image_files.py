@@ -21,6 +21,8 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
+from _storage_key import to_storage_key
+
 PIPELINE_ROOT  = Path(__file__).parent
 REWRITTEN_ROOT = PIPELINE_ROOT / "output" / "rewritten"
 
@@ -95,8 +97,8 @@ def main() -> None:
 
             for q in questions:
                 total_q += 1
-                qfiles = q.get("question_images") or []
-                efiles = q.get("explanation_images") or []
+                qfiles = [to_storage_key(n) for n in (q.get("question_images") or [])]
+                efiles = [to_storage_key(n) for n in (q.get("explanation_images") or [])]
                 if not qfiles and not efiles:
                     continue
                 total_with_img += 1

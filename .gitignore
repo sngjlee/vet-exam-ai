@@ -20,5 +20,7 @@ raw-exams/
 pipeline/output/
 pipeline/.env
 pipeline/.venv/
+**/__pycache__/
+*.pyc
 
 .vercel
