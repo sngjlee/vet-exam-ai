@@ -10,6 +10,7 @@ import {
   applyQuestionFilters,
   formatPublicId,
   saveQuestionsListContext,
+  FIXED_CATEGORIES,
   type RecentYearsWindow,
 } from "../../lib/questions";
 import LoadingSpinner from "../../components/LoadingSpinner";
@@ -21,31 +22,7 @@ const RECENT_OPTIONS: ReadonlyArray<RecentYearsWindow> = [5, 7, 10] as const;
 const STORAGE_KEY = "kvle:questions-filter:v1";
 const STORAGE_TTL_MS = 30 * 60 * 1000; // 30분
 
-// 기본 카테고리 셀렉트 옵션 — 전체 fetch 없이 정적 목록.
-// 순서는 DB 분포(많은→적은) 기준. 임상병리학·조직학은 raw 재유입 대기 슬롯이라 끝.
-// 운영 시 schema.sql + seed 기준으로 주기적 동기화 권장.
-const FIXED_CATEGORIES = [
-  "내과학",
-  "외과학",
-  "산과학",
-  "해부학",
-  "병리학",
-  "생리학",
-  "공중보건학",
-  "수의법규",
-  "전염병학",
-  "약리학",
-  "미생물학",
-  "생화학",
-  "영상진단의학",
-  "독성학",
-  "기생충학",
-  "조류질병학",
-  "실험동물학",
-  "수생생물의학",
-  "임상병리학",
-  "조직학",
-] as const;
+// FIXED_CATEGORIES is imported from "../../lib/questions" — single source of truth.
 
 type StoredFilter = {
   selectedCategory: string;

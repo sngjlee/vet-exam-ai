@@ -604,6 +604,34 @@ export interface Database {
         };
         Returns: void;
       };
+      search_questions: {
+        Args: {
+          q:               string;
+          category_filter?: string | null;
+          recent_years?:    number | null;
+          page_size?:       number;
+          page_offset?:     number;
+        };
+        Returns: {
+          id:          string;
+          public_id:   string;
+          question:    string;
+          category:    string;
+          year:        number | null;
+          is_active:   boolean;
+          matched_in:  "question" | "explanation" | "choices" | "community_notes";
+          headline:    string;
+          rank:        number;
+          total_count: number;
+        }[];
+      };
+      suggest_similar_queries: {
+        Args: { q: string };
+        Returns: {
+          suggestion: string;
+          similarity: number;
+        }[];
+      };
     };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";

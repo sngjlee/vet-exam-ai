@@ -16,3 +16,8 @@ export {
   clearQuestionsListContext,
   type QuestionsListContext,
 } from "./listContext";
+export {
+  FIXED_CATEGORIES,
+  isFixedCategory,
+  type FixedCategory,
+} from "./categories";
