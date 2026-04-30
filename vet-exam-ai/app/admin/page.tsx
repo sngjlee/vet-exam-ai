@@ -4,6 +4,7 @@ import {
   Layers,
   Hash,
   CheckCircle2,
+  Image as ImageIcon,
   Users,
   GraduationCap,
   Flag,
@@ -17,25 +18,34 @@ export const dynamic = "force-dynamic";
 type CountResult = number | null;
 
 async function loadCounts(): Promise<{
-  total: CountResult;
-  active: CountResult;
-  rounds: CountResult;
-  categories: CountResult;
+  total:               CountResult;
+  active:              CountResult;
+  rounds:              CountResult;
+  categories:          CountResult;
+  imageQueuePending:   CountResult;
 }> {
   const supabase = await createClient();
 
-  const [total, active, rounds, categories] = await Promise.all([
+  const [total, active, rounds, categories, hasImageTotal, triageCount] = await Promise.all([
     supabase.from("questions").select("*", { count: "exact", head: true }),
     supabase.from("questions").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.rpc("count_questions_distinct", { col: "round" }),
     supabase.rpc("count_questions_distinct", { col: "category" }),
+    supabase.from("questions").select("*", { count: "exact", head: true }).contains("tags", ["has_image"]),
+    supabase.from("question_image_triage").select("*", { count: "exact", head: true }),
   ]);
+
+  const imageQueuePending =
+    hasImageTotal.count != null && triageCount.count != null
+      ? Math.max(0, hasImageTotal.count - triageCount.count)
+      : null;
 
   return {
     total: total.error ? null : total.count ?? 0,
     active: active.error ? null : active.count ?? 0,
     rounds: rounds.error ? null : (rounds.data as number | null) ?? 0,
     categories: categories.error ? null : (categories.data as number | null) ?? 0,
+    imageQueuePending,
   };
 }
 
@@ -159,6 +169,16 @@ export default async function AdminDashboardPage() {
             label="문제 관리"
             desc="문제 은행 둘러보기, 회차/과목/카테고리 필터, KVLE-ID 검색."
             icon={FileText}
+          />
+          <HubCard
+            href="/admin/image-questions"
+            label="이미지 큐"
+            desc={
+              counts.imageQueuePending == null
+                ? "분류 대기 카운트 로드 실패"
+                : `미분류 ${counts.imageQueuePending.toLocaleString("ko-KR")}건`
+            }
+            icon={ImageIcon}
           />
           <HubCard
             href="/admin/users"

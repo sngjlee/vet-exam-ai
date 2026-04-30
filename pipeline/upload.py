@@ -18,8 +18,10 @@ Env (pipeline/.env):
     SUPABASE_SERVICE_KEY  (service_role key — RLS bypass)
 
 미지원 (out of scope):
-    - 이미지를 Supabase Storage 로 업로드 (Phase 2)
+    - 이미지를 Supabase Storage 로 업로드 → upload_images.py 사용
     - 기존 row 정리/삭제 (드물게 필요할 때 수동 SQL)
+
+주의: 이미지 분류 시작 후 374건 대상으로 재실행 금지. is_active=false 로 reset됨.
 """
 
 from __future__ import annotations
@@ -65,6 +67,8 @@ def build_row(doc: dict, q: dict) -> dict[str, Any]:
         "community_notes": q.get("community_notes"),
         "tags":            tags,
         "is_active":       not has_image,
+        "question_image_files":    q.get("question_images", []),
+        "explanation_image_files": q.get("explanation_images", []),
     }
 
 

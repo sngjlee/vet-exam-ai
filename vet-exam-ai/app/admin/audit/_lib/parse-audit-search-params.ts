@@ -121,6 +121,8 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   role_change:            "역할 변경",
   question_update:        "문제 수정",
   password_reset_issued:  "비밀번호 재설정 링크 발급",
+  image_triage_decide:    "이미지 트리아지 결정",
+  image_triage_revert:    "이미지 트리아지 복구",
 };
 
 export const TARGET_TYPE_LABEL: Record<string, string> = {
