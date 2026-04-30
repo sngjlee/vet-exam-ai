@@ -111,7 +111,7 @@ begin
       qs.public_id,
       qs.question,
       qs.category,
-      qs.year,
+      qs.year::integer as year,
       qs.is_active,
       qs.explanation,
       qs.choices,
