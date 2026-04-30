@@ -3,12 +3,16 @@
 -- =============================================================================
 -- Adds:
 --   1. pg_trgm extension (idempotent)
---   2. questions.search_tsv generated column with setweight 가중치
+--   2. f_questions_search_tsv IMMUTABLE wrapper — needed because the implicit
+--      text → regconfig cast in `to_tsvector('simple', ...)` is STABLE, which
+--      blocks direct use in a STORED generated column. Wrapping in a SQL
+--      IMMUTABLE function lets Postgres trust the declaration.
+--   3. questions.search_tsv generated column with setweight 가중치
 --      (A=question, B=explanation+topic, C=choices+subject+tags, D=community_notes)
---   3. GIN index on search_tsv (FTS)
---   4. trigram GIN indexes on question + explanation (0건 fallback / suggestion)
---   5. search_questions(q, category_filter, recent_years, page_size, page_offset)
---   6. suggest_similar_queries(q)
+--   4. GIN index on search_tsv (FTS)
+--   5. trigram GIN indexes on question + explanation (0건 fallback / suggestion)
+--   6. search_questions(q, category_filter, recent_years, page_size, page_offset)
+--   7. suggest_similar_queries(q)
 --
 -- 저작권 가드: round/session/year/created_at/source 컬럼은 인덱스 제외.
 --             RPC 응답에도 직접 노출하지 않음 (year만 정렬 보조).
@@ -16,17 +20,35 @@
 
 create extension if not exists pg_trgm;
 
+create or replace function public.f_questions_search_tsv(
+  p_question        text,
+  p_explanation     text,
+  p_topic           text,
+  p_choices         text[],
+  p_subject         text,
+  p_tags            text[],
+  p_community_notes text
+) returns tsvector
+language sql
+immutable
+as $$
+  select
+    setweight(to_tsvector('simple', coalesce(p_question, '')), 'A') ||
+    setweight(to_tsvector('simple',
+      coalesce(p_explanation, '') || ' ' || coalesce(p_topic, '')), 'B') ||
+    setweight(to_tsvector('simple',
+      coalesce(array_to_string(p_choices, ' '), '') || ' ' ||
+      coalesce(p_subject, '') || ' ' ||
+      coalesce(array_to_string(p_tags, ' '), '')), 'C') ||
+    setweight(to_tsvector('simple', coalesce(p_community_notes, '')), 'D')
+$$;
+
 alter table public.questions
   add column if not exists search_tsv tsvector
   generated always as (
-    setweight(to_tsvector('simple', coalesce(question, '')), 'A') ||
-    setweight(to_tsvector('simple',
-      coalesce(explanation, '') || ' ' || coalesce(topic, '')), 'B') ||
-    setweight(to_tsvector('simple',
-      coalesce(array_to_string(choices, ' '), '') || ' ' ||
-      coalesce(subject, '') || ' ' ||
-      coalesce(array_to_string(tags, ' '), '')), 'C') ||
-    setweight(to_tsvector('simple', coalesce(community_notes, '')), 'D')
+    public.f_questions_search_tsv(
+      question, explanation, topic, choices, subject, tags, community_notes
+    )
   ) stored;
 
 create index if not exists questions_search_tsv_idx
