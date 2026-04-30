@@ -56,6 +56,8 @@ export interface Database {
           community_notes: string | null;  // vet40 댓글 — 수험생 팁
           tags: string[] | null;
           is_active: boolean;
+          question_image_files: string[];
+          explanation_image_files: string[];
           created_at: string;
         };
         Insert: {
@@ -76,6 +78,8 @@ export interface Database {
           community_notes?: string | null;
           tags?: string[] | null;
           is_active?: boolean;
+          question_image_files?: string[];
+          explanation_image_files?: string[];
           created_at?: string;
         };
         Update: {
@@ -95,6 +99,8 @@ export interface Database {
           community_notes?: string | null;
           tags?: string[] | null;
           is_active?: boolean;
+          question_image_files?: string[];
+          explanation_image_files?: string[];
         };
         Relationships: [];
       };
@@ -508,6 +514,34 @@ export interface Database {
         };
         Relationships: [];
       };
+
+      question_image_triage: {
+        Row: {
+          question_id: string;
+          status: Database["public"]["Enums"]["image_triage_status"];
+          note: string | null;
+          decided_by: string;
+          decided_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          question_id: string;
+          status: Database["public"]["Enums"]["image_triage_status"];
+          note?: string | null;
+          decided_by: string;
+          decided_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          question_id?: string;
+          status?: Database["public"]["Enums"]["image_triage_status"];
+          note?: string | null;
+          decided_by?: string;
+          decided_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
 
     Views: Record<string, never>;
@@ -632,6 +666,27 @@ export interface Database {
           similarity: number;
         }[];
       };
+      triage_question_decide: {
+        Args: {
+          p_question_id: string;
+          p_status:      Database["public"]["Enums"]["image_triage_status"];
+          p_note?:       string | null;
+        };
+        Returns: void;
+      };
+      triage_questions_bulk_activate: {
+        Args: {
+          p_ids:  string[];
+          p_note?: string | null;
+        };
+        Returns: number;
+      };
+      triage_question_revert: {
+        Args: {
+          p_question_id: string;
+        };
+        Returns: void;
+      };
     };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
@@ -686,7 +741,16 @@ export interface Database {
         | "report_dismiss"
         | "role_change"
         | "question_update"
-        | "password_reset_issued";
+        | "password_reset_issued"
+        | "image_triage_decide"
+        | "image_triage_revert";
+      image_triage_status:
+        | "pending"
+        | "activate_no_image"
+        | "needs_rewrite"
+        | "needs_rebuild"
+        | "needs_license"
+        | "remove";
     };
   };
 }
@@ -706,3 +770,4 @@ export type CommentEditHistoryRow  = Database["public"]["Tables"]["comment_edit_
 export type NotificationRow        = Database["public"]["Tables"]["notifications"]["Row"];
 export type QuestionCorrectionRow  = Database["public"]["Tables"]["question_corrections"]["Row"];
 export type AdminAuditLogRow       = Database["public"]["Tables"]["admin_audit_logs"]["Row"];
+export type QuestionImageTriageRow = Database["public"]["Tables"]["question_image_triage"]["Row"];
