@@ -82,7 +82,25 @@ export async function GET(req: NextRequest) {
   }
 
   const rows = data ?? [];
-  const total = rows.length > 0 ? Number(rows[0].total_count) : 0;
+  let total = rows.length > 0 ? Number(rows[0].total_count) : 0;
+
+  // Pagination overshoot guard: if the requested page returned 0 rows but the
+  // user wasn't on page 0, the URL may be stale (e.g. user changes filters
+  // via browser back, or shares a deep-page link after the dataset changed).
+  // Re-probe page 0 to recover the real `total_count` so the UI can clamp the
+  // page index instead of falsely showing "no results".
+  if (rows.length === 0 && offset > 0) {
+    const { data: probe } = await supabase.rpc("search_questions", {
+      q,
+      category_filter: category,
+      recent_years:    recent,
+      page_size:       1,
+      page_offset:     0,
+    });
+    if (probe && probe.length > 0) {
+      total = Number(probe[0].total_count);
+    }
+  }
 
   const items: SearchHit[] = rows.map((r) => ({
     id:        r.id,
@@ -94,6 +112,8 @@ export async function GET(req: NextRequest) {
   }));
 
   // 0건이면 trigram 제안 fallback. 1건 이상이면 빈 배열.
+  // Note: only triggers when the search genuinely has zero matches (total === 0
+  // after the overshoot probe), not for stale-URL overshoot cases.
   let suggestions: SearchSuggestion[] = [];
   if (total === 0) {
     const { data: sugg } = await supabase.rpc("suggest_similar_queries", { q });

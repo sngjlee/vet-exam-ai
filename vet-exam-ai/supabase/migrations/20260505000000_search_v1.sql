@@ -179,6 +179,13 @@ grant execute on function public.search_questions(text, text, integer, integer, 
 -- ------------------------------------------------------------
 -- suggest_similar_queries: trigram fallback for 0건 case
 -- ------------------------------------------------------------
+-- Perf note (v1): scans every active question's question+explanation, unnests
+-- to per-word rows, similarity-scores each.  At ~2k rows × ~20 words this is
+-- a few tens of thousands of comparisons per zero-result query — acceptable
+-- because (a) only fires when total === 0, (b) returns within ~hundreds of
+-- ms.  If it becomes a hotspot (e.g. seeding §20 surfaces many zero-result
+-- typos), materialize a `questions_words` table populated by trigger and
+-- score against that instead of unnesting on every call.
 create or replace function public.suggest_similar_queries(q text)
 returns table (suggestion text, similarity real)
 language sql

@@ -105,6 +105,26 @@ function SearchPage() {
     if (data?.redirect) router.replace(data.redirect);
   }, [data, router]);
 
+  // Stale-URL page overshoot recovery: if a deep-page URL (e.g. ?page=25)
+  // returned no items but the API recovered a non-zero `total`, the URL is
+  // pointing past the last page. Bounce back to the last valid page so the
+  // user sees results instead of an empty state.
+  useEffect(() => {
+    if (!data || data.error || data.redirect) return;
+    if (page <= 0) return;
+    if (data.items.length > 0) return;
+    if (data.total <= 0) return;
+    const lastPage = Math.max(0, Math.ceil(data.total / SEARCH_PAGE_SIZE) - 1);
+    if (page > lastPage) {
+      const sp = new URLSearchParams();
+      if (q) sp.set("q", q);
+      if (category) sp.set("category", category);
+      if (recentYears) sp.set("recent_years", String(recentYears));
+      if (lastPage > 0) sp.set("page", String(lastPage));
+      router.replace(`/search?${sp.toString()}`);
+    }
+  }, [data, page, q, category, recentYears, router]);
+
   // Auth gate (UX only — RLS is the real boundary).
   useEffect(() => {
     if (authLoading) return;
