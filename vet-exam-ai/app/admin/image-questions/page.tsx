@@ -27,6 +27,9 @@ type QuestionRow = {
   explanation: string | null;
   question_image_files: string[];
   explanation_image_files: string[];
+  question_image_files_original:    string[] | null;
+  explanation_image_files_original: string[] | null;
+  tags: string[] | null;
 };
 
 type TriageRow = {
@@ -68,7 +71,7 @@ async function loadQueue(sp: ReturnType<typeof parseTriageSearchParams>): Promis
   let q = supabase
     .from("questions")
     .select(
-      "id, public_id, round, category, question, choices, answer, explanation, question_image_files, explanation_image_files",
+      "id, public_id, round, category, question, choices, answer, explanation, question_image_files, explanation_image_files, question_image_files_original, explanation_image_files_original, tags",
       { count: "exact" },
     )
     .contains("tags", ["has_image"]);
@@ -131,13 +134,13 @@ async function buildListItems(
   rows: QuestionRow[],
   triageMap: Map<string, TriageRow>,
 ): Promise<TriageListItem[]> {
-  // 모든 페이지의 이미지 파일명 합쳐서 한 번에 signed URL 발급
+  // 원본을 admin 참조용으로 표시 (교체 후에도 비교 가능). _original이 있으면 거기서, 없으면 active 컬럼.
+  const originalQ = (row: QuestionRow) => row.question_image_files_original ?? row.question_image_files;
+  const originalE = (row: QuestionRow) => row.explanation_image_files_original ?? row.explanation_image_files;
+
   const allFiles = Array.from(
     new Set(
-      rows.flatMap((r) => [
-        ...r.question_image_files,
-        ...r.explanation_image_files,
-      ]),
+      rows.flatMap((r) => [...originalQ(r), ...originalE(r)]),
     ),
   );
   const signed = await getSignedImageUrls(allFiles);
@@ -155,14 +158,12 @@ async function buildListItems(
       choices:     row.choices,
       answer:      row.answer,
       explanation: row.explanation,
-      questionImages:    row.question_image_files.map((f) => ({
-        filename: f,
-        url:      urlMap.get(f) ?? null,
-      })),
-      explanationImages: row.explanation_image_files.map((f) => ({
-        filename: f,
-        url:      urlMap.get(f) ?? null,
-      })),
+      questionImages:    originalQ(row).map((f) => ({ filename: f, url: urlMap.get(f) ?? null })),
+      explanationImages: originalE(row).map((f) => ({ filename: f, url: urlMap.get(f) ?? null })),
+      originalSlotCounts: {
+        question:    originalQ(row).length,
+        explanation: originalE(row).length,
+      },
       triageStatus: tr ? tr.status : null,
       triageNote:   tr ? tr.note : null,
     };

@@ -63,3 +63,25 @@ export async function triageQuestionRevert(
   revalidatePath("/admin");
   return { ok: true };
 }
+
+export async function triageQuestionReplaceAndActivate(args: {
+  questionId:       string;
+  questionFiles:    string[];
+  explanationFiles: string[];
+  note:             string | null;
+}): Promise<TriageActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("triage_question_replace_and_activate", {
+    p_question_id:        args.questionId,
+    p_question_files:     args.questionFiles,
+    p_explanation_files:  args.explanationFiles,
+    p_note:               args.note,
+  });
+  if (error) {
+    console.error("[triage] replace-and-activate failed", error);
+    return { ok: false, error: error.message };
+  }
+  revalidatePath("/admin/image-questions");
+  revalidatePath("/admin");
+  return { ok: true };
+}

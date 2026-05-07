@@ -19,6 +19,8 @@ type QuestionApiRow = Pick<
   | "year"
   | "tags"
   | "is_active"
+  | "question_image_files"
+  | "explanation_image_files"
 >;
 
 function toQuestion(row: QuestionApiRow): Question {
@@ -37,6 +39,8 @@ function toQuestion(row: QuestionApiRow): Question {
     year: row.year ?? undefined,
     tags: row.tags ?? undefined,
     isActive: row.is_active,
+    questionImageFiles:    row.question_image_files ?? undefined,
+    explanationImageFiles: row.explanation_image_files ?? undefined,
   };
 }
 
@@ -81,7 +85,7 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from("questions")
       .select(
-        "id, public_id, question, choices, answer, explanation, category, subject, topic, difficulty, source, year, tags, is_active"
+        "id, public_id, question, choices, answer, explanation, category, subject, topic, difficulty, source, year, tags, is_active, question_image_files, explanation_image_files"
       )
       .eq("is_active", true);
 

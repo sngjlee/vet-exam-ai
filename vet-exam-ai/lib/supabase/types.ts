@@ -58,6 +58,8 @@ export interface Database {
           is_active: boolean;
           question_image_files: string[];
           explanation_image_files: string[];
+          question_image_files_original:    string[] | null;
+          explanation_image_files_original: string[] | null;
           created_at: string;
         };
         Insert: {
@@ -80,6 +82,8 @@ export interface Database {
           is_active?: boolean;
           question_image_files?: string[];
           explanation_image_files?: string[];
+          question_image_files_original?:    string[] | null;
+          explanation_image_files_original?: string[] | null;
           created_at?: string;
         };
         Update: {
@@ -101,6 +105,8 @@ export interface Database {
           is_active?: boolean;
           question_image_files?: string[];
           explanation_image_files?: string[];
+          question_image_files_original?:    string[] | null;
+          explanation_image_files_original?: string[] | null;
         };
         Relationships: [];
       };
@@ -687,6 +693,15 @@ export interface Database {
         };
         Returns: void;
       };
+      triage_question_replace_and_activate: {
+        Args: {
+          p_question_id:        string;
+          p_question_files:     string[];
+          p_explanation_files:  string[];
+          p_note?:              string | null;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
@@ -747,6 +762,7 @@ export interface Database {
       image_triage_status:
         | "pending"
         | "activate_no_image"
+        | "activate_with_replacement"
         | "needs_rewrite"
         | "needs_rebuild"
         | "needs_license"

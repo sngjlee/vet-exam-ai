@@ -19,4 +19,8 @@ export interface Question {
   year?: number;          // exam year if sourced from a past exam — INTERNAL only, never display
   tags?: string[];        // free-form labels, e.g. ["cow", "LH", "ovulation"]
   isActive?: boolean;     // soft-delete flag — false means excluded from sessions
+
+  // --- image fields (replacement bucket filenames; absent/empty = no images) ---
+  questionImageFiles?:    string[];
+  explanationImageFiles?: string[];
 }
