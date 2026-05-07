@@ -11,6 +11,7 @@ import {
   TRIAGE_STATUS_COLOR,
   type ImageTriageStatus,
 } from "../../../../lib/admin/triage-labels";
+import { TriageReplaceForm } from "./triage-replace-form";
 
 export type TriageCardData = {
   id:           string;
@@ -72,6 +73,7 @@ export function TriageCard({
     });
   }
 
+  const [showReplaceForm, setShowReplaceForm] = useState(false);
   const decided = row.triageStatus !== null;
   const decidedColor = row.triageStatus
     ? TRIAGE_STATUS_COLOR[row.triageStatus]
@@ -179,6 +181,22 @@ export function TriageCard({
               {b.label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setShowReplaceForm((v) => !v)}
+            disabled={pending}
+            style={{
+              padding:      "6px 12px",
+              fontSize:     12,
+              borderRadius: 4,
+              border:       "1px solid var(--teal)",
+              background:   showReplaceForm ? "var(--teal)" : "var(--surface)",
+              color:        showReplaceForm ? "white"       : "var(--teal)",
+              cursor:       pending ? "wait" : "pointer",
+            }}
+          >
+            교체 활성화 {showReplaceForm ? "▲" : "▼"}
+          </button>
         </div>
       )}
 
@@ -209,7 +227,20 @@ export function TriageCard({
       )}
 
       {/* 메모 입력 */}
-      {!decided && (
+      {!decided && showReplaceForm && (
+        <TriageReplaceForm
+          questionId={row.id}
+          qSlotCount={row.originalSlotCounts.question}
+          eSlotCount={row.originalSlotCounts.explanation}
+          qOriginalUrls={row.questionImages.map((i) => i.url)}
+          eOriginalUrls={row.explanationImages.map((i) => i.url)}
+          note={note}
+          onNoteChange={setNote}
+          onError={setError}
+        />
+      )}
+
+      {!decided && !showReplaceForm && (
         <input
           type="text"
           value={note}
