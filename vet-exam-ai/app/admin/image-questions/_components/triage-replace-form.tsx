@@ -292,17 +292,33 @@ function SlotGroup({
               </>
             ) : (
               <>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/heic"
-                  disabled={disabled || slot.uploading}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) onSelect(role, idx, f);
-                    e.target.value = "";
+                <label
+                  style={{
+                    display:      "inline-flex",
+                    alignItems:   "center",
+                    gap:          6,
+                    padding:      "6px 12px",
+                    fontSize:     12,
+                    borderRadius: 4,
+                    border:       "1px solid var(--rule)",
+                    background:   disabled || slot.uploading ? "var(--surface-raised)" : "var(--surface)",
+                    color:        disabled || slot.uploading ? "var(--text-muted)"      : "var(--text)",
+                    cursor:       disabled || slot.uploading ? "not-allowed"            : "pointer",
                   }}
-                  style={{ fontSize: 11 }}
-                />
+                >
+                  <span>📁 파일 선택</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/heic"
+                    disabled={disabled || slot.uploading}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onSelect(role, idx, f);
+                      e.target.value = "";
+                    }}
+                    style={{ display: "none" }}
+                  />
+                </label>
                 {slot.uploading && (
                   <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
                     업로드 중...
