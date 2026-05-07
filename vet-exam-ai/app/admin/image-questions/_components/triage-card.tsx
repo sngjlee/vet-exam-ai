@@ -23,6 +23,7 @@ export type TriageCardData = {
   explanation:  string | null;
   questionImages:    { filename: string; url: string | null }[];
   explanationImages: { filename: string; url: string | null }[];
+  originalSlotCounts: { question: number; explanation: number };
   triageStatus: ImageTriageStatus | null; // null = pending (row 미존재)
   triageNote:   string | null;
 };
