@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "../lib/supabase/client";
 
 const BUCKET = "question-images-public";
@@ -21,23 +21,17 @@ export default function QuestionImageGallery({ files, altPrefix }: Props) {
   );
   const visibleIndexes = urls.map((_, i) => i).filter((i) => !hidden.has(i));
 
-  const close = useCallback(() => setOpenIdx(null), []);
-  const next  = useCallback(
-    () => setOpenIdx((i) => {
-      if (i === null) return null;
-      const pos = visibleIndexes.indexOf(i);
-      return visibleIndexes[(pos + 1) % visibleIndexes.length];
-    }),
-    [visibleIndexes],
-  );
-  const prev = useCallback(
-    () => setOpenIdx((i) => {
-      if (i === null) return null;
-      const pos = visibleIndexes.indexOf(i);
-      return visibleIndexes[(pos - 1 + visibleIndexes.length) % visibleIndexes.length];
-    }),
-    [visibleIndexes],
-  );
+  const close = () => setOpenIdx(null);
+  const next  = () => setOpenIdx((i) => {
+    if (i === null) return null;
+    const pos = visibleIndexes.indexOf(i);
+    return visibleIndexes[(pos + 1) % visibleIndexes.length];
+  });
+  const prev = () => setOpenIdx((i) => {
+    if (i === null) return null;
+    const pos = visibleIndexes.indexOf(i);
+    return visibleIndexes[(pos - 1 + visibleIndexes.length) % visibleIndexes.length];
+  });
 
   useEffect(() => {
     if (openIdx === null) return;
@@ -48,7 +42,9 @@ export default function QuestionImageGallery({ files, altPrefix }: Props) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openIdx, close, next, prev]);
+    // close/next/prev are stable per-render; React Compiler memoizes them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openIdx]);
 
   if (visibleIndexes.length === 0) return null;
 
