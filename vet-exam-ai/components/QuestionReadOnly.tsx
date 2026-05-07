@@ -3,6 +3,7 @@
 import { CheckCircle2, HelpCircle } from "lucide-react";
 import type { Question } from "../lib/questions";
 import { formatPublicId } from "../lib/questions";
+import QuestionImageGallery from "./QuestionImageGallery";
 
 const SUBJECT_COLORS: Record<string, string> = {
   "약리학": "#9B6FD4",
@@ -73,6 +74,13 @@ export default function QuestionReadOnly({ question }: Props) {
       >
         {question.question}
       </h2>
+
+      {question.questionImageFiles && question.questionImageFiles.length > 0 && (
+        <QuestionImageGallery
+          files={question.questionImageFiles}
+          altPrefix="문제 이미지"
+        />
+      )}
 
       {/* Choices — read-only, correct answer pre-revealed */}
       <div
@@ -156,6 +164,13 @@ export default function QuestionReadOnly({ question }: Props) {
             >
               {question.explanation}
             </p>
+
+            {question.explanationImageFiles && question.explanationImageFiles.length > 0 && (
+              <QuestionImageGallery
+                files={question.explanationImageFiles}
+                altPrefix="해설 이미지"
+              />
+            )}
           </div>
         </div>
       </div>
