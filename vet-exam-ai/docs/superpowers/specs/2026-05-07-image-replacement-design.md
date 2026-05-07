@@ -37,45 +37,14 @@ insert into storage.buckets (id, name, public)
 values ('question-images-public', 'question-images-public', true)
 on conflict (id) do nothing;
 
--- 4. RLS — 누구나 read, admin만 write
+-- 4. RLS — 누구나 read만. write/update/delete는 service_role 경유 (RLS bypass)
 drop policy if exists "public read replacement" on storage.objects;
 create policy "public read replacement" on storage.objects
   for select to public
   using (bucket_id = 'question-images-public');
-
-drop policy if exists "admin write replacement" on storage.objects;
-create policy "admin write replacement" on storage.objects
-  for insert to authenticated
-  with check (
-    bucket_id = 'question-images-public'
-    and exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.role = 'admin' and p.is_active
-    )
-  );
-
-drop policy if exists "admin update replacement" on storage.objects;
-create policy "admin update replacement" on storage.objects
-  for update to authenticated
-  using (
-    bucket_id = 'question-images-public'
-    and exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.role = 'admin' and p.is_active
-    )
-  );
-
-drop policy if exists "admin delete replacement" on storage.objects;
-create policy "admin delete replacement" on storage.objects
-  for delete to authenticated
-  using (
-    bucket_id = 'question-images-public'
-    and exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.role = 'admin' and p.is_active
-    )
-  );
 ```
+
+> Storage write는 admin API 라우트가 service_role 키로 처리 (`/api/admin/image-replacement/upload`). 댓글 업로드(`/api/comments/upload`)와 동일 패턴 — RLS bypass라 INSERT/UPDATE/DELETE 정책 불필요.
 
 ### 데이터 흐름
 - **원본**: `question-images-private` (admin-only RLS) — 그대로 보존
@@ -84,13 +53,27 @@ create policy "admin delete replacement" on storage.objects
 - **사용자측**: DB 컬럼 → public 버킷 URL 단순 lookup
 
 ### 파일명 규칙
-pipeline의 hex slug 패턴(`pipeline/_storage_key.py`) 재사용. Admin 업로드 키:
+pipeline의 hex slug 패턴(`pipeline/_storage_key.py`)을 TS로 포팅. Admin 업로드 키:
 ```
-<question_id_slug>_replacement_<index>_<unix_ts>.<ext>
+<question_id_slug>_<role>_<index>_<unix_ts>.webp
 ```
-- `question_id_slug` = pipeline의 `to_storage_key()` 결과 (한글/non-ASCII 안전)
-- `index` = 0-based 슬롯 인덱스 (q/e 구분 없음, RPC 호출 시 컬럼별로 분리 전달)
-- `unix_ts` = 충돌 회피 + 재교체 시 캐시 무효화
+- `question_id_slug` = `lib/admin/storage-key.ts`의 `toStorageKey()` 결과 (Python `_storage_key.py`와 동일 hex 인코딩 — 한글 → UTF-8 byte hex). KVLE-NNNN 같은 ASCII id는 no-op.
+- `role` = `q`(문제) 또는 `e`(해설)
+- `index` = 0-based 슬롯 인덱스
+- `unix_ts` = 충돌 회피 + 재교체 시 CDN 캐시 무효화
+- 확장자는 항상 `.webp` (클라이언트 압축이 webp로 변환)
+
+### TS slug 헬퍼 (신규: `lib/admin/storage-key.ts`)
+```ts
+export function toStorageKey(input: string): string {
+  // Replace each non-ASCII char with its UTF-8 byte hex sequence.
+  return input.replace(/[^\x20-\x7e]/g, (ch) => {
+    const bytes = new TextEncoder().encode(ch);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  });
+}
+```
+Python `_storage_key.py`와 동일 출력 (e.g. `해부` → `ed95b4ebb680`). 운영 일관성 확보.
 
 ## 신규 RPC: `triage_question_replace_and_activate`
 
@@ -211,13 +194,35 @@ update questions
 TriageCard 내부에 자식으로 마운트. Props: `questionId`, `questionImages`, `explanationImages` (원본 thumbnail signed URL 포함, server에서 주입).
 
 ### 클라이언트 흐름
-1. 각 슬롯 file input — `compressForUpload()` 으로 client-side 압축 (HEIC/large JPEG 등 처리)
-2. 모든 슬롯 채워지면 "교체 활성화" 버튼 enabled
-3. 클릭 시:
-   - `Promise.all`로 public 버킷 병렬 업로드 (`supabase.storage.from('question-images-public').upload()`)
-   - 모두 성공 → `triage_question_replace_and_activate(qid, [filenames_q], [filenames_e], note)` RPC 호출
-   - 실패 시 부분 업로드된 파일은 그대로 둠 (다음 시도 시 timestamp 다른 키로 새로 업로드, 결과적으로 orphan은 수동 cleanup 또는 cron 외부)
-4. 성공 시 `router.refresh()` (Server Component refresh)
+1. 각 슬롯 file input — `compressForUpload()` 으로 client-side webp 압축 (HEIC/large JPEG 처리)
+2. 파일 선택 즉시 슬롯에 thumbnail preview 표시 (`URL.createObjectURL(blob)`, 업로드 전 단계, 메모리 only)
+3. 모든 슬롯 채워지면 "교체 활성화" 버튼 enabled
+4. 클릭 시:
+   - 각 blob을 `/api/admin/image-replacement/upload` POST (multipart, `role` + `index` + `question_id` 동봉)
+   - 서버: admin guard → magic number/dimension 검증 → `toStorageKey(question_id)` 슬러그 → service_role로 public 버킷 업로드 → 파일명 응답
+   - 모든 슬롯 업로드 성공 → `triage_question_replace_and_activate(qid, [filenames_q], [filenames_e], note)` RPC 호출 (RPC는 인증된 client supabase 사용)
+   - 부분 실패 시 이미 업로드된 파일은 best-effort `DELETE /api/admin/image-replacement/upload?key=...`. 실패한 파일은 orphan으로 남음 (별건 cron cleanup)
+5. 성공 시 `router.refresh()` (Server Component refresh)
+
+### 서버 라우트: `/api/admin/image-replacement/upload`
+파일: `app/api/admin/image-replacement/upload/route.ts`. 댓글 업로드 라우트(`app/api/comments/upload/route.ts`) 패턴 미러링.
+
+POST body (multipart):
+- `file`: webp blob (max 1MB)
+- `question_id`: text
+- `role`: `q` | `e`
+- `index`: number (0-based)
+
+검증 계층:
+1. admin guard (`profiles.role='admin' and is_active`)
+2. content-length ≤ 1MB + 8KB margin
+3. mime = `image/webp`
+4. magic number = `RIFF...WEBP` (`lib/webp-dimensions.ts` 재사용)
+5. width/height ≤ 2200
+
+성공 응답: `{ filename: string }` (public 버킷 내 파일명만, full URL 아님 — RPC는 파일명만 받음)
+
+DELETE: `?key=<filename>` 으로 best-effort 삭제 (admin guard).
 
 ### `lib/admin/triage.ts` 신규 함수
 ```ts
@@ -253,8 +258,7 @@ export async function triageQuestionReplaceAndActivate(args: {
   - 1장: max-width 600px (데스크톱), 100% (모바일, < 640px)
   - 2-4장: 2-column grid
 - alt 텍스트: `${altPrefix} ${i + 1}` (단순 인덱스, 캡션 메타 없음)
-- private 버킷 파일을 가리키는 경우(=미교체 상태) → public URL이 404 반환 → `<img>` `onerror` 시 placeholder 또는 hide
-  - 결정: **hide** (broken image icon 노출 방지). 미교체 문제는 어차피 `is_active=false`라 사용자측 페이지 자체에 도달 못함 — defensive check만
+- private 버킷 파일을 가리키는 경우(=미교체 상태) → public URL이 404 → `<img onError={() => setHidden(true)}>` 으로 hide (broken image icon 노출 방지). 미교체 문제는 어차피 `is_active=false`라 사용자측 페이지에 도달 못함 — defensive check.
 
 ### `lib/questions.ts` 타입 확장
 ```ts
@@ -308,11 +312,13 @@ RPC `forbidden: admin only` 예외, RLS도 admin 외 write 차단. 이중 가드
 1. CLI dev 적용은 무시하고 SQL Editor에서 직접 적용 (memory `community_tables_done.md`의 "CLI db push up-to-date" 함정 회피)
 2. 적용 순서:
    a. enum value 추가
-   b. questions 컬럼 2개 추가
-   c. Storage 버킷 신설
-   d. RLS 4개 정책
-   e. RPC 신규 + 기존 revert 교체
-3. 적용 후 admin 본인 계정으로 happy path 1건 수동 검증
+   b. questions `_original` 컬럼 2개 추가
+   c. Storage 버킷 신설 (`question-images-public`)
+   d. RLS — public read 1개 정책 (write는 service_role bypass)
+   e. RPC `triage_question_replace_and_activate` 신규
+   f. RPC `triage_question_revert` 교체 (기존 함수 OR REPLACE)
+3. 환경변수 확인: `SUPABASE_SERVICE_ROLE_KEY` 이미 설정됨 (`pre_done.md` 참고)
+4. 적용 후 admin 본인 계정으로 happy path 1건 수동 검증 (외과 카테고리 1문제로)
 
 ## 마이그 timestamp 충돌
 
