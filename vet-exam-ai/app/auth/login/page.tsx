@@ -38,7 +38,13 @@ function LoginForm() {
         router.refresh();
       }
     } else if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/pending-proof`,
+        },
+      });
       if (error) {
         setMessage({ text: error.message, type: "error" });
       } else if (data.session) {
