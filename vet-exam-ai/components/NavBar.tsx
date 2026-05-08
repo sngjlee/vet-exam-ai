@@ -7,7 +7,7 @@ import { useAuth } from "../lib/hooks/useAuth";
 import { useDueCountCtx } from "../lib/context/DueCountContext";
 import { useMyNickname } from "../lib/hooks/useMyNickname";
 import { useMyRole } from "../lib/hooks/useMyRole";
-import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User, CirclePlay, ListChecks, Shield, Search } from "lucide-react";
+import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User, CirclePlay, ListChecks, Shield, Search, Settings } from "lucide-react";
 import NotificationBell from "./notifications/NotificationBell";
 
 export default function NavBar() {
@@ -140,18 +140,38 @@ export default function NavBar() {
                     <span className="truncate max-w-[120px]">{myNickname}</span>
                   </Link>
                 ) : (
-                  <div
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
+                  <Link
+                    href="/profile/me"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs no-underline"
                     style={{
-                      background: "var(--surface-raised)",
-                      border: "1px solid var(--border)",
-                      color: "var(--text-muted)",
+                      background: "var(--amber-dim)",
+                      border: "1px solid var(--amber)",
+                      color: "var(--amber)",
+                      textDecoration: "none",
                     }}
+                    title="프로필을 설정해주세요"
                   >
                     <User size={13} />
-                    <span className="truncate max-w-[120px]">{user.email}</span>
-                  </div>
+                    <span>프로필 설정</span>
+                  </Link>
                 )}
+                <Link
+                  href="/settings"
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "50%",
+                    background: "var(--surface-raised)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text-muted)",
+                    textDecoration: "none",
+                  }}
+                  title="계정 설정"
+                  aria-label="계정 설정"
+                >
+                  <Settings size={14} />
+                </Link>
                 <button
                   onClick={handleSignOut}
                   style={{
