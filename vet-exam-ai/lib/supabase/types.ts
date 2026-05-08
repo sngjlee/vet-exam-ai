@@ -766,7 +766,7 @@ export interface Database {
       };
       approve_signup_application: {
         Args: { p_user_id: string; p_note?: string | null };
-        Returns: void;
+        Returns: string | null;
       };
       reject_signup_application: {
         Args: { p_user_id: string; p_reason: string };

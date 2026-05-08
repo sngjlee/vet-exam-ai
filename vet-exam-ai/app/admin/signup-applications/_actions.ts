@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "../../../lib/supabase/server";
+import { createAdminClient } from "../../../lib/supabase/admin";
 import { signedProofUrl } from "../../../lib/storage/signup-proofs";
 
 export type AdminActionResult =
@@ -10,11 +11,26 @@ export type AdminActionResult =
 
 export async function approveSignupAction(userId: string, note: string | null): Promise<AdminActionResult> {
   const supabase = await createClient();
-  const { error } = await supabase.rpc("approve_signup_application", {
+  const { data, error } = await supabase.rpc("approve_signup_application", {
     p_user_id: userId,
     p_note:    note ?? null,
   });
   if (error) return { ok: false, error: error.message };
+
+  // RPC returns the captured proof_storage_path. Storage delete must go
+  // through the Storage API (postgres trigger blocks direct DELETE on
+  // storage.objects). Failures are best-effort: the row is already approved
+  // and the user is unblocked; orphan cleanup belongs to a separate sweep.
+  const path = data;
+  if (typeof path === "string" && path.length > 0) {
+    try {
+      const admin = createAdminClient();
+      await admin.storage.from("signup-proofs").remove([path]);
+    } catch {
+      // best-effort
+    }
+  }
+
   revalidatePath("/admin/signup-applications");
   return { ok: true };
 }
