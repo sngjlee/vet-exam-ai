@@ -48,6 +48,19 @@ export function formatNotification(
     return { text, href: buildQuestionHref(payload) };
   }
 
+  if (type === "signup_approved") {
+    return { text: "가입이 승인되었어요 🎉", href: "/dashboard" };
+  }
+  if (type === "signup_rejected") {
+    const reason = stringField(payload, "reason");
+    return {
+      text: reason
+        ? `가입이 거부되었어요: ${reason}`
+        : "가입이 거부되었어요",
+      href: "/auth/rejected",
+    };
+  }
+
   // If the underlying comment is gone (cascade-deleted), every comment-bound
   // type degrades to text-only.
   if (related == null) {
@@ -97,7 +110,7 @@ export function formatNotification(
 }
 
 function textOnlyFallback(
-  type: Exclude<NotificationType, "correction_resolved">,
+  type: Exclude<NotificationType, "correction_resolved" | "signup_approved" | "signup_rejected">,
   payload: Record<string, unknown>,
 ): string {
   switch (type) {
