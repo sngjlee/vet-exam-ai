@@ -16,6 +16,10 @@ export const ALL_AUDIT_ACTIONS: ReadonlyArray<AuditAction> = [
   "role_change",
   "question_update",
   "password_reset_issued",
+  "image_triage_decide",
+  "image_triage_revert",
+  "signup_approve",
+  "signup_reject",
 ];
 
 export const ALL_TARGET_TYPES: ReadonlyArray<string> = [
@@ -123,6 +127,8 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   password_reset_issued:  "비밀번호 재설정 링크 발급",
   image_triage_decide:    "이미지 트리아지 결정",
   image_triage_revert:    "이미지 트리아지 복구",
+  signup_approve:         "가입 승인",
+  signup_reject:          "가입 거부",
 };
 
 export const TARGET_TYPE_LABEL: Record<string, string> = {

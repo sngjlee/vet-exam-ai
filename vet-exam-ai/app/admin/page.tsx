@@ -10,6 +10,7 @@ import {
   Flag,
   GitPullRequest,
   History,
+  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "../../lib/supabase/server";
 
@@ -23,16 +24,19 @@ async function loadCounts(): Promise<{
   rounds:              CountResult;
   categories:          CountResult;
   imageQueuePending:   CountResult;
+  signupPending:       CountResult;
 }> {
   const supabase = await createClient();
 
-  const [total, active, rounds, categories, hasImageTotal, triageCount] = await Promise.all([
+  const [total, active, rounds, categories, hasImageTotal, triageCount, signupPendingRpc] = await Promise.all([
     supabase.from("questions").select("*", { count: "exact", head: true }),
     supabase.from("questions").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.rpc("count_questions_distinct", { col: "round" }),
     supabase.rpc("count_questions_distinct", { col: "category" }),
     supabase.from("questions").select("*", { count: "exact", head: true }).contains("tags", ["has_image"]),
     supabase.from("question_image_triage").select("*", { count: "exact", head: true }),
+    // signup_applications RLS allows own SELECT only; admin path is the SECURITY DEFINER RPC.
+    supabase.rpc("list_signup_applications", { p_status: "pending_review", p_page: 1, p_page_size: 1 }),
   ]);
 
   const imageQueuePending =
@@ -40,12 +44,17 @@ async function loadCounts(): Promise<{
       ? Math.max(0, hasImageTotal.count - triageCount.count)
       : null;
 
+  const signupPending: CountResult = signupPendingRpc.error
+    ? null
+    : Number(signupPendingRpc.data?.[0]?.total_count ?? 0);
+
   return {
     total: total.error ? null : total.count ?? 0,
     active: active.error ? null : active.count ?? 0,
     rounds: rounds.error ? null : (rounds.data as number | null) ?? 0,
     categories: categories.error ? null : (categories.data as number | null) ?? 0,
     imageQueuePending,
+    signupPending,
   };
 }
 
@@ -185,6 +194,16 @@ export default async function AdminDashboardPage() {
             label="회원 관리"
             desc="역할/활성 상태 변경, 뱃지 부여."
             icon={Users}
+          />
+          <HubCard
+            href="/admin/signup-applications"
+            label="가입 신청 검토"
+            desc={
+              counts.signupPending == null
+                ? "검토 대기 카운트 로드 실패"
+                : `검토 대기 ${counts.signupPending.toLocaleString("ko-KR")}건`
+            }
+            icon={ShieldCheck}
           />
           <HubCard href="#" label="시험 회차" desc="회차별 문제 수/공개 상태 집계." icon={GraduationCap} disabled />
           <HubCard
