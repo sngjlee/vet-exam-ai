@@ -329,7 +329,7 @@ begin
     end;
   end if;
 
-  insert into public.notifications (recipient_id, type, payload)
+  insert into public.notifications (user_id, type, payload)
   values (
     p_user_id,
     'signup_approved',
@@ -397,7 +397,7 @@ begin
 
   update public.profiles set signup_status = 'rejected' where id = p_user_id;
 
-  insert into public.notifications (recipient_id, type, payload)
+  insert into public.notifications (user_id, type, payload)
   values (
     p_user_id,
     'signup_rejected',
@@ -573,9 +573,19 @@ create policy "signup-proofs: own upload"
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
--- No SELECT / UPDATE / DELETE policies on signup-proofs:
---  - admin reads via service-role signed URL
---  - approve/cron deletes via SECURITY DEFINER signup_proof_delete()
+-- Admin SELECT (for signed URL issuance from /admin/signup-applications drawer).
+-- No UPDATE / DELETE policies — approve/cron deletes via SECURITY DEFINER.
+drop policy if exists "signup-proofs: admin signed url access" on storage.objects;
+create policy "signup-proofs: admin signed url access"
+  on storage.objects for select
+  to authenticated
+  using (
+    bucket_id = 'signup-proofs'
+    and exists (
+      select 1 from public.profiles p
+      where p.id = auth.uid() and p.role = 'admin' and p.is_active
+    )
+  );
 
 -- 11. pg_cron job — purge 30-day-old rejected proofs --------------------------
 -- Runs daily at 04:00 UTC. Deletes storage objects whose owning row was

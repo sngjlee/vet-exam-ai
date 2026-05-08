@@ -28,14 +28,15 @@ async function loadCounts(): Promise<{
 }> {
   const supabase = await createClient();
 
-  const [total, active, rounds, categories, hasImageTotal, triageCount, signupPending] = await Promise.all([
+  const [total, active, rounds, categories, hasImageTotal, triageCount, signupPendingRpc] = await Promise.all([
     supabase.from("questions").select("*", { count: "exact", head: true }),
     supabase.from("questions").select("*", { count: "exact", head: true }).eq("is_active", true),
     supabase.rpc("count_questions_distinct", { col: "round" }),
     supabase.rpc("count_questions_distinct", { col: "category" }),
     supabase.from("questions").select("*", { count: "exact", head: true }).contains("tags", ["has_image"]),
     supabase.from("question_image_triage").select("*", { count: "exact", head: true }),
-    supabase.from("signup_applications").select("*", { count: "exact", head: true }).eq("status", "pending_review"),
+    // signup_applications RLS allows own SELECT only; admin path is the SECURITY DEFINER RPC.
+    supabase.rpc("list_signup_applications", { p_status: "pending_review", p_page: 1, p_page_size: 1 }),
   ]);
 
   const imageQueuePending =
@@ -43,13 +44,17 @@ async function loadCounts(): Promise<{
       ? Math.max(0, hasImageTotal.count - triageCount.count)
       : null;
 
+  const signupPending: CountResult = signupPendingRpc.error
+    ? null
+    : Number(signupPendingRpc.data?.[0]?.total_count ?? 0);
+
   return {
     total: total.error ? null : total.count ?? 0,
     active: active.error ? null : active.count ?? 0,
     rounds: rounds.error ? null : (rounds.data as number | null) ?? 0,
     categories: categories.error ? null : (categories.data as number | null) ?? 0,
     imageQueuePending,
-    signupPending: signupPending.error ? null : signupPending.count ?? 0,
+    signupPending,
   };
 }
 

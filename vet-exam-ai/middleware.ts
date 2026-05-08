@@ -3,7 +3,10 @@ import { createServerClient } from "@supabase/ssr";
 
 const PUBLIC_PATH_PREFIXES = [
   "/_next",
-  "/api/auth",
+  // /api/* passes through middleware; route handlers do their own auth
+  // and respond JSON. Otherwise pending users get HTML 307 for JSON fetches
+  // (notifications poll, comment counts) and silently break.
+  "/api",
   "/auth/login",
   "/auth/callback",
   "/auth/pending-proof",

@@ -881,7 +881,9 @@ export interface Database {
         | "question_update"
         | "password_reset_issued"
         | "image_triage_decide"
-        | "image_triage_revert";
+        | "image_triage_revert"
+        | "signup_approve"
+        | "signup_reject";
       image_triage_status:
         | "pending"
         | "activate_no_image"
