@@ -170,6 +170,10 @@ create policy "user_profiles_public: owner update"
     and public.signup_status_of(auth.uid()) = 'approved'
   );
 
+-- 7b. audit_action enum extension ---------------------------------------------
+alter type public.audit_action add value if not exists 'signup_approve';
+alter type public.audit_action add value if not exists 'signup_reject';
+
 -- 8. notification_type enum extension -----------------------------------------
 alter type public.notification_type add value if not exists 'signup_approved';
 alter type public.notification_type add value if not exists 'signup_rejected';
@@ -317,7 +321,12 @@ begin
 
   -- Storage delete (best-effort; if object missing the function noops)
   if v_path is not null then
-    perform public.signup_proof_delete(v_path);
+    begin
+      perform public.signup_proof_delete(v_path);
+    exception when others then
+      -- best-effort: object may already be gone or storage briefly unreachable
+      null;
+    end;
   end if;
 
   insert into public.notifications (recipient_id, type, payload)
@@ -593,8 +602,7 @@ begin
         )
         update public.signup_applications a
         set proof_storage_path = null
-        from expired e
-        where a.user_id = e.user_id;
+        where a.proof_storage_path in (select name from deleted);
       $cron$
     );
   end if;
