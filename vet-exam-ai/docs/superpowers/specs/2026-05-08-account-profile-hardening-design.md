@@ -126,10 +126,14 @@ NavBar pill:
       → 실패: inline 에러
 ```
 
-**Supabase 설정 사전 확인**:
+**Supabase 설정 사전 확인** (배포 전 운영자 작업 — Pre-deploy checklist 참조):
 - Dashboard → Authentication → URL Configuration → Redirect URLs:
   - `${SITE_URL}/auth/callback` 등록 여부 (가입 confirmation으로 이미 등록되어 있을 가능성 높음)
 - Email Template → Reset Password: 기본 템플릿 사용
+
+**ForgotPasswordForm 입력 검증**:
+- `<input type="email" required />` + 빈 입력 거부
+- 클라이언트 측 추가 정규식 검증 없음 (Supabase가 형식 검증 처리)
 
 ### 흐름 3 — `/profile/me` 닉네임 fix
 
@@ -218,8 +222,15 @@ grant execute on function public.ensure_my_profile_public() to authenticated;
 ) : (
   <Link 
     href="/profile/me" 
+    // 기존 pill과 동일한 padding/border-radius/font-size + amber 강조
     style={{
-      ...pillBase,
+      display: "flex",
+      alignItems: "center",
+      gap: "0.5rem",
+      padding: "0.375rem 0.75rem",
+      borderRadius: "9999px",
+      fontSize: "0.75rem",
+      textDecoration: "none",
       background: "var(--amber-dim)",
       border: "1px solid var(--amber)",
       color: "var(--amber)",
@@ -293,6 +304,14 @@ grant execute on function public.ensure_my_profile_public() to authenticated;
 - `feedback_module_load_env_throw.md` — 모듈 top에서 env throw 금지 (Server Action에서 lazy init) ✅
 - `feedback_subagent_repo_root_path_confusion.md` — 마이그 경로 절대경로 명시 (`vet-exam-ai/supabase/migrations/`) ✅
 - `feedback_react_compiler_usecallback_unstable_deps.md` — useCallback deps 새 array/object 금지 ✅
+
+## Pre-deploy 체크리스트 (운영자 수동 작업)
+
+PR 머지 후 배포 전 1회 확인 — 흐름 2 (비번찾기) 동작 전제 조건:
+
+- [ ] **Supabase Dashboard → Authentication → URL Configuration → Redirect URLs**: `${SITE_URL}/auth/callback` 등록 여부 확인 (가입 confirmation 흐름이 이미 동작 중이면 등록되어 있을 가능성 높음)
+- [ ] **Email Template → Reset Password**: 기본 템플릿이 활성화되어 있는지 확인 (한글화는 Phase 2)
+- [ ] **`/auth/reset` 라우트 manual 테스트**: prod 환경에서 본인 계정으로 비번찾기 1회 → 메일 수신 → 링크 클릭 → 새 비번 설정 → 재로그인 성공 확인
 
 ## Phase 2 백로그 (이번 PR 밖)
 
