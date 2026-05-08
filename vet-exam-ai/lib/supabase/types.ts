@@ -17,6 +17,7 @@ export interface Database {
           display_name: string | null;
           role: Database["public"]["Enums"]["user_role"];
           is_active: boolean;
+          signup_status: Database["public"]["Enums"]["signup_status"];
           created_at: string;
           updated_at: string;
         };
@@ -548,9 +549,53 @@ export interface Database {
         };
         Relationships: [];
       };
+
+      signup_applications: {
+        Row: {
+          user_id:            string;
+          status:             Database["public"]["Enums"]["signup_status"];
+          university:         string;
+          target_round:       number;
+          real_name:          string | null;
+          student_number:     string | null;
+          free_note:          string | null;
+          proof_kind:         Database["public"]["Enums"]["signup_proof_kind"];
+          proof_storage_path: string | null;
+          proof_text:         string | null;
+          submitted_at:       string;
+          reviewed_at:        string | null;
+          reviewed_by:        string | null;
+          decision_reason:    string | null;
+          rejection_count:    number;
+          last_rejection_at:  string | null;
+        };
+        Insert: {
+          // signup_applications is mutated only via RPCs (submit/approve/reject);
+          // direct INSERT is not exposed to the app layer.
+        };
+        Update: {
+          // signup_applications is mutated only via RPCs (submit/approve/reject);
+          // direct UPDATE is not exposed to the app layer.
+        };
+        Relationships: [];
+      };
     };
 
-    Views: Record<string, never>;
+    Views: {
+      my_signup_application: {
+        Row: {
+          user_id:           string;
+          status:            Database["public"]["Enums"]["signup_status"];
+          rejection_count:   number;
+          decision_reason:   string | null;
+          submitted_at:      string;
+          reviewed_at:       string | null;
+          last_rejection_at: string | null;
+          proof_kind:        Database["public"]["Enums"]["signup_proof_kind"];
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       is_temp_nickname: {
         Args: { n: string };
@@ -706,6 +751,78 @@ export interface Database {
         };
         Returns: undefined;
       };
+      submit_signup_application: {
+        Args: {
+          p_university:          string;
+          p_target_round:        number;
+          p_proof_kind:          Database["public"]["Enums"]["signup_proof_kind"];
+          p_real_name?:          string | null;
+          p_student_number?:     string | null;
+          p_free_note?:          string | null;
+          p_proof_storage_path?: string | null;
+          p_proof_text?:         string | null;
+        };
+        Returns: void;
+      };
+      approve_signup_application: {
+        Args: { p_user_id: string; p_note?: string | null };
+        Returns: void;
+      };
+      reject_signup_application: {
+        Args: { p_user_id: string; p_reason: string };
+        Returns: void;
+      };
+      list_signup_applications: {
+        Args: {
+          p_status?:    Database["public"]["Enums"]["signup_status"];
+          p_page?:      number;
+          p_page_size?: number;
+        };
+        Returns: Array<{
+          user_id:            string;
+          email:              string | null;
+          nickname:           string | null;
+          status:             Database["public"]["Enums"]["signup_status"];
+          university:         string;
+          target_round:       number;
+          real_name:          string | null;
+          student_number:     string | null;
+          free_note:          string | null;
+          proof_kind:         Database["public"]["Enums"]["signup_proof_kind"];
+          proof_storage_path: string | null;
+          proof_text:         string | null;
+          submitted_at:       string;
+          reviewed_at:        string | null;
+          reviewed_by:        string | null;
+          decision_reason:    string | null;
+          rejection_count:    number;
+          last_rejection_at:  string | null;
+          total_count:        number;
+        }>;
+      };
+      get_signup_application: {
+        Args: { p_user_id: string };
+        Returns: Array<{
+          user_id:            string;
+          email:              string | null;
+          nickname:           string | null;
+          status:             Database["public"]["Enums"]["signup_status"];
+          university:         string;
+          target_round:       number;
+          real_name:          string | null;
+          student_number:     string | null;
+          free_note:          string | null;
+          proof_kind:         Database["public"]["Enums"]["signup_proof_kind"];
+          proof_storage_path: string | null;
+          proof_text:         string | null;
+          submitted_at:       string;
+          reviewed_at:        string | null;
+          reviewed_by:        string | null;
+          decision_reason:    string | null;
+          rejection_count:    number;
+          last_rejection_at:  string | null;
+        }>;
+      };
     };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
@@ -745,7 +862,9 @@ export interface Database {
         | "mention"
         | "report_resolved"
         | "comment_blinded"
-        | "correction_resolved";
+        | "correction_resolved"
+        | "signup_approved"
+        | "signup_rejected";
       correction_status: "proposed" | "reviewing" | "accepted" | "rejected";
       audit_action:
         | "comment_remove"
@@ -771,6 +890,8 @@ export interface Database {
         | "needs_rebuild"
         | "needs_license"
         | "remove";
+      signup_status: "pending_proof" | "pending_review" | "approved" | "rejected";
+      signup_proof_kind: "image" | "text";
     };
   };
 }
