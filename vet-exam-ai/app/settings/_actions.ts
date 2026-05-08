@@ -8,7 +8,6 @@ export type ChangePasswordResult =
   | {
       ok: false;
       error: "auth_required" | "wrong_current_password" | "invalid_input" | "update_failed";
-      message?: string;
     };
 
 export async function changePassword(
@@ -19,7 +18,7 @@ export async function changePassword(
   // 1) Defense-in-depth: validate inputs server-side too
   const policy = validateNewPassword(current, next, confirm);
   if (!policy.ok) {
-    return { ok: false, error: "invalid_input", message: policy.error };
+    return { ok: false, error: "invalid_input" };
   }
 
   const supabase = await createClient();
@@ -43,7 +42,8 @@ export async function changePassword(
   // 4) Update to new password
   const { error: updateErr } = await supabase.auth.updateUser({ password: next });
   if (updateErr) {
-    return { ok: false, error: "update_failed", message: updateErr.message };
+    console.error("[changePassword] updateUser failed:", updateErr.message);
+    return { ok: false, error: "update_failed" };
   }
 
   return { ok: true };

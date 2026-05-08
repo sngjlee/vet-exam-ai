@@ -37,7 +37,7 @@ export default function PasswordChangeForm() {
           ? "로그인이 필요합니다"
           : result.error === "invalid_input"
           ? "입력값을 확인해주세요"
-          : result.message ?? "변경에 실패했습니다. 잠시 후 다시 시도해주세요";
+          : "변경에 실패했습니다. 잠시 후 다시 시도해주세요";
       setError(msg);
       return;
     }
