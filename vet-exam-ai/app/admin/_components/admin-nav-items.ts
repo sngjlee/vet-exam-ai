@@ -7,6 +7,7 @@ import {
   Flag,
   GitPullRequest,
   History,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -22,6 +23,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "문제",      href: "/admin/questions",       icon: FileText },
   { label: "이미지 큐", href: "/admin/image-questions", icon: ImageIcon },
   { label: "회원",      href: "/admin/users",           icon: Users },
+  { label: "가입 신청", href: "/admin/signup-applications", icon: ShieldCheck },
   { label: "시험",      href: "/admin/exams",           icon: GraduationCap, disabled: true },
   { label: "신고",      href: "/admin/reports",         icon: Flag },
   { label: "정정",      href: "/admin/corrections",     icon: GitPullRequest },
