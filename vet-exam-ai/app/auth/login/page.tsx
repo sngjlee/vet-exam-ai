@@ -9,8 +9,14 @@ import { createClient } from "../../../lib/supabase/client";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "signin";
-  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
+  const initialModeParam = searchParams.get("mode");
+  const initialMode: "signin" | "signup" | "forgot" =
+    initialModeParam === "signup"
+      ? "signup"
+      : initialModeParam === "forgot"
+      ? "forgot"
+      : "signin";
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +37,7 @@ function LoginForm() {
         router.push("/dashboard");
         router.refresh();
       }
-    } else {
+    } else if (mode === "signup") {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setMessage({ text: error.message, type: "error" });
@@ -44,12 +50,25 @@ function LoginForm() {
           type: "success",
         });
       }
+    } else {
+      // forgot
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset`,
+      });
+      if (error) {
+        setMessage({ text: error.message, type: "error" });
+      } else {
+        setMessage({
+          text: "메일을 보냈습니다. 받은편지함을 확인해 주세요. (도착하지 않으면 스팸함도 확인)",
+          type: "success",
+        });
+      }
     }
     setLoading(false);
   }
 
-  function toggleMode() {
-    setMode((prev) => (prev === "signin" ? "signup" : "signin"));
+  function setModeAndClear(newMode: "signin" | "signup" | "forgot") {
+    setMode(newMode);
     setMessage(null);
   }
 
@@ -171,12 +190,14 @@ function LoginForm() {
               className="text-2xl font-bold tracking-tight mb-1"
               style={{ fontFamily: "var(--font-serif)", color: "var(--text)" }}
             >
-              {mode === "signin" ? "로그인" : "회원가입"}
+              {mode === "signin" ? "로그인" : mode === "signup" ? "회원가입" : "비밀번호 찾기"}
             </h1>
             <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
               {mode === "signin"
                 ? "학습 기록과 복습 큐에 접근하려면 로그인하세요."
-                : "무료로 시작하세요. 카드 정보가 필요 없습니다."}
+                : mode === "signup"
+                ? "무료로 시작하세요. 카드 정보가 필요 없습니다."
+                : "가입한 이메일로 재설정 링크를 보내드립니다."}
             </p>
 
             <form
@@ -196,52 +217,54 @@ function LoginForm() {
                 />
               </div>
 
-              <div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  <label className="kvle-label">비밀번호</label>
-                  <span className="text-xs" style={{ color: "var(--text-faint)" }}>
-                    6자 이상
-                  </span>
-                </div>
-                <div style={{ position: "relative" }}>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                    className="kvle-input"
-                    style={{ paddingRight: "2.75rem" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
+              {mode !== "forgot" && (
+                <div>
+                  <div
                     style={{
-                      position: "absolute",
-                      right: "0.75rem",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "var(--text-faint)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: "4px",
-                      lineHeight: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: "0.5rem",
                     }}
-                    aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
                   >
-                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
+                    <label className="kvle-label">비밀번호</label>
+                    <span className="text-xs" style={{ color: "var(--text-faint)" }}>
+                      6자 이상
+                    </span>
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                      className="kvle-input"
+                      style={{ paddingRight: "2.75rem" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      style={{
+                        position: "absolute",
+                        right: "0.75rem",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "var(--text-faint)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "4px",
+                        lineHeight: 0,
+                      }}
+                      aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+                    >
+                      {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {message && (
                 <div
@@ -270,31 +293,87 @@ function LoginForm() {
                 className="kvle-btn-primary w-full"
                 style={{ marginTop: "0.25rem" }}
               >
-                {loading ? "처리 중…" : mode === "signin" ? "로그인" : "회원가입"}
+                {loading
+                  ? "처리 중…"
+                  : mode === "signin"
+                  ? "로그인"
+                  : mode === "signup"
+                  ? "회원가입"
+                  : "재설정 메일 보내기"}
               </button>
             </form>
 
-            <button
-              onClick={toggleMode}
-              className="mt-4 text-sm w-full text-center"
+            <div
               style={{
-                color: "var(--text-muted)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                transition: "color 200ms",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.color = "var(--text)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.color = "var(--text-muted)";
+                marginTop: "1rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                alignItems: "center",
+                fontSize: 13,
               }}
             >
-              {mode === "signin"
-                ? "계정이 없으신가요? 회원가입"
-                : "이미 계정이 있으신가요? 로그인"}
-            </button>
+              {mode === "signin" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setModeAndClear("signup")}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--text-muted)",
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  >
+                    계정이 없으신가요? <span style={{ color: "var(--text)" }}>회원가입</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModeAndClear("forgot")}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--text-muted)",
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  >
+                    비밀번호를 잊으셨나요?
+                  </button>
+                </>
+              )}
+              {mode === "signup" && (
+                <button
+                  type="button"
+                  onClick={() => setModeAndClear("signin")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--text-muted)",
+                    cursor: "pointer",
+                    padding: 0,
+                  }}
+                >
+                  이미 계정이 있으신가요? <span style={{ color: "var(--text)" }}>로그인</span>
+                </button>
+              )}
+              {mode === "forgot" && (
+                <button
+                  type="button"
+                  onClick={() => setModeAndClear("signin")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--text-muted)",
+                    cursor: "pointer",
+                    padding: 0,
+                  }}
+                >
+                  <span style={{ color: "var(--text)" }}>로그인</span>으로 돌아가기
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

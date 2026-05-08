@@ -564,6 +564,10 @@ export interface Database {
         Args: { col: string };
         Returns: number;
       };
+      ensure_my_profile_public: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
       get_questions_filter_options: {
         Args: Record<string, never>;
         Returns: {
