@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, ArrowLeft, Zap } from "lucide-react";
 import { createClient } from "../../../lib/supabase/client";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialModeParam = searchParams.get("mode");
   const initialMode: "signin" | "signup" | "forgot" =
@@ -29,14 +28,24 @@ function LoginForm() {
     setMessage(null);
     const supabase = createClient();
 
+    // Hard-navigate after auth so the Supabase SSR cookie is guaranteed to be
+    // sent on the next request. router.push triggers an RSC fetch that can
+    // race the cookie write and bounce back to /auth/login via proxy.ts.
+    const rawNext = searchParams.get("next");
+    const safeNext =
+      rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//")
+        ? rawNext
+        : "/dashboard";
+
     if (mode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setMessage({ text: error.message, type: "error" });
-      } else {
-        router.push("/dashboard");
-        router.refresh();
+        setLoading(false);
+        return;
       }
+      window.location.assign(safeNext);
+      return;
     } else if (mode === "signup") {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -48,8 +57,8 @@ function LoginForm() {
       if (error) {
         setMessage({ text: error.message, type: "error" });
       } else if (data.session) {
-        router.push("/dashboard");
-        router.refresh();
+        window.location.assign(safeNext);
+        return;
       } else {
         setMessage({
           text: "계정이 생성되었습니다. 이메일로 전송된 인증 링크를 확인해 주세요.",
