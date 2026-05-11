@@ -79,7 +79,10 @@ export async function proxy(request: NextRequest) {
 
   if (!user) {
     // Not signed in — read-only routes pass; write routes redirect to login.
-    const isWrite = WRITE_GATED_EXACT.has(path) || path.startsWith("/profile/");
+    const isWrite =
+      WRITE_GATED_EXACT.has(path) ||
+      path.startsWith("/profile/") ||
+      path.startsWith("/board");
     if (isWrite) {
       const url = request.nextUrl.clone();
       url.pathname = "/auth/login";
