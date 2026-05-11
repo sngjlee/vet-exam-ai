@@ -74,6 +74,7 @@ export const BADGE_META: Record<BadgeType, BadgeMeta> = {
 export const BADGE_DISPLAY_ORDER: BadgeType[] = [
   "operator",
   "reviewer",
+  "adopter",
   "popular_comment",
   "first_contrib",
   "newbie",

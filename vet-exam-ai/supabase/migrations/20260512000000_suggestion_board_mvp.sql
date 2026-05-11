@@ -299,7 +299,8 @@ create policy "bpc: owner edit visible"
 -- ---------------------------------------------------------------------------
 -- 5c. RLS — upvotes (approved 사용자, 자기 글 upvote 차단)
 -- ---------------------------------------------------------------------------
-create policy "upvotes: read all" on public.board_post_upvotes for select using (true);
+create policy "upvotes: read own" on public.board_post_upvotes for select
+  using (auth.uid() = user_id);
 
 create policy "upvotes: insert own"
   on public.board_post_upvotes for insert
@@ -547,7 +548,7 @@ begin
   -- 알림: 부모 댓글 작성자 (있으면), 그게 아니면 게시글 작성자.
   -- 자기 글/자기 댓글에 답하면 알림 skip.
   select nickname into v_actor_nick
-    from public.user_profiles_public where id = new.user_id;
+    from public.user_profiles_public where user_id = new.user_id;
 
   if new.parent_id is not null and v_parent_owner is not null
      and v_parent_owner <> new.user_id then
