@@ -137,9 +137,9 @@ create index board_post_upvotes_user on public.board_post_upvotes (user_id);
 create table public.board_post_reports (
   id               uuid                  primary key default gen_random_uuid(),
   post_id          uuid                  not null references public.board_posts(id) on delete cascade,
-  reporter_id      uuid                  not null references public.profiles(id) on delete cascade,
+  reporter_id      uuid                  references public.profiles(id) on delete set null,
   reason           public.report_reason  not null,
-  note             text,
+  description      text,
   status           public.report_status  not null default 'pending',
   created_at       timestamptz           not null default now(),
   resolved_at      timestamptz,
@@ -154,9 +154,9 @@ create index board_post_reports_pending
 create table public.board_post_comment_reports (
   id               uuid                  primary key default gen_random_uuid(),
   comment_id       uuid                  not null references public.board_post_comments(id) on delete cascade,
-  reporter_id      uuid                  not null references public.profiles(id) on delete cascade,
+  reporter_id      uuid                  references public.profiles(id) on delete set null,
   reason           public.report_reason  not null,
-  note             text,
+  description      text,
   status           public.report_status  not null default 'pending',
   created_at       timestamptz           not null default now(),
   resolved_at      timestamptz,
