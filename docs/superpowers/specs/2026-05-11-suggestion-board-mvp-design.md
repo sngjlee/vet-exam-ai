@@ -211,7 +211,7 @@ received ──┬──→ reviewing ──┬──→ accepted (lock)
 ### 4.2 RLS — `board_posts`
 
 **SELECT**
-- approved 사용자(`signup_status = 'approved'`) 또는 admin만 SELECT 가능
+- `signup_status_of(auth.uid()) = 'approved'`인 사용자만 SELECT 가능 (admin 포함)
 - `visibility = 'visible'`이면 모두 표시
 - `visibility = 'hidden_by_author'` 또는 `'blinded_by_report'`인 경우: 작성자 본인 또는 admin만 표시
 - `visibility = 'removed_by_admin'`인 경우: admin만 표시
@@ -219,7 +219,7 @@ received ──┬──→ reviewing ──┬──→ accepted (lock)
 
 **INSERT**
 - `kind = 'announcement'`: admin only (`role = 'admin' AND is_active`)
-- `kind = 'suggestion'`: approved 사용자
+- `kind = 'suggestion'`: `signup_status_of(auth.uid()) = 'approved'` (admin도 grandfather 백필로 approved 상태이므로 통과)
 
 **UPDATE — 작성자 본인 편집** (제목·본문·이미지·익명 토글)
 - `auth.uid() = user_id`
@@ -335,7 +335,7 @@ received ──┬──→ reviewing ──┬──→ accepted (lock)
 - 액션 바: 공감(upvote) / 신고 / 공유 / 작성자에겐 수정·삭제 (잠금 시 disable + tooltip)
 - 운영자 코멘트: `resolution_note` 있으면 본문 아래 강조 박스
 - 댓글 스레드: `BoardCommentList` — 1-depth 답글, sort, anonymize 옵션
-- Admin 보이기: 익명 글에도 admin 한정 작성자 닉네임 toggle (`admin_view=1` 쿼리 파라미터 또는 admin role 자동 표시)
+- Admin 보이기: 익명 글이면 일반 영역엔 "익명" 그대로 표시. admin role 사용자에게만 본문 헤더 옆에 회색 작은 "(작성자: {nickname})" 자동 표기 (별도 토글 없음)
 
 ### 7.5 Admin 모더 큐 `/admin/suggestions`
 
