@@ -121,3 +121,74 @@ export async function softDeletePost(id: string): Promise<void> {
   revalidatePath("/board/suggestions");
   revalidatePath("/board/announcements");
 }
+
+const REPORT_REASONS = [
+  "spam", "misinformation", "privacy", "hate_speech",
+  "advertising", "copyright", "defamation", "other",
+] as const;
+const ReportSchema = z.object({
+  post_id: z.string().uuid(),
+  reason: z.enum(REPORT_REASONS),
+  note: z.string().max(500).optional(),
+});
+
+export async function toggleUpvote(postId: string): Promise<{ upvoted: boolean }> {
+  const supabase = await createClient();
+  const { data: userRes } = await supabase.auth.getUser();
+  if (!userRes.user) redirect("/auth/login");
+
+  const userId = userRes.user.id;
+
+  // 현재 상태 확인
+  const { data: existing } = await supabase
+    .from("board_post_upvotes")
+    .select("post_id")
+    .eq("post_id", postId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase
+      .from("board_post_upvotes")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    revalidatePath(`/board/suggestions/${postId}`);
+    revalidatePath(`/board/announcements/${postId}`);
+    return { upvoted: false };
+  }
+
+  const { error } = await supabase
+    .from("board_post_upvotes")
+    .insert({ post_id: postId, user_id: userId });
+  if (error) throw new Error(error.message);
+
+  revalidatePath(`/board/suggestions/${postId}`);
+  revalidatePath(`/board/announcements/${postId}`);
+  return { upvoted: true };
+}
+
+export async function reportPost(input: z.input<typeof ReportSchema>): Promise<void> {
+  const parsed = ReportSchema.parse(input);
+  const supabase = await createClient();
+  const { data: userRes } = await supabase.auth.getUser();
+  if (!userRes.user) redirect("/auth/login");
+
+  const { error } = await supabase
+    .from("board_post_reports")
+    .insert({
+      post_id: parsed.post_id,
+      reporter_id: userRes.user.id,
+      reason: parsed.reason,
+      description: parsed.note ?? null,
+    });
+
+  // unique (post_id, reporter_id) 충돌은 멱등 처리
+  if (error && error.code !== "23505") {
+    throw new Error(error.message);
+  }
+
+  revalidatePath(`/board/suggestions/${parsed.post_id}`);
+  revalidatePath(`/board/announcements/${parsed.post_id}`);
+}
