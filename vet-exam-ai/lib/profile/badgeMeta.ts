@@ -60,6 +60,15 @@ export const BADGE_META: Record<BadgeType, BadgeMeta> = {
     showInline: true,
     manualGrant: false,
   },
+  adopter: {
+    label: "얼리어답터",
+    description: "베타 초기 참여자",
+    icon: Sparkles,
+    color: "var(--teal)",
+    background: "var(--teal-dim)",
+    showInline: true,
+    manualGrant: true,
+  },
 };
 
 export const BADGE_DISPLAY_ORDER: BadgeType[] = [

@@ -15,6 +15,7 @@ export const BADGE_TYPE_KO: Record<BadgeType, string> = {
   newbie:          "새내기",
   first_contrib:   "첫 기여",
   popular_comment: "인기 댓글",
+  adopter:         "얼리어답터",
 };
 
 // Manual-grantable badges (others are auto-awarded by triggers).
