@@ -168,6 +168,11 @@ create index board_post_comment_reports_pending
   on public.board_post_comment_reports (created_at desc)
   where status in ('pending', 'reviewing');
 
+create index board_post_reports_post_id
+  on public.board_post_reports (post_id);
+create index board_post_comment_reports_comment_id
+  on public.board_post_comment_reports (comment_id);
+
 -- ---------------------------------------------------------------------------
 -- 4. Enable RLS
 -- ---------------------------------------------------------------------------
@@ -691,10 +696,9 @@ begin
     into v_old, v_owner, v_title, v_kind
     from public.board_posts where id = p_post_id;
 
-  if v_old is null then
-    raise exception 'post not found or not a suggestion' using errcode = 'P0002';
+  if not found then
+    raise exception 'post not found' using errcode = 'P0002';
   end if;
-
   if v_kind <> 'suggestion' then
     raise exception 'kind is not suggestion' using errcode = '22023';
   end if;
@@ -736,6 +740,8 @@ begin
   );
 end;
 $$;
+revoke execute on function public.update_suggestion_state(uuid, public.suggestion_status, text) from public, anon;
+grant execute on function public.update_suggestion_state(uuid, public.suggestion_status, text) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 8b. RPC — set_announcement_pinned (단일 핀)
@@ -781,6 +787,8 @@ begin
   );
 end;
 $$;
+revoke execute on function public.set_announcement_pinned(uuid, boolean) from public, anon;
+grant execute on function public.set_announcement_pinned(uuid, boolean) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 8c. RPC — set_board_post_visibility
@@ -844,6 +852,8 @@ begin
   );
 end;
 $$;
+revoke execute on function public.set_board_post_visibility(uuid, public.board_visibility, text) from public, anon;
+grant execute on function public.set_board_post_visibility(uuid, public.board_visibility, text) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 8d. RPC — set_board_post_comment_visibility
@@ -890,6 +900,8 @@ begin
   );
 end;
 $$;
+revoke execute on function public.set_board_post_comment_visibility(uuid, public.comment_status, text) from public, anon;
+grant execute on function public.set_board_post_comment_visibility(uuid, public.comment_status, text) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 8e. RPC — resolve_board_post_report
@@ -935,6 +947,8 @@ begin
   return v_affected;
 end;
 $$;
+revoke execute on function public.resolve_board_post_report(uuid, text, text) from public, anon;
+grant execute on function public.resolve_board_post_report(uuid, text, text) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 8f. RPC — resolve_board_post_comment_report
@@ -980,6 +994,8 @@ begin
   return v_affected;
 end;
 $$;
+revoke execute on function public.resolve_board_post_comment_report(uuid, text, text) from public, anon;
+grant execute on function public.resolve_board_post_comment_report(uuid, text, text) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 8g. Trigger + RPC — broadcast_announcement
@@ -995,6 +1011,12 @@ declare
   v_pinned   boolean;
   v_inserted int;
 begin
+  if auth.uid() is null
+     or not exists (select 1 from public.profiles
+                    where id = auth.uid() and role = 'admin' and is_active) then
+    raise exception 'access denied' using errcode = '42501';
+  end if;
+
   select title, is_pinned into v_title, v_pinned
     from public.board_posts
    where id = p_post_id and kind = 'announcement' and visibility = 'visible';
@@ -1018,6 +1040,8 @@ begin
   return v_inserted;
 end;
 $$;
+revoke execute on function public.broadcast_announcement(uuid) from public, anon;
+grant execute on function public.broadcast_announcement(uuid) to authenticated;
 
 create or replace function public.handle_board_post_insert()
 returns trigger
