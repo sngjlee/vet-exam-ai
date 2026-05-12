@@ -35,21 +35,33 @@ export function BoardPostListItem({ post, authorNickname }: Props) {
   return (
     <Link
       href={`/board/${kindSegment}/${post.id}`}
-      className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4 hover:border-gray-300"
+      className="flex items-start justify-between gap-3 rounded-lg p-4 transition-colors"
+      style={{
+        background: "var(--surface-raised)",
+        border: "1px solid var(--border)",
+        textDecoration: "none",
+      }}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          {post.is_pinned ? <span className="text-xs font-bold text-amber-600">📌 고정</span> : null}
+          {post.is_pinned ? (
+            <span className="text-xs font-bold" style={{ color: "var(--amber)" }}>📌 고정</span>
+          ) : null}
           {post.suggestion_status ? (
             <SuggestionStatusBadge status={post.suggestion_status} />
           ) : null}
         </div>
-        <h3 className="mt-1 truncate text-base font-semibold text-gray-900">{post.title}</h3>
-        <div className="mt-1 text-xs text-gray-500">
+        <h3
+          className="mt-1 truncate text-base font-semibold"
+          style={{ color: "var(--text)" }}
+        >
+          {post.title}
+        </h3>
+        <div className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
           {author} · {formatRelative(post.created_at)}
         </div>
       </div>
-      <div className="shrink-0 text-right text-xs text-gray-500">
+      <div className="shrink-0 text-right text-xs" style={{ color: "var(--text-muted)" }}>
         <div>👍 {post.upvote_count}</div>
         <div>💬 {post.comment_count}</div>
       </div>

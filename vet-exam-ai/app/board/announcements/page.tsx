@@ -43,10 +43,13 @@ export default async function AnnouncementsListPage({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">📢 공지</h2>
+        <h2 className="text-lg font-semibold" style={{ color: "var(--text)" }}>📢 공지</h2>
         {isAdmin ? (
-          <Link href="/board/announcements/new"
-            className="rounded-md bg-blue-600 px-3 py-1 text-sm font-semibold text-white">
+          <Link
+            href="/board/announcements/new"
+            className="rounded-md px-3 py-1 text-sm font-semibold"
+            style={{ background: "var(--teal)", color: "#080D1A", textDecoration: "none" }}
+          >
             새 공지 작성
           </Link>
         ) : null}
@@ -60,10 +63,12 @@ export default async function AnnouncementsListPage({
             />
           </li>
         ))}
-        {(posts ?? []).length === 0 ? <li className="text-sm text-gray-500">공지가 없습니다.</li> : null}
+        {(posts ?? []).length === 0 ? (
+          <li className="text-sm" style={{ color: "var(--text-muted)" }}>공지가 없습니다.</li>
+        ) : null}
       </ul>
       {totalPages > 1 ? (
-        <nav className="mt-4 flex justify-center gap-2 text-sm">
+        <nav className="mt-4 flex justify-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
           {page > 1 ? <Link href={`?page=${page - 1}`}>이전</Link> : null}
           <span>{page} / {totalPages}</span>
           {page < totalPages ? <Link href={`?page=${page + 1}`}>다음</Link> : null}

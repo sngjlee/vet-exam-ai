@@ -85,6 +85,12 @@ export function BoardPostComposer(props: Mode) {
     });
   };
 
+  const fieldStyle = {
+    background: "var(--surface-raised)",
+    border: "1px solid var(--teal-border)",
+    color: "var(--text)",
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-3">
       <div>
@@ -93,9 +99,10 @@ export function BoardPostComposer(props: Mode) {
           onChange={(e) => setTitle(e.target.value)}
           maxLength={TITLE_MAX}
           placeholder="제목"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-base"
+          className="w-full rounded-md px-3 py-2 text-base"
+          style={fieldStyle}
         />
-        <div className="mt-1 text-right text-xs text-gray-500">
+        <div className="mt-1 text-right text-xs" style={{ color: "var(--text-muted)" }}>
           {title.length}/{TITLE_MAX}
         </div>
       </div>
@@ -107,15 +114,16 @@ export function BoardPostComposer(props: Mode) {
           maxLength={BODY_MAX}
           placeholder="내용을 입력하세요"
           rows={10}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-md px-3 py-2 text-sm"
+          style={fieldStyle}
         />
-        <div className="mt-1 text-right text-xs text-gray-500">
+        <div className="mt-1 text-right text-xs" style={{ color: "var(--text-muted)" }}>
           {body.length}/{BODY_MAX}
         </div>
       </div>
 
       {props.kind === "suggestion" ? (
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm" style={{ color: "var(--text)" }}>
           <input
             type="checkbox"
             checked={isAnonymized}
@@ -125,12 +133,13 @@ export function BoardPostComposer(props: Mode) {
         </label>
       ) : null}
 
-      {error ? <div className="text-sm text-red-600">{error}</div> : null}
+      {error ? <div className="text-sm" style={{ color: "var(--wrong)" }}>{error}</div> : null}
 
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+        className="rounded-md px-4 py-2 text-sm font-semibold disabled:opacity-60"
+        style={{ background: "var(--teal)", color: "#080D1A" }}
       >
         {pending ? "저장 중…" : props.mode === "create" ? "작성" : "수정 저장"}
       </button>

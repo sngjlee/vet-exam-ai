@@ -50,17 +50,26 @@ export function BoardCommentComposer({ postId, kindSegment, parentId, onDone }: 
         onChange={(e) => setBody(e.target.value)}
         maxLength={5000}
         placeholder={parentId ? "답글을 입력하세요" : "댓글을 입력하세요"}
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+        className="w-full rounded-md px-3 py-2 text-sm"
+        style={{
+          background: "var(--surface-raised)",
+          border: "1px solid var(--teal-border)",
+          color: "var(--text)",
+        }}
         rows={3}
       />
       <div className="flex items-center justify-between gap-2">
-        <label className="flex items-center gap-1 text-xs text-gray-600">
+        <label className="flex items-center gap-1 text-xs" style={{ color: "var(--text-muted)" }}>
           <input type="checkbox" checked={isAnon} onChange={(e) => setIsAnon(e.target.checked)} />
           익명
         </label>
-        {error ? <span className="text-xs text-red-600">{error}</span> : null}
-        <button type="submit" disabled={pending}
-          className="rounded-md bg-blue-600 px-3 py-1 text-sm font-semibold text-white disabled:opacity-50">
+        {error ? <span className="text-xs" style={{ color: "var(--wrong)" }}>{error}</span> : null}
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-md px-3 py-1 text-sm font-semibold disabled:opacity-50"
+          style={{ background: "var(--teal)", color: "#080D1A" }}
+        >
           {pending ? "전송 중…" : parentId ? "답글" : "댓글"}
         </button>
       </div>

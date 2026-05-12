@@ -48,7 +48,7 @@ export function ReportButton(props: Props) {
   };
 
   if (done) {
-    return <span className="text-xs text-gray-500">신고 접수됨</span>;
+    return <span className="text-xs" style={{ color: "var(--text-muted)" }}>신고 접수됨</span>;
   }
 
   return (
@@ -56,17 +56,28 @@ export function ReportButton(props: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-xs text-gray-500 hover:text-red-600 hover:underline"
+        className="text-xs hover:underline transition-colors"
+        style={{ color: "var(--text-muted)" }}
       >
         신고
       </button>
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-white p-4">
-            <h3 className="text-base font-semibold">신고 사유</h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.6)" }}
+        >
+          <div
+            className="w-full max-w-sm rounded-lg p-4"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--rule)",
+              color: "var(--text)",
+            }}
+          >
+            <h3 className="text-base font-semibold" style={{ color: "var(--text)" }}>신고 사유</h3>
             <div className="mt-2 space-y-1">
               {REASONS.map((r) => (
-                <label key={r.value} className="flex items-center gap-2 text-sm">
+                <label key={r.value} className="flex items-center gap-2 text-sm" style={{ color: "var(--text)" }}>
                   <input
                     type="radio"
                     name="reason"
@@ -83,13 +94,30 @@ export function ReportButton(props: Props) {
               onChange={(e) => setNote(e.target.value)}
               maxLength={500}
               placeholder="추가 설명 (선택, 500자)"
-              className="mt-2 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
+              className="mt-2 w-full rounded-md px-2 py-1 text-sm"
+              style={{
+                background: "var(--surface-raised)",
+                border: "1px solid var(--teal-border)",
+                color: "var(--text)",
+              }}
               rows={3}
             />
             <div className="mt-3 flex justify-end gap-2">
-              <button type="button" onClick={() => setOpen(false)} className="text-sm text-gray-600">취소</button>
-              <button type="button" onClick={submit} disabled={pending}
-                className="rounded-md bg-red-600 px-3 py-1 text-sm text-white disabled:opacity-50">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="text-sm"
+                style={{ color: "var(--text-muted)" }}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={submit}
+                disabled={pending}
+                className="rounded-md px-3 py-1 text-sm disabled:opacity-50"
+                style={{ background: "var(--wrong)", color: "var(--text)" }}
+              >
                 {pending ? "전송 중…" : "신고"}
               </button>
             </div>

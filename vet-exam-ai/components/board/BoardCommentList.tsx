@@ -19,7 +19,11 @@ export function BoardCommentList({
   comments, nicknames, viewerId, viewerIsAdmin, postId, kindSegment,
 }: Props) {
   if (comments.length === 0) {
-    return <div className="text-sm text-gray-500">아직 댓글이 없습니다.</div>;
+    return (
+      <div className="text-sm" style={{ color: "var(--text-muted)" }}>
+        아직 댓글이 없습니다.
+      </div>
+    );
   }
 
   // 1-level threading: root → replies

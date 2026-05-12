@@ -49,31 +49,34 @@ export default async function SuggestionsListPage({ searchParams }: { searchPara
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
+  const navLinkStyle = (active: boolean) => ({
+    color: active ? "var(--teal)" : "var(--text-muted)",
+    fontWeight: active ? 700 : 400,
+    textDecoration: "none",
+  });
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-3 text-sm">
           {(["latest", "popular"] as const).map((s) => (
             <Link
               key={s}
               href={`?sort=${s}${status ? `&status=${status}` : ""}`}
-              className={s === sort ? "font-bold text-blue-600" : "text-gray-600 hover:underline"}
+              style={navLinkStyle(s === sort)}
             >
               {s === "latest" ? "최신" : "인기"}
             </Link>
           ))}
-          <span className="text-gray-300">|</span>
-          <Link
-            href="?"
-            className={!status ? "font-bold text-blue-600" : "text-gray-600 hover:underline"}
-          >
+          <span style={{ color: "var(--text-faint)" }}>|</span>
+          <Link href="?" style={navLinkStyle(!status)}>
             전체
           </Link>
           {(["received", "reviewing", "accepted", "rejected"] as const).map((s) => (
             <Link
               key={s}
               href={`?status=${s}${sort === "popular" ? "&sort=popular" : ""}`}
-              className={s === status ? "font-bold text-blue-600" : "text-gray-600 hover:underline"}
+              style={navLinkStyle(s === status)}
             >
               {SUGGESTION_STATUS_LABEL[s]}
             </Link>
@@ -81,7 +84,8 @@ export default async function SuggestionsListPage({ searchParams }: { searchPara
         </div>
         <Link
           href="/board/suggestions/new"
-          className="rounded-md bg-blue-600 px-3 py-1 text-sm font-semibold text-white"
+          className="rounded-md px-3 py-1 text-sm font-semibold"
+          style={{ background: "var(--teal)", color: "#080D1A", textDecoration: "none" }}
         >
           건의 작성
         </Link>
@@ -97,12 +101,12 @@ export default async function SuggestionsListPage({ searchParams }: { searchPara
           </li>
         ))}
         {(posts ?? []).length === 0 ? (
-          <li className="text-sm text-gray-500">건의글이 없습니다.</li>
+          <li className="text-sm" style={{ color: "var(--text-muted)" }}>건의글이 없습니다.</li>
         ) : null}
       </ul>
 
       {totalPages > 1 ? (
-        <nav className="mt-4 flex justify-center gap-2 text-sm">
+        <nav className="mt-4 flex justify-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
           {page > 1 ? <Link href={`?page=${page - 1}`}>이전</Link> : null}
           <span>
             {page} / {totalPages}

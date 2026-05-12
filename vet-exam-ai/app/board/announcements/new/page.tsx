@@ -14,8 +14,10 @@ export default async function NewAnnouncementPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold">새 공지 작성</h2>
-      <p className="mt-1 text-sm text-gray-600">게시 즉시 모든 사용자에게 알림이 발송됩니다.</p>
+      <h2 className="text-xl font-semibold" style={{ color: "var(--text)" }}>새 공지 작성</h2>
+      <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+        게시 즉시 모든 사용자에게 알림이 발송됩니다.
+      </p>
       <div className="mt-4">
         <BoardPostComposer mode="create" kind="announcement" />
       </div>

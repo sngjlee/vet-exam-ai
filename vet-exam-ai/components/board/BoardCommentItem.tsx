@@ -26,25 +26,40 @@ export function BoardCommentItem({
   const author = comment.is_anonymized ? "익명" : (authorNickname ?? "탈퇴한 사용자");
 
   return (
-    <li className={isReply ? "ml-6 border-l border-gray-200 pl-4" : ""}>
-      <div className="rounded-md bg-gray-50 p-3">
-        <div className="text-xs text-gray-500">
-          <span className="font-semibold text-gray-700">{author}</span>
+    <li
+      className={isReply ? "ml-6 pl-4" : ""}
+      style={isReply ? { borderLeft: "1px solid var(--border)" } : undefined}
+    >
+      <div
+        className="rounded-md p-3"
+        style={{ background: "var(--surface-raised)", border: "1px solid var(--border)" }}
+      >
+        <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+          <span className="font-semibold" style={{ color: "var(--text)" }}>{author}</span>
           {viewerIsAdmin && comment.is_anonymized && authorNickname ? (
-            <span className="ml-2 text-xs text-gray-400">(작성자: {authorNickname})</span>
+            <span className="ml-2 text-xs" style={{ color: "var(--text-faint)" }}>
+              (작성자: {authorNickname})
+            </span>
           ) : null}
           {" · "}
           {new Date(comment.created_at).toLocaleString("ko-KR")}
-          {comment.edit_count > 0 ? <span className="ml-1 text-xs text-gray-400">(수정됨)</span> : null}
+          {comment.edit_count > 0 ? (
+            <span className="ml-1 text-xs" style={{ color: "var(--text-faint)" }}>(수정됨)</span>
+          ) : null}
         </div>
         <div
-          className="prose prose-sm mt-1 max-w-none"
+          className="prose prose-invert prose-sm mt-1 max-w-none"
+          style={{ color: "var(--text)" }}
           dangerouslySetInnerHTML={{ __html: comment.body_html }}
         />
         <div className="mt-2 flex items-center gap-3 text-xs">
           {!isReply && viewerId ? (
-            <button type="button" onClick={() => setReplying((v) => !v)}
-              className="text-gray-500 hover:underline">
+            <button
+              type="button"
+              onClick={() => setReplying((v) => !v)}
+              className="hover:underline"
+              style={{ color: "var(--text-muted)" }}
+            >
               {replying ? "취소" : "답글"}
             </button>
           ) : null}

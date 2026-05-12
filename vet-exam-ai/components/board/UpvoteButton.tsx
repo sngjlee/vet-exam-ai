@@ -36,9 +36,12 @@ export function UpvoteButton({ postId, count, initialUpvoted, disabled }: Props)
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-1 rounded-full border px-3 py-1 text-sm ${
-        upvoted ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-300 text-gray-700"
-      } disabled:opacity-50`}
+      className="flex items-center gap-1 rounded-full border px-3 py-1 text-sm disabled:opacity-50 transition-colors"
+      style={{
+        borderColor: upvoted ? "var(--teal-border)" : "var(--rule)",
+        background: upvoted ? "var(--teal-dim)" : "transparent",
+        color: upvoted ? "var(--teal)" : "var(--text)",
+      }}
       aria-pressed={upvoted}
     >
       <span>{upvoted ? "👍" : "👍🏻"}</span>
