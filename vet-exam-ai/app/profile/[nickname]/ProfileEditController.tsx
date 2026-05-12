@@ -6,6 +6,7 @@ import { Pencil } from "lucide-react";
 import { canChangeNickname } from "../../../lib/profile/nickname";
 import ProfileTempNicknameBanner from "./ProfileTempNicknameBanner";
 import type { UserProfilePublicRow } from "../../../lib/profile/maskPrivacy";
+import { formatKstDate } from "../../../lib/utils/datetime";
 
 type Props = {
   profile: UserProfilePublicRow;
@@ -88,7 +89,7 @@ export default function ProfileEditController({ profile, joinedLabel }: Props) {
           setError("이미 사용 중인 닉네임입니다.");
         } else if (data.error === "nickname_change_too_soon") {
           const next = data.next_change_available_at
-            ? new Date(data.next_change_available_at).toLocaleDateString("ko-KR")
+            ? formatKstDate(data.next_change_available_at)
             : "";
           setError(`닉네임은 30일에 한 번만 변경할 수 있습니다. (다음 변경 가능: ${next})`);
         } else {
@@ -333,7 +334,7 @@ function FieldGroup({
           <>
             <input value={currentNickname} disabled style={{ ...inputStyle, opacity: 0.7 }} />
             <p style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 4 }}>
-              다음 변경 가능: {policy.nextChangeAt.toLocaleDateString("ko-KR")}
+              다음 변경 가능: {formatKstDate(policy.nextChangeAt)}
             </p>
           </>
         )}

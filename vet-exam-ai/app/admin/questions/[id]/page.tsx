@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, Pencil } from "lucide-react";
 import { createClient } from "../../../../lib/supabase/server";
+import { formatKstDateTime } from "../../../../lib/utils/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -135,7 +136,7 @@ export default async function AdminQuestionDetailPage({
           label="상태"
           value={q.is_active ? <span style={{ color: "var(--teal)" }}>활성</span> : <span style={{ color: "var(--text-muted)" }}>비활성</span>}
         />
-        <MetaRow label="등록일" value={new Date(q.created_at).toLocaleString("ko-KR")} />
+        <MetaRow label="등록일" value={formatKstDateTime(q.created_at)} />
       </section>
 
       <section

@@ -9,6 +9,7 @@ import CommentEditComposer, { type EditedCommentRow } from "./CommentEditCompose
 import CommentReplyComposer from "./CommentReplyComposer";
 import CommentImageGallery from "./CommentImageGallery";
 import type { BadgeType } from "../../lib/profile/badgeMeta";
+import { formatKstDate } from "../../lib/utils/datetime";
 
 type VoteValue = 1 | -1;
 
@@ -68,7 +69,7 @@ function formatRelative(iso: string): string {
   if (hr < 24) return `${hr}시간 전`;
   const day = Math.round(hr / 24);
   if (day < 30) return `${day}일 전`;
-  return new Date(iso).toLocaleDateString("ko-KR");
+  return formatKstDate(iso);
 }
 
 export default function CommentItem({

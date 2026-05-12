@@ -4,6 +4,7 @@ import {
   REPORT_REASON_KO,
   REPORT_STATUS_KO,
 } from "../../../../lib/admin/report-labels";
+import { formatKstDate } from "../../../../lib/utils/datetime";
 import { ReportResolveForm } from "./report-resolve-form";
 
 export type ReportGroupRow = {
@@ -40,7 +41,7 @@ function formatRelative(iso: string): string {
   if (hr < 24) return `${hr}시간 전`;
   const day = Math.round(hr / 24);
   if (day < 30) return `${day}일 전`;
-  return new Date(iso).toLocaleDateString("ko-KR");
+  return formatKstDate(iso);
 }
 
 export function ReportsTable({

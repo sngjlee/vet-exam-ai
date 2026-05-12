@@ -1,3 +1,5 @@
+import { formatKstDate } from "../../../../lib/utils/datetime";
+
 export function formatJoinedRelative(iso: string | null): string {
   if (!iso) return "—";
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -6,7 +8,7 @@ export function formatJoinedRelative(iso: string | null): string {
   if (day < 7)   return `${day}일 전`;
   if (day < 30)  return `${Math.round(day / 7)}주 전`;
   if (day < 365) return `${Math.round(day / 30)}개월 전`;
-  return new Date(iso).toLocaleDateString("ko-KR");
+  return formatKstDate(iso);
 }
 
 export function truncateEmail(email: string | null): string {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { Database } from "../../../lib/supabase/types";
+import { formatKstDate } from "../../../lib/utils/datetime";
 
 type CommentType = Database["public"]["Enums"]["comment_type"];
 
@@ -122,7 +123,7 @@ export default function ProfileCommentList({
               <span>·</span>
               <span>추천 {c.vote_score}</span>
               <span>·</span>
-              <span>{new Date(c.created_at).toLocaleDateString("ko-KR")}</span>
+              <span>{formatKstDate(c.created_at)}</span>
             </div>
             <div
               style={{

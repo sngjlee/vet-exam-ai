@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { formatKstDateOptions } from "@/lib/utils/datetime";
 
 function ArrowSVG({ size = 14 }: { size?: number }) {
   return (
@@ -33,7 +34,7 @@ function getDaysLeft(dateValue: string) {
 function formatKoreanDate(dateValue: string) {
   const target = new Date(`${dateValue}T00:00:00`);
   if (Number.isNaN(target.getTime())) return "날짜 미정";
-  return target.toLocaleDateString("ko-KR", {
+  return formatKstDateOptions(target, {
     year: "numeric",
     month: "long",
     day: "numeric",

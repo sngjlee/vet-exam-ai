@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { createClient } from "../../../../../lib/supabase/server";
 import { getFilterOptions } from "../../../../../lib/admin/filter-options";
+import { formatKstDateTime } from "../../../../../lib/utils/datetime";
 import { updateQuestion } from "./_actions";
 
 export const dynamic = "force-dynamic";
@@ -175,7 +176,7 @@ export default async function AdminQuestionEditPage({
           <MetaRow label="회차" value={q.round != null ? `${q.round}회` : null} />
           <MetaRow label="교시" value={q.session != null ? `${q.session}교시` : null} />
           <MetaRow label="연도" value={q.year} />
-          <MetaRow label="등록일" value={new Date(q.created_at).toLocaleString("ko-KR")} />
+          <MetaRow label="등록일" value={formatKstDateTime(q.created_at)} />
         </section>
 
         <section style={sectionStyle}>

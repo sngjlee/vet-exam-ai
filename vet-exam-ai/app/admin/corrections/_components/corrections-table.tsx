@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { CORRECTION_STATUS_KO } from "../../../../lib/admin/correction-labels";
+import { formatKstDate } from "../../../../lib/utils/datetime";
 import { CorrectionResolveForm } from "./correction-resolve-form";
 
 export type CorrectionRow = {
@@ -33,7 +34,7 @@ function formatRelative(iso: string): string {
   if (hr < 24) return `${hr}시간 전`;
   const day = Math.round(hr / 24);
   if (day < 30) return `${day}일 전`;
-  return new Date(iso).toLocaleDateString("ko-KR");
+  return formatKstDate(iso);
 }
 
 function shortJson(v: unknown, max = 80): string {

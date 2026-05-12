@@ -1,4 +1,5 @@
 import type { Database } from "../../../../lib/supabase/types";
+import { formatKstDateTimeOptions } from "../../../../lib/utils/datetime";
 
 export type SignupStatus = Database["public"]["Enums"]["signup_status"];
 
@@ -15,8 +16,7 @@ export function formatRound(round: number): string {
 
 export function shortDate(iso: string | null): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleString("ko-KR", {
+  return formatKstDateTimeOptions(iso, {
     year: "2-digit",
     month: "2-digit",
     day: "2-digit",
