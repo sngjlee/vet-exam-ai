@@ -122,10 +122,15 @@ export async function resolveBoardPostCommentReportAction(input: z.input<typeof 
 // Inline closures in <form action> capture iteration variables and fail at
 // runtime under RSC serialization (cf. feedback_rsc_inline_fn_trap.md).
 export async function updateSuggestionStateFormAction(formData: FormData): Promise<void> {
+  const rawNote = formData.get("note");
+  const note = typeof rawNote === "string" && rawNote.trim().length > 0
+    ? rawNote.trim()
+    : null;
   await updateSuggestionStateAction({
     post_id: String(formData.get("post_id") ?? ""),
     new_status: String(formData.get("new_status") ?? "") as
       "received" | "reviewing" | "accepted" | "rejected",
+    note,
   });
 }
 

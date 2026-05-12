@@ -3,10 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SuggestionStatusBadge } from "@/components/board/SuggestionStatusBadge";
-import {
-  updateSuggestionStateFormAction,
-  setBoardPostVisibilityFormAction,
-} from "./_actions";
+import { SuggestionActionRow } from "./_components/suggestion-action-row";
 
 export const dynamic = "force-dynamic";
 
@@ -130,56 +127,12 @@ export default async function AdminSuggestionsPage({
                 </div>
               </div>
             </div>
-            <div className="mt-3 flex flex-wrap gap-2 text-sm">
-              {VALID.map((s) => (
-                <form key={s} action={updateSuggestionStateFormAction}>
-                  <input type="hidden" name="post_id" value={p.id} />
-                  <input type="hidden" name="new_status" value={s} />
-                  <button
-                    className="rounded-md px-2 py-1 text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    style={{
-                      border: "1px solid var(--rule)",
-                      color: "var(--text)",
-                      background: "transparent",
-                    }}
-                    disabled={p.suggestion_status === s}
-                  >
-                    {s === "received" ? "접수로" : s === "reviewing" ? "검토중으로"
-                      : s === "accepted" ? "채택" : "반려"}
-                  </button>
-                </form>
-              ))}
-              {p.visibility === "visible" ? (
-                <form action={setBoardPostVisibilityFormAction}>
-                  <input type="hidden" name="post_id" value={p.id} />
-                  <input type="hidden" name="visibility" value="removed_by_admin" />
-                  <button
-                    className="rounded-md px-2 py-1 text-xs transition-colors"
-                    style={{
-                      border: "1px solid rgba(192, 74, 58, 0.4)",
-                      color: "var(--wrong)",
-                      background: "transparent",
-                    }}
-                  >
-                    삭제
-                  </button>
-                </form>
-              ) : (
-                <form action={setBoardPostVisibilityFormAction}>
-                  <input type="hidden" name="post_id" value={p.id} />
-                  <input type="hidden" name="visibility" value="visible" />
-                  <button
-                    className="rounded-md px-2 py-1 text-xs transition-colors"
-                    style={{
-                      border: "1px solid var(--rule)",
-                      color: "var(--text)",
-                      background: "transparent",
-                    }}
-                  >
-                    복구
-                  </button>
-                </form>
-              )}
+            <div className="mt-3">
+              <SuggestionActionRow
+                postId={p.id}
+                currentStatus={p.suggestion_status}
+                currentVisibility={p.visibility}
+              />
             </div>
           </li>
         ))}
