@@ -29,7 +29,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "신고",      href: "/admin/reports",         icon: Flag },
   { label: "정정",      href: "/admin/corrections",     icon: GitPullRequest },
   { label: "감사",      href: "/admin/audit",           icon: History },
-  { label: "건의 모더", href: "/admin/suggestions",     icon: MessageSquareDot },
+  { label: "건의 관리", href: "/admin/suggestions",     icon: MessageSquareDot },
 ];
 
 export function isAdminNavActive(activeHref: string, itemHref: string): boolean {
