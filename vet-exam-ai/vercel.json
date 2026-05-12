@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/comment-image-sweep",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/signup-proof-purge",
+      "schedule": "30 4 * * *"
     }
   ]
 }
