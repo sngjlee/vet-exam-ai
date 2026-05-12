@@ -12,6 +12,7 @@ import {
   History,
   ShieldCheck,
   MessageSquareDot,
+  Ban,
 } from "lucide-react";
 import { createClient } from "../../lib/supabase/server";
 
@@ -205,6 +206,12 @@ export default async function AdminDashboardPage() {
                 : `검토 대기 ${counts.signupPending.toLocaleString("ko-KR")}건`
             }
             icon={ShieldCheck}
+          />
+          <HubCard
+            href="/admin/ip-bans"
+            label="IP 차단"
+            desc="가입/로그인 진입 차단 — 도배·다중 계정 봉합 용도."
+            icon={Ban}
           />
           <HubCard href="#" label="시험 회차" desc="회차별 문제 수/공개 상태 집계." icon={GraduationCap} disabled />
           <HubCard
