@@ -4,8 +4,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SuggestionStatusBadge } from "@/components/board/SuggestionStatusBadge";
 import {
-  updateSuggestionStateAction,
-  setBoardPostVisibilityAction,
+  updateSuggestionStateFormAction,
+  setBoardPostVisibilityFormAction,
 } from "./_actions";
 
 export const dynamic = "force-dynamic";
@@ -54,15 +54,33 @@ export default async function AdminSuggestionsPage({
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-xl font-bold">건의 모더레이션</h1>
-        <p className="text-sm text-gray-600">상태 변경은 작성자에게 알림이 발송됩니다.</p>
+        <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>건의 관리</h1>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          상태 변경은 작성자에게 알림이 발송됩니다.
+        </p>
       </header>
 
-      <nav className="flex flex-wrap gap-2 text-sm">
-        <Link href="/admin/suggestions" className={!statusFilter ? "font-bold text-blue-600" : "text-gray-600 hover:underline"}>전체</Link>
+      <nav className="flex flex-wrap gap-3 text-sm">
+        <Link
+          href="/admin/suggestions"
+          style={{
+            color: !statusFilter ? "var(--teal)" : "var(--text-muted)",
+            fontWeight: !statusFilter ? 700 : 400,
+            textDecoration: "none",
+          }}
+        >
+          전체
+        </Link>
         {VALID.map((s) => (
-          <Link key={s} href={`?status=${s}`}
-            className={s === statusFilter ? "font-bold text-blue-600" : "text-gray-600 hover:underline"}>
+          <Link
+            key={s}
+            href={`?status=${s}`}
+            style={{
+              color: s === statusFilter ? "var(--teal)" : "var(--text-muted)",
+              fontWeight: s === statusFilter ? 700 : 400,
+              textDecoration: "none",
+            }}
+          >
             {s === "received" ? "접수"
               : s === "reviewing" ? "검토중"
               : s === "accepted" ? "채택" : "반려"}
@@ -72,26 +90,41 @@ export default async function AdminSuggestionsPage({
 
       <ul className="space-y-3">
         {(posts ?? []).map((p) => (
-          <li key={p.id} className="rounded-md border border-gray-200 bg-white p-4">
+          <li
+            key={p.id}
+            className="rounded-md p-4"
+            style={{
+              background: "var(--surface-raised)",
+              border: "1px solid var(--border)",
+            }}
+          >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   {p.suggestion_status ? <SuggestionStatusBadge status={p.suggestion_status} /> : null}
                   {p.visibility !== "visible" ? (
-                    <span className="text-xs text-red-600">{p.visibility}</span>
+                    <span className="text-xs" style={{ color: "var(--wrong)" }}>{p.visibility}</span>
                   ) : null}
                 </div>
-                <Link href={`/board/suggestions/${p.id}`} className="mt-1 block text-base font-semibold hover:underline">
+                <Link
+                  href={`/board/suggestions/${p.id}`}
+                  className="mt-1 block text-base font-semibold hover:underline"
+                  style={{ color: "var(--text)" }}
+                >
                   {p.title}
                 </Link>
-                <div className="mt-1 text-xs text-gray-500">
+                <div className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
                   {p.is_anonymized ? "익명" : (p.user_id ? nicknames.get(p.user_id) ?? "탈퇴" : "탈퇴")}
                   {p.is_anonymized && p.user_id ? (
-                    <span className="ml-1 text-gray-400">(작성자: {nicknames.get(p.user_id) ?? "탈퇴"})</span>
+                    <span className="ml-1" style={{ color: "var(--text-faint)" }}>
+                      (작성자: {nicknames.get(p.user_id) ?? "탈퇴"})
+                    </span>
                   ) : null}
                   {" · "}
                   👍 {p.upvote_count} · 💬 {p.comment_count}
-                  {p.report_count > 0 ? <span className="ml-1 text-red-600">🚩 {p.report_count}</span> : null}
+                  {p.report_count > 0 ? (
+                    <span className="ml-1" style={{ color: "var(--wrong)" }}>🚩 {p.report_count}</span>
+                  ) : null}
                   {" · "}
                   {new Date(p.created_at).toLocaleString("ko-KR")}
                 </div>
@@ -99,32 +132,50 @@ export default async function AdminSuggestionsPage({
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-sm">
               {VALID.map((s) => (
-                <form key={s} action={async () => {
-                  "use server";
-                  await updateSuggestionStateAction({ post_id: p.id, new_status: s });
-                }}>
-                  <button className="rounded-md border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100"
-                    disabled={p.suggestion_status === s}>
+                <form key={s} action={updateSuggestionStateFormAction}>
+                  <input type="hidden" name="post_id" value={p.id} />
+                  <input type="hidden" name="new_status" value={s} />
+                  <button
+                    className="rounded-md px-2 py-1 text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{
+                      border: "1px solid var(--rule)",
+                      color: "var(--text)",
+                      background: "transparent",
+                    }}
+                    disabled={p.suggestion_status === s}
+                  >
                     {s === "received" ? "접수로" : s === "reviewing" ? "검토중으로"
                       : s === "accepted" ? "채택" : "반려"}
                   </button>
                 </form>
               ))}
               {p.visibility === "visible" ? (
-                <form action={async () => {
-                  "use server";
-                  await setBoardPostVisibilityAction({ post_id: p.id, visibility: "removed_by_admin" });
-                }}>
-                  <button className="rounded-md border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50">
+                <form action={setBoardPostVisibilityFormAction}>
+                  <input type="hidden" name="post_id" value={p.id} />
+                  <input type="hidden" name="visibility" value="removed_by_admin" />
+                  <button
+                    className="rounded-md px-2 py-1 text-xs transition-colors"
+                    style={{
+                      border: "1px solid rgba(192, 74, 58, 0.4)",
+                      color: "var(--wrong)",
+                      background: "transparent",
+                    }}
+                  >
                     삭제
                   </button>
                 </form>
               ) : (
-                <form action={async () => {
-                  "use server";
-                  await setBoardPostVisibilityAction({ post_id: p.id, visibility: "visible" });
-                }}>
-                  <button className="rounded-md border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100">
+                <form action={setBoardPostVisibilityFormAction}>
+                  <input type="hidden" name="post_id" value={p.id} />
+                  <input type="hidden" name="visibility" value="visible" />
+                  <button
+                    className="rounded-md px-2 py-1 text-xs transition-colors"
+                    style={{
+                      border: "1px solid var(--rule)",
+                      color: "var(--text)",
+                      background: "transparent",
+                    }}
+                  >
                     복구
                   </button>
                 </form>
@@ -132,14 +183,20 @@ export default async function AdminSuggestionsPage({
             </div>
           </li>
         ))}
-        {(posts ?? []).length === 0 ? <li className="text-sm text-gray-500">건의글이 없습니다.</li> : null}
+        {(posts ?? []).length === 0 ? (
+          <li className="text-sm" style={{ color: "var(--text-muted)" }}>건의글이 없습니다.</li>
+        ) : null}
       </ul>
 
       {totalPages > 1 ? (
-        <nav className="flex justify-center gap-2 text-sm">
-          {page > 1 ? <Link href={`?page=${page - 1}${statusFilter ? `&status=${statusFilter}` : ""}`}>이전</Link> : null}
+        <nav className="flex justify-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
+          {page > 1 ? (
+            <Link href={`?page=${page - 1}${statusFilter ? `&status=${statusFilter}` : ""}`}>이전</Link>
+          ) : null}
           <span>{page} / {totalPages}</span>
-          {page < totalPages ? <Link href={`?page=${page + 1}${statusFilter ? `&status=${statusFilter}` : ""}`}>다음</Link> : null}
+          {page < totalPages ? (
+            <Link href={`?page=${page + 1}${statusFilter ? `&status=${statusFilter}` : ""}`}>다음</Link>
+          ) : null}
         </nav>
       ) : null}
     </div>

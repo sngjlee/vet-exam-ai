@@ -117,3 +117,22 @@ export async function resolveBoardPostCommentReportAction(input: z.input<typeof 
   if (error) throw new Error(error.message);
   revalidatePath("/admin/suggestions");
 }
+
+// FormData-bound wrappers — module-level (no closures over loop variables).
+// Inline closures in <form action> capture iteration variables and fail at
+// runtime under RSC serialization (cf. feedback_rsc_inline_fn_trap.md).
+export async function updateSuggestionStateFormAction(formData: FormData): Promise<void> {
+  await updateSuggestionStateAction({
+    post_id: String(formData.get("post_id") ?? ""),
+    new_status: String(formData.get("new_status") ?? "") as
+      "received" | "reviewing" | "accepted" | "rejected",
+  });
+}
+
+export async function setBoardPostVisibilityFormAction(formData: FormData): Promise<void> {
+  await setBoardPostVisibilityAction({
+    post_id: String(formData.get("post_id") ?? ""),
+    visibility: String(formData.get("visibility") ?? "") as
+      "visible" | "hidden_by_author" | "blinded_by_report" | "removed_by_admin",
+  });
+}

@@ -122,6 +122,13 @@ export async function softDeletePost(id: string): Promise<void> {
   revalidatePath("/board/announcements");
 }
 
+// FormData-bound wrapper for <form action> usage. Server Component <form>
+// elements can't capture closure variables reliably under RSC, so we go
+// through a stable module-level action with hidden inputs.
+export async function softDeletePostFormAction(formData: FormData): Promise<void> {
+  await softDeletePost(String(formData.get("id") ?? ""));
+}
+
 const REPORT_REASONS = [
   "spam", "misinformation", "privacy", "hate_speech",
   "advertising", "copyright", "defamation", "other",
