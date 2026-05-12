@@ -133,6 +133,8 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   board_post_visibility_change:         "게시글 공개 상태 변경",
   board_post_comment_visibility_change: "게시글 댓글 공개 상태 변경",
   announcement_pinned:                  "공지 고정",
+  ip_ban_grant:                         "IP 차단 추가",
+  ip_ban_revoke:                        "IP 차단 해제",
 };
 
 export const TARGET_TYPE_LABEL: Record<string, string> = {

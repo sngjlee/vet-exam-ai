@@ -69,12 +69,32 @@ export const BADGE_META: Record<BadgeType, BadgeMeta> = {
     showInline: true,
     manualGrant: true,
   },
+  passer: {
+    label: "합격생",
+    description: "수의사 국가시험 합격자",
+    icon: Award,
+    color: "var(--teal)",
+    background: "var(--teal-dim)",
+    showInline: true,
+    manualGrant: true,
+  },
+  candidate: {
+    label: "수험생",
+    description: "수의사 국가시험 준비 중",
+    icon: BadgeCheck,
+    color: "var(--text-muted)",
+    background: "var(--surface-raised)",
+    showInline: false,
+    manualGrant: true,
+  },
 };
 
 export const BADGE_DISPLAY_ORDER: BadgeType[] = [
   "operator",
   "reviewer",
   "adopter",
+  "passer",
+  "candidate",
   "popular_comment",
   "first_contrib",
   "newbie",

@@ -562,6 +562,7 @@ export interface Database {
           proof_kind:         Database["public"]["Enums"]["signup_proof_kind"];
           proof_storage_path: string | null;
           proof_text:         string | null;
+          applicant_type:     Database["public"]["Enums"]["applicant_type"];
           submitted_at:       string;
           reviewed_at:        string | null;
           reviewed_by:        string | null;
@@ -576,6 +577,23 @@ export interface Database {
         Update: {
           // signup_applications is mutated only via RPCs (submit/approve/reject);
           // direct UPDATE is not exposed to the app layer.
+        };
+        Relationships: [];
+      };
+
+      ip_bans: {
+        Row: {
+          id:         string;
+          cidr:       string;
+          reason:     string;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          // ip_bans is mutated only via RPCs (add_ip_ban / revoke_ip_ban).
+        };
+        Update: {
+          // ip_bans is mutated only via RPCs.
         };
         Relationships: [];
       };
@@ -929,6 +947,7 @@ export interface Database {
           p_university:          string;
           p_target_round:        number;
           p_proof_kind:          Database["public"]["Enums"]["signup_proof_kind"];
+          p_applicant_type?:     Database["public"]["Enums"]["applicant_type"];
           p_real_name?:          string | null;
           p_student_number?:     string | null;
           p_free_note?:          string | null;
@@ -964,6 +983,7 @@ export interface Database {
           proof_kind:         Database["public"]["Enums"]["signup_proof_kind"];
           proof_storage_path: string | null;
           proof_text:         string | null;
+          applicant_type:     Database["public"]["Enums"]["applicant_type"];
           submitted_at:       string;
           reviewed_at:        string | null;
           reviewed_by:        string | null;
@@ -988,6 +1008,7 @@ export interface Database {
           proof_kind:         Database["public"]["Enums"]["signup_proof_kind"];
           proof_storage_path: string | null;
           proof_text:         string | null;
+          applicant_type:     Database["public"]["Enums"]["applicant_type"];
           submitted_at:       string;
           reviewed_at:        string | null;
           reviewed_by:        string | null;
@@ -999,6 +1020,18 @@ export interface Database {
       purge_signup_proof_paths: {
         Args: { p_paths: string[] };
         Returns: number;
+      };
+      add_ip_ban: {
+        Args: { p_cidr: string; p_reason: string };
+        Returns: string;
+      };
+      revoke_ip_ban: {
+        Args: { p_id: string; p_note?: string | null };
+        Returns: void;
+      };
+      is_ip_banned: {
+        Args: { p_ip: string };
+        Returns: boolean;
       };
       update_suggestion_state: {
         Args: {
@@ -1059,7 +1092,9 @@ export interface Database {
         | "newbie"
         | "first_contrib"
         | "popular_comment"
-        | "adopter";
+        | "adopter"
+        | "passer"
+        | "candidate";
       comment_type:
         | "memorization"
         | "correction"
@@ -1117,7 +1152,9 @@ export interface Database {
         | "board_post_state_change"
         | "board_post_visibility_change"
         | "board_post_comment_visibility_change"
-        | "announcement_pinned";
+        | "announcement_pinned"
+        | "ip_ban_grant"
+        | "ip_ban_revoke";
       image_triage_status:
         | "pending"
         | "activate_no_image"
@@ -1128,6 +1165,7 @@ export interface Database {
         | "remove";
       signup_status: "pending_proof" | "pending_review" | "approved" | "rejected";
       signup_proof_kind: "image" | "text";
+      applicant_type: "student" | "passer";
       board_post_kind: "suggestion" | "announcement";
       suggestion_status: "received" | "reviewing" | "accepted" | "rejected";
       board_visibility: "visible" | "hidden_by_author" | "blinded_by_report" | "removed_by_admin";
