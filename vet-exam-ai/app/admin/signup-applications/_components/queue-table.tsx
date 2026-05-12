@@ -18,6 +18,7 @@ type Row = {
   proof_kind:         Database["public"]["Enums"]["signup_proof_kind"];
   proof_storage_path: string | null;
   proof_text:         string | null;
+  applicant_type:     Database["public"]["Enums"]["applicant_type"];
   submitted_at:       string;
   rejection_count:    number;
 };
@@ -39,6 +40,7 @@ export function QueueTable({ rows }: { rows: Row[] }) {
             <th style={th}>대학</th>
             <th style={th}>회차</th>
             <th style={th}>증빙</th>
+            <th style={th}>신분</th>
             <th style={th}>제출</th>
             <th style={th}>상태</th>
             <th style={th}></th>
@@ -52,6 +54,22 @@ export function QueueTable({ rows }: { rows: Row[] }) {
               <td style={td}>{r.university}</td>
               <td style={td}>{r.target_round}</td>
               <td style={td}>{r.proof_kind === "image" ? "이미지" : "텍스트"}</td>
+              <td style={td}>
+                <span
+                  style={{
+                    display:      "inline-block",
+                    padding:      "2px 8px",
+                    borderRadius: 999,
+                    fontSize:     11,
+                    background:   r.applicant_type === "passer" ? "var(--amber-dim)" : "var(--teal-dim)",
+                    color:        r.applicant_type === "passer" ? "var(--amber)"     : "var(--teal)",
+                    border:       "1px solid",
+                    borderColor:  r.applicant_type === "passer" ? "var(--amber)"     : "var(--teal)",
+                  }}
+                >
+                  {r.applicant_type === "passer" ? "합격생" : "수험생"}
+                </span>
+              </td>
               <td style={td}>{shortDate(r.submitted_at)}</td>
               <td style={td}>{STATUS_LABEL[r.status]}{r.rejection_count > 0 ? ` (×${r.rejection_count})` : ""}</td>
               <td style={td}>
