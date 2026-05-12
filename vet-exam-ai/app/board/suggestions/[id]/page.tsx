@@ -11,7 +11,13 @@ export default async function SuggestionDetailPage({ params }: { params: Promise
   const supabase = await createClient();
 
   const [{ data: post }, { data: userRes }, { data: comments }] = await Promise.all([
-    supabase.from("board_posts").select("*").eq("id", id).eq("kind", "suggestion").single(),
+    supabase
+      .from("board_posts")
+      .select("*")
+      .eq("id", id)
+      .eq("kind", "suggestion")
+      .eq("visibility", "visible")
+      .maybeSingle(),
     supabase.auth.getUser(),
     supabase.from("board_post_comments")
       .select("*")
