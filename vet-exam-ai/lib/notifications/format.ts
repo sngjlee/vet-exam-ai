@@ -61,6 +61,47 @@ export function formatNotification(
     };
   }
 
+  // Board notification types are not comment-bound — handle before the related check.
+  if (type === "post_reply") {
+    const nickname = stringField(payload, "actor_nickname") ?? "익명";
+    const postId = stringField(payload, "post_id");
+    const postKind = stringField(payload, "post_kind");
+    const seg = postKind === "announcement" ? "announcements" : "suggestions";
+    return {
+      text: `${nickname}님이 회원님의 게시글에 댓글을 달았어요`,
+      href: postId ? `/board/${seg}/${postId}#comments` : NO_HREF,
+    };
+  }
+  if (type === "suggestion_state_changed") {
+    const status = stringField(payload, "to_status");
+    const postId = stringField(payload, "post_id");
+    const statusKo =
+      status === "reviewing" ? "검토 중"
+      : status === "accepted" ? "수락됨"
+      : status === "rejected" ? "반려됨"
+      : "업데이트됨";
+    return {
+      text: `건의사항 상태가 '${statusKo}'(으)로 변경되었어요`,
+      href: postId ? `/board/suggestions/${postId}` : NO_HREF,
+    };
+  }
+  if (type === "announcement_published") {
+    const postId = stringField(payload, "post_id");
+    return {
+      text: "새 공지사항이 게시되었어요",
+      href: postId ? `/board/announcements/${postId}` : NO_HREF,
+    };
+  }
+  if (type === "post_blinded") {
+    const postId = stringField(payload, "post_id");
+    const postKind = stringField(payload, "post_kind");
+    const seg = postKind === "announcement" ? "announcements" : "suggestions";
+    return {
+      text: "회원님의 게시글이 블라인드 처리되었어요",
+      href: postId ? `/board/${seg}/${postId}` : NO_HREF,
+    };
+  }
+
   // If the underlying comment is gone (cascade-deleted), every comment-bound
   // type degrades to text-only.
   if (related == null) {
@@ -110,7 +151,7 @@ export function formatNotification(
 }
 
 function textOnlyFallback(
-  type: Exclude<NotificationType, "correction_resolved" | "signup_approved" | "signup_rejected">,
+  type: Exclude<NotificationType, "correction_resolved" | "signup_approved" | "signup_rejected" | "post_reply" | "suggestion_state_changed" | "announcement_published" | "post_blinded">,
   payload: Record<string, unknown>,
 ): string {
   switch (type) {

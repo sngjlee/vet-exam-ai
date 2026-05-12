@@ -7,7 +7,7 @@ import { useAuth } from "../lib/hooks/useAuth";
 import { useDueCountCtx } from "../lib/context/DueCountContext";
 import { useMyNickname } from "../lib/hooks/useMyNickname";
 import { useMyRole } from "../lib/hooks/useMyRole";
-import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User, CirclePlay, ListChecks, Shield, Search, Settings } from "lucide-react";
+import { LogOut, BookOpen, BarChart3, RotateCcw, PenTool, User, CirclePlay, ListChecks, Shield, Search, Settings, MessageSquare } from "lucide-react";
 import NotificationBell from "./notifications/NotificationBell";
 
 export default function NavBar() {
@@ -67,6 +67,10 @@ export default function NavBar() {
               <Link href="/questions" className={linkClass("/questions")} aria-label="해설보기">
                 <ListChecks size={16} />
                 <span className="hidden sm:inline">해설보기</span>
+              </Link>
+              <Link href="/board" className={linkClass("/board")} aria-label="공지·건의">
+                <MessageSquare size={16} />
+                <span className="hidden sm:inline">공지·건의</span>
               </Link>
               <Link href="/my-stats" className={linkClass("/my-stats")} aria-label="나의 통계">
                 <BarChart3 size={16} />

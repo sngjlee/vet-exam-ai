@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../lib/hooks/useAuth";
 import { useStats, type CategoryStat } from "../../lib/hooks/useStats";
@@ -9,6 +9,8 @@ import { useDueCountCtx } from "../../lib/context/DueCountContext";
 import { findWeakestCategory } from "../../lib/stats/weakCategory";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import DDayPlanWidget from "../../components/dashboard/DDayPlanWidget";
+import { AnnouncementBannerClient } from "../../components/dashboard/AnnouncementBannerClient";
+import { createClient } from "../../lib/supabase/client";
 import type { AttemptRow } from "../../lib/supabase/types";
 import type { WrongAnswerNote } from "../../lib/types";
 
@@ -331,6 +333,44 @@ function WeekChart({ recentAttempts }: { recentAttempts: AttemptRow[] }) {
   );
 }
 
+function AnnouncementBannerWrapper() {
+  const [post, setPost] = useState<{ id: string; title: string; is_pinned: boolean } | null>(null);
+
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      try {
+        const supabase = createClient();
+        const { data: posts } = await supabase
+          .from("board_posts")
+          .select("id,title,is_pinned,created_at")
+          .eq("kind", "announcement")
+          .eq("visibility", "visible")
+          .order("is_pinned", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (posts && posts.length > 0) {
+          setPost(posts[0]);
+        }
+      } catch {
+        // ignore fetch errors
+      }
+    };
+
+    fetchAnnouncement();
+  }, []);
+
+  if (!post) return null;
+
+  return (
+    <AnnouncementBannerClient
+      postId={post.id}
+      title={post.title}
+      isPinned={post.is_pinned}
+    />
+  );
+}
+
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const { stats, loading: statsLoading } = useStats(user?.id ?? null, authLoading);
@@ -414,6 +454,7 @@ export default function DashboardPage() {
   return (
     <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px 64px" }}>
       <DDayPlanWidget />
+      <AnnouncementBannerWrapper />
       {/* ── Header ── */}
       <div style={{ marginBottom: 24 }}>
         <span className="kvle-label" style={{ marginBottom: 10, fontSize: 13 }}>오늘의 학습</span>

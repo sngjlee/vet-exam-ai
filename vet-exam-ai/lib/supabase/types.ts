@@ -579,6 +579,179 @@ export interface Database {
         };
         Relationships: [];
       };
+
+      // ─────────────────────────────────────────────────────────────────────
+      // Board tables — mirrors supabase/migrations/20260512000000_suggestion_board_mvp.sql
+      // ─────────────────────────────────────────────────────────────────────
+
+      board_posts: {
+        Row: {
+          id: string;
+          kind: Database["public"]["Enums"]["board_post_kind"];
+          user_id: string | null;
+          title: string;
+          body_text: string;
+          body_html: string;
+          image_urls: string[];
+          visibility: Database["public"]["Enums"]["board_visibility"];
+          suggestion_status: Database["public"]["Enums"]["suggestion_status"] | null;
+          is_anonymized: boolean;
+          is_pinned: boolean;
+          resolution_note: string | null;
+          upvote_count: number;
+          report_count: number;
+          comment_count: number;
+          blinded_until: string | null;
+          edit_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          kind: Database["public"]["Enums"]["board_post_kind"];
+          user_id?: string | null;
+          title: string;
+          body_text: string;
+          body_html: string;
+          image_urls?: string[];
+          visibility?: Database["public"]["Enums"]["board_visibility"];
+          suggestion_status?: Database["public"]["Enums"]["suggestion_status"] | null;
+          is_anonymized?: boolean;
+          is_pinned?: boolean;
+          resolution_note?: string | null;
+          upvote_count?: number;
+          report_count?: number;
+          comment_count?: number;
+          blinded_until?: string | null;
+          edit_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["board_posts"]["Insert"]>;
+        Relationships: [];
+      };
+
+      board_post_comments: {
+        Row: {
+          id: string;
+          post_id: string;
+          user_id: string | null;
+          parent_id: string | null;
+          body_text: string;
+          body_html: string;
+          image_urls: string[];
+          status: Database["public"]["Enums"]["comment_status"];
+          report_count: number;
+          reply_count: number;
+          blinded_until: string | null;
+          is_anonymized: boolean;
+          edit_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          user_id?: string | null;
+          parent_id?: string | null;
+          body_text: string;
+          body_html: string;
+          image_urls?: string[];
+          status?: Database["public"]["Enums"]["comment_status"];
+          report_count?: number;
+          reply_count?: number;
+          blinded_until?: string | null;
+          is_anonymized?: boolean;
+          edit_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          body_text?: string;
+          body_html?: string;
+          image_urls?: string[];
+          status?: Database["public"]["Enums"]["comment_status"];
+          blinded_until?: string | null;
+          is_anonymized?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      board_post_upvotes: {
+        Row: { post_id: string; user_id: string; created_at: string };
+        Insert: { post_id: string; user_id: string; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["board_post_upvotes"]["Insert"]>;
+        Relationships: [];
+      };
+
+      board_post_reports: {
+        Row: {
+          id: string;
+          post_id: string;
+          reporter_id: string | null;
+          reason: Database["public"]["Enums"]["report_reason"];
+          description: string | null;
+          status: Database["public"]["Enums"]["report_status"];
+          resolved_by: string | null;
+          resolved_at: string | null;
+          resolution_note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          reporter_id?: string | null;
+          reason: Database["public"]["Enums"]["report_reason"];
+          description?: string | null;
+          status?: Database["public"]["Enums"]["report_status"];
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          resolution_note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          status?: Database["public"]["Enums"]["report_status"];
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          resolution_note?: string | null;
+        };
+        Relationships: [];
+      };
+
+      board_post_comment_reports: {
+        Row: {
+          id: string;
+          comment_id: string;
+          reporter_id: string | null;
+          reason: Database["public"]["Enums"]["report_reason"];
+          description: string | null;
+          status: Database["public"]["Enums"]["report_status"];
+          resolved_by: string | null;
+          resolved_at: string | null;
+          resolution_note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          comment_id: string;
+          reporter_id?: string | null;
+          reason: Database["public"]["Enums"]["report_reason"];
+          description?: string | null;
+          status?: Database["public"]["Enums"]["report_status"];
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          resolution_note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          status?: Database["public"]["Enums"]["report_status"];
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          resolution_note?: string | null;
+        };
+        Relationships: [];
+      };
     };
 
     Views: {
@@ -823,6 +996,54 @@ export interface Database {
           last_rejection_at:  string | null;
         }>;
       };
+      update_suggestion_state: {
+        Args: {
+          p_post_id:   string;
+          p_new_status: Database["public"]["Enums"]["suggestion_status"];
+          p_note?:     string | null;
+        };
+        Returns: undefined;
+      };
+      set_announcement_pinned: {
+        Args: { p_post_id: string; p_pinned: boolean };
+        Returns: undefined;
+      };
+      set_board_post_visibility: {
+        Args: {
+          p_post_id:    string;
+          p_visibility: Database["public"]["Enums"]["board_visibility"];
+          p_reason?:    string | null;
+        };
+        Returns: undefined;
+      };
+      set_board_post_comment_visibility: {
+        Args: {
+          p_comment_id: string;
+          p_status:     Database["public"]["Enums"]["comment_status"];
+          p_reason?:    string | null;
+        };
+        Returns: undefined;
+      };
+      resolve_board_post_report: {
+        Args: {
+          p_post_id:    string;
+          p_resolution: string;
+          p_note?:      string | null;
+        };
+        Returns: number;
+      };
+      resolve_board_post_comment_report: {
+        Args: {
+          p_comment_id: string;
+          p_resolution: string;
+          p_note?:      string | null;
+        };
+        Returns: number;
+      };
+      broadcast_announcement: {
+        Args: { p_post_id: string };
+        Returns: number;
+      };
     };
     Enums: {
       difficulty_level: "easy" | "medium" | "hard";
@@ -833,7 +1054,8 @@ export interface Database {
         | "reviewer"
         | "newbie"
         | "first_contrib"
-        | "popular_comment";
+        | "popular_comment"
+        | "adopter";
       comment_type:
         | "memorization"
         | "correction"
@@ -864,7 +1086,11 @@ export interface Database {
         | "comment_blinded"
         | "correction_resolved"
         | "signup_approved"
-        | "signup_rejected";
+        | "signup_rejected"
+        | "post_reply"
+        | "suggestion_state_changed"
+        | "announcement_published"
+        | "post_blinded";
       correction_status: "proposed" | "reviewing" | "accepted" | "rejected";
       audit_action:
         | "comment_remove"
@@ -883,7 +1109,11 @@ export interface Database {
         | "image_triage_decide"
         | "image_triage_revert"
         | "signup_approve"
-        | "signup_reject";
+        | "signup_reject"
+        | "board_post_state_change"
+        | "board_post_visibility_change"
+        | "board_post_comment_visibility_change"
+        | "announcement_pinned";
       image_triage_status:
         | "pending"
         | "activate_no_image"
@@ -894,6 +1124,9 @@ export interface Database {
         | "remove";
       signup_status: "pending_proof" | "pending_review" | "approved" | "rejected";
       signup_proof_kind: "image" | "text";
+      board_post_kind: "suggestion" | "announcement";
+      suggestion_status: "received" | "reviewing" | "accepted" | "rejected";
+      board_visibility: "visible" | "hidden_by_author" | "blinded_by_report" | "removed_by_admin";
     };
   };
 }

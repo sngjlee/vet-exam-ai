@@ -11,6 +11,7 @@ import {
   GitPullRequest,
   History,
   ShieldCheck,
+  MessageSquareDot,
 } from "lucide-react";
 import { createClient } from "../../lib/supabase/server";
 
@@ -217,6 +218,12 @@ export default async function AdminDashboardPage() {
             label="정정"
             desc="문제 정정 제안 처리."
             icon={GitPullRequest}
+          />
+          <HubCard
+            href="/admin/suggestions"
+            label="건의 관리"
+            desc="사용자 건의 검토 — 채택/반려, 운영자 코멘트, 신고 처리."
+            icon={MessageSquareDot}
           />
           <HubCard href="/admin/audit" label="감사 로그" desc="모든 운영 작업 기록." icon={History} />
         </div>
