@@ -996,6 +996,10 @@ export interface Database {
           last_rejection_at:  string | null;
         }>;
       };
+      purge_signup_proof_paths: {
+        Args: { p_paths: string[] };
+        Returns: number;
+      };
       update_suggestion_state: {
         Args: {
           p_post_id:   string;
