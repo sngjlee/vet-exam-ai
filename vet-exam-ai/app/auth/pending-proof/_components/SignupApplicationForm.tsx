@@ -7,6 +7,8 @@ import { submitSignupApplicationAction } from "../_actions";
 
 type Mode = "image" | "text";
 
+type ApplicantType = "student" | "passer";
+
 type Props = {
   userId: string;
   defaultUniversity?: string;
@@ -21,6 +23,7 @@ export default function SignupApplicationForm({
   showRejectionBanner = null,
 }: Props) {
   const [mode, setMode] = useState<Mode>("image");
+  const [applicantType, setApplicantType] = useState<ApplicantType>("student");
   const [university, setUniversity] = useState(defaultUniversity);
   const [targetRound, setTargetRound] = useState<string>(
     defaultTargetRound != null ? String(defaultTargetRound) : "",
@@ -73,14 +76,15 @@ export default function SignupApplicationForm({
       }
 
       const result = await submitSignupApplicationAction({
-        university: university.trim(),
-        targetRound: round,
-        realName: realName.trim() || null,
-        studentNumber: studentNumber.trim() || null,
-        freeNote: freeNote.trim() || null,
-        proofKind: mode,
-        proofStoragePath,
-        proofText: proofTextValue,
+        university:       university.trim(),
+        targetRound:      round,
+        realName:         realName.trim() || null,
+        studentNumber:    studentNumber.trim() || null,
+        freeNote:         freeNote.trim() || null,
+        proofKind:        mode,
+        proofStoragePath: proofStoragePath,
+        proofText:        proofTextValue,
+        applicantType,
       });
 
       if (!result.ok) {
@@ -119,6 +123,33 @@ export default function SignupApplicationForm({
           <div>사유: {showRejectionBanner.reason}</div>
         </div>
       )}
+
+      <div>
+        <label className="kvle-label mb-2">신분</label>
+        <div role="radiogroup" style={{ display: "flex", gap: 8 }}>
+          <button
+            type="button"
+            onClick={() => setApplicantType("student")}
+            aria-pressed={applicantType === "student"}
+            className={applicantType === "student" ? "kvle-btn-primary" : "kvle-btn-secondary"}
+            style={{ flex: 1 }}
+          >
+            수험생
+          </button>
+          <button
+            type="button"
+            onClick={() => setApplicantType("passer")}
+            aria-pressed={applicantType === "passer"}
+            className={applicantType === "passer" ? "kvle-btn-primary" : "kvle-btn-secondary"}
+            style={{ flex: 1 }}
+          >
+            합격생
+          </button>
+        </div>
+        <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 4 }}>
+          합격생은 합격증 또는 면허증 이미지 첨부를 권장합니다. 승인 시 자동으로 해당 뱃지가 부여됩니다.
+        </div>
+      </div>
 
       <div style={{ display: "flex", gap: 8 }}>
         <button
