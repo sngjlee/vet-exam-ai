@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "../../../lib/supabase/server";
 import { getMySignupStatus } from "../../../lib/auth/signup-status";
+import { formatKstDateTime } from "../../../lib/utils/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ export default async function PendingReviewPage() {
             <>
               <br />
               <span style={{ fontSize: 12, color: "var(--text-faint)" }}>
-                제출: {new Date(app.submitted_at).toLocaleString("ko-KR")}
+                제출: {formatKstDateTime(app.submitted_at)}
               </span>
             </>
           ) : null}

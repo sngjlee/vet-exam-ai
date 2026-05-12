@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import type { Database } from "@/lib/supabase/types";
+import { formatKstDateTime } from "@/lib/utils/datetime";
 import { ReportButton } from "./ReportButton";
 import { BoardCommentComposer } from "./BoardCommentComposer";
 
@@ -42,7 +43,7 @@ export function BoardCommentItem({
             </span>
           ) : null}
           {" · "}
-          {new Date(comment.created_at).toLocaleString("ko-KR")}
+          {formatKstDateTime(comment.created_at)}
           {comment.edit_count > 0 ? (
             <span className="ml-1 text-xs" style={{ color: "var(--text-faint)" }}>(수정됨)</span>
           ) : null}

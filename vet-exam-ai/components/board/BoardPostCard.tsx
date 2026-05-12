@@ -6,6 +6,7 @@ import { SUGGESTION_TERMINAL } from "@/lib/board/labels";
 import { UpvoteButton } from "./UpvoteButton";
 import { ReportButton } from "./ReportButton";
 import { softDeletePostFormAction } from "@/app/board/_actions";
+import { formatKstDateTime } from "@/lib/utils/datetime";
 
 type Post = Database["public"]["Tables"]["board_posts"]["Row"];
 
@@ -52,7 +53,7 @@ export function BoardPostCard({
               </span>
             ) : null}
             {" · "}
-            {new Date(post.created_at).toLocaleString("ko-KR")}
+            {formatKstDateTime(post.created_at)}
             {post.edit_count > 0 ? (
               <span className="ml-1 text-xs" style={{ color: "var(--text-faint)" }}>(수정됨)</span>
             ) : null}
@@ -69,6 +70,7 @@ export function BoardPostCard({
             </Link>
             <form action={softDeletePostFormAction}>
               <input type="hidden" name="id" value={post.id} />
+              <input type="hidden" name="kind_segment" value={seg} />
               <button className="hover:underline" style={{ color: "var(--wrong)" }}>
                 삭제
               </button>

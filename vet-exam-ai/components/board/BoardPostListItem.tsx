@@ -1,6 +1,7 @@
 // vet-exam-ai/components/board/BoardPostListItem.tsx
 import Link from "next/link";
 import type { Database } from "@/lib/supabase/types";
+import { formatKstDate } from "@/lib/utils/datetime";
 import { SuggestionStatusBadge } from "./SuggestionStatusBadge";
 
 type Post = Pick<
@@ -25,7 +26,7 @@ function formatRelative(iso: string) {
   if (hr < 24) return `${hr}시간 전`;
   const day = Math.floor(hr / 24);
   if (day < 30) return `${day}일 전`;
-  return date.toLocaleDateString("ko-KR");
+  return formatKstDate(date);
 }
 
 export function BoardPostListItem({ post, authorNickname }: Props) {

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SuggestionStatusBadge } from "@/components/board/SuggestionStatusBadge";
+import { formatKstDateTime } from "@/lib/utils/datetime";
 import { SuggestionActionRow } from "./_components/suggestion-action-row";
 
 export const dynamic = "force-dynamic";
@@ -123,7 +124,7 @@ export default async function AdminSuggestionsPage({
                     <span className="ml-1" style={{ color: "var(--wrong)" }}>🚩 {p.report_count}</span>
                   ) : null}
                   {" · "}
-                  {new Date(p.created_at).toLocaleString("ko-KR")}
+                  {formatKstDateTime(p.created_at)}
                 </div>
               </div>
             </div>

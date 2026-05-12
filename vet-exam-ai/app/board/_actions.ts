@@ -102,7 +102,12 @@ export async function updatePost(input: z.input<typeof UpdateSchema>): Promise<v
   revalidatePath(`/board/announcements/${parsed.id}`);
 }
 
-export async function softDeletePost(id: string): Promise<void> {
+const KindSegmentSchema = z.enum(["suggestions", "announcements"]);
+
+export async function softDeletePost(
+  id: string,
+  kindSegment: z.infer<typeof KindSegmentSchema>,
+): Promise<void> {
   const supabase = await createClient();
   const { data: userRes } = await supabase.auth.getUser();
   if (!userRes.user) {
@@ -120,13 +125,16 @@ export async function softDeletePost(id: string): Promise<void> {
 
   revalidatePath("/board/suggestions");
   revalidatePath("/board/announcements");
+  redirect(`/board/${kindSegment}`);
 }
 
 // FormData-bound wrapper for <form action> usage. Server Component <form>
 // elements can't capture closure variables reliably under RSC, so we go
 // through a stable module-level action with hidden inputs.
 export async function softDeletePostFormAction(formData: FormData): Promise<void> {
-  await softDeletePost(String(formData.get("id") ?? ""));
+  const id = String(formData.get("id") ?? "");
+  const kindSegment = KindSegmentSchema.parse(formData.get("kind_segment"));
+  await softDeletePost(id, kindSegment);
 }
 
 const REPORT_REASONS = [

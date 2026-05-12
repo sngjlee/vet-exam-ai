@@ -6,6 +6,7 @@ import { useStats } from "../../lib/hooks/useStats";
 import { findWeakestCategory } from "../../lib/stats/weakCategory";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { CheckCircle2, XCircle, TrendingDown } from "lucide-react";
+import { formatKstDateTime } from "../../lib/utils/datetime";
 
 function getAccuracyTone(accuracy: number) {
   if (accuracy >= 80) return { color: "var(--correct)", dim: "var(--correct-dim)", label: "안정권" };
@@ -353,7 +354,7 @@ export default function MyStatsPage() {
                   className="mt-0.5 kvle-mono text-xs"
                   style={{ color: "var(--text-faint)" }}
                 >
-                  {new Date(attempt.answered_at).toLocaleString("ko-KR")}
+                  {formatKstDateTime(attempt.answered_at)}
                 </p>
               </div>
               <span

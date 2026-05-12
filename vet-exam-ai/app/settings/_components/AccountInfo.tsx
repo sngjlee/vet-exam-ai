@@ -1,4 +1,5 @@
 import { createClient } from "../../../lib/supabase/server";
+import { formatKstDateOptions } from "../../../lib/utils/datetime";
 
 export default async function AccountInfo() {
   const supabase = await createClient();
@@ -8,7 +9,7 @@ export default async function AccountInfo() {
   if (!user) return null;
 
   const joinedAt = user.created_at
-    ? new Date(user.created_at).toLocaleDateString("ko-KR", {
+    ? formatKstDateOptions(user.created_at, {
         year: "numeric",
         month: "long",
         day: "numeric",

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "../../../lib/supabase/server";
 import { maskProfile } from "../../../lib/profile/maskPrivacy";
 import type { BadgeType } from "../../../lib/profile/badgeMeta";
+import { formatKstDate } from "../../../lib/utils/datetime";
 import ProfileBadges from "./ProfileBadges";
 import ProfileCommentList from "./ProfileCommentList";
 import ProfileEditController from "./ProfileEditController";
@@ -131,7 +132,7 @@ export default async function ProfilePage({
         <StatCard label="받은 추천" value={totalVoteScore} />
         <StatCard
           label="가입일"
-          value={new Date(profile.created_at).toLocaleDateString("ko-KR")}
+          value={formatKstDate(profile.created_at)}
         />
       </section>
 

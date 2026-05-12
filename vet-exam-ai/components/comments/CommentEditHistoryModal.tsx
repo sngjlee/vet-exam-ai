@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { formatKstDate } from "../../lib/utils/datetime";
 
 type Version = { body_html: string; edited_at: string };
 type HistoryResponse = {
@@ -23,7 +24,7 @@ function formatRelative(iso: string): string {
   if (hr < 24) return `${hr}시간 전`;
   const day = Math.round(hr / 24);
   if (day < 30) return `${day}일 전`;
-  return new Date(iso).toLocaleDateString("ko-KR");
+  return formatKstDate(iso);
 }
 
 export default function CommentEditHistoryModal({
