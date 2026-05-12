@@ -13,7 +13,13 @@ export default async function AnnouncementDetailPage({
   const supabase = await createClient();
 
   const [{ data: post }, { data: userRes }, { data: comments }] = await Promise.all([
-    supabase.from("board_posts").select("*").eq("id", id).eq("kind", "announcement").single(),
+    supabase
+      .from("board_posts")
+      .select("*")
+      .eq("id", id)
+      .eq("kind", "announcement")
+      .eq("visibility", "visible")
+      .maybeSingle(),
     supabase.auth.getUser(),
     supabase.from("board_post_comments")
       .select("*").eq("post_id", id).order("created_at", { ascending: true }),
