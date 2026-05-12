@@ -734,10 +734,13 @@ begin
   end if;
 
   -- audit
-  insert into public.admin_audit_logs (admin_id, action, target_type, target_id, payload)
+  insert into public.admin_audit_logs
+    (admin_id, action, target_type, target_id, before_state, after_state, note)
   values (
     v_admin_id, 'board_post_state_change', 'board_post', p_post_id::text,
-    jsonb_build_object('from', v_old::text, 'to', p_new_status::text, 'note', p_note)
+    jsonb_build_object('status', v_old::text),
+    jsonb_build_object('status', p_new_status::text),
+    p_note
   );
 end;
 $$;
@@ -781,10 +784,13 @@ begin
 
   update public.board_posts set is_pinned = p_pinned where id = p_post_id;
 
-  insert into public.admin_audit_logs (admin_id, action, target_type, target_id, payload)
+  insert into public.admin_audit_logs
+    (admin_id, action, target_type, target_id, before_state, after_state, note)
   values (
     v_admin_id, 'announcement_pinned', 'board_post', p_post_id::text,
-    jsonb_build_object('pinned', p_pinned)
+    null,
+    jsonb_build_object('pinned', p_pinned),
+    null
   );
 end;
 $$;
@@ -846,10 +852,13 @@ begin
     );
   end if;
 
-  insert into public.admin_audit_logs (admin_id, action, target_type, target_id, payload)
+  insert into public.admin_audit_logs
+    (admin_id, action, target_type, target_id, before_state, after_state, note)
   values (
     v_admin_id, 'board_post_visibility_change', 'board_post', p_post_id::text,
-    jsonb_build_object('from', v_old::text, 'to', p_visibility::text, 'reason', p_reason)
+    jsonb_build_object('visibility', v_old::text),
+    jsonb_build_object('visibility', p_visibility::text),
+    p_reason
   );
 end;
 $$;
@@ -893,11 +902,14 @@ begin
          end
    where id = p_comment_id;
 
-  insert into public.admin_audit_logs (admin_id, action, target_type, target_id, payload)
+  insert into public.admin_audit_logs
+    (admin_id, action, target_type, target_id, before_state, after_state, note)
   values (
     v_admin_id, 'board_post_comment_visibility_change', 'board_post_comment',
     p_comment_id::text,
-    jsonb_build_object('from', v_old::text, 'to', p_status::text, 'reason', p_reason)
+    jsonb_build_object('status', v_old::text),
+    jsonb_build_object('status', p_status::text),
+    p_reason
   );
 end;
 $$;
