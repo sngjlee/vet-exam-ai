@@ -20,8 +20,15 @@ export const BADGE_TYPE_KO: Record<BadgeType, string> = {
   candidate:       "수험생",
 };
 
-// Manual-grantable badges (others are auto-awarded by triggers).
-export const GRANTABLE_BADGES: BadgeType[] = ["operator", "reviewer"];
+// Manual-grantable badges (others are auto-awarded by triggers or approve flow).
+// passer/candidate are auto-granted on signup approve, but admins may also
+// grant manually for grandfather/upgrade cases.
+export const GRANTABLE_BADGES: BadgeType[] = [
+  "operator",
+  "reviewer",
+  "passer",
+  "candidate",
+];
 
 // Auto-awarded badges that admins cannot revoke.
 export const AUTO_BADGES: BadgeType[] = [
