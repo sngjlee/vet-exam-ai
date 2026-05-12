@@ -48,7 +48,14 @@ create table if not exists public.ip_bans (
 create index if not exists ip_bans_cidr_gist on public.ip_bans using gist (cidr inet_ops);
 
 alter table public.ip_bans enable row level security;
--- No RLS policies — only SECURITY DEFINER RPC reads/writes.
+
+-- Admins may SELECT (the /admin/ip-bans page reads directly).
+-- INSERT/UPDATE/DELETE remain RPC-only (no policies) — add_ip_ban / revoke_ip_ban are SECURITY DEFINER.
+drop policy if exists "ip_bans: admin select" on public.ip_bans;
+create policy "ip_bans: admin select"
+  on public.ip_bans for select
+  to authenticated
+  using (public.is_admin());
 
 comment on table public.ip_bans is
   '운영자 등록 IP 차단 목록. /auth/login|callback|pending-proof 진입 시 proxy.ts 에서 검사.';
@@ -168,7 +175,7 @@ declare
   v_path      text;
   v_app_type  public.applicant_type;
   v_badge     public.badge_type;
-  v_inserted  boolean;
+  v_inserted  bigint;
 begin
   if not public.is_admin() then
     raise exception 'access denied' using errcode = '42501';

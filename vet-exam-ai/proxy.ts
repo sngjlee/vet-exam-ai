@@ -81,11 +81,13 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // IP ban gate — only on auth entry paths (login / callback / pending-proof).
-  // Runs AFTER PUBLIC_PATH_PREFIXES is checked above (which short-circuits
-  // /_next and /api), but BEFORE the regular signup gating. Fail-open: if the
-  // RPC errors we let the request through (a DB hiccup must not lock everyone
-  // out of the login form).
+  // IP ban gate — only fires for the three auth-entry paths in
+  // IP_GATED_PATH_PREFIXES. /_next and /api are excluded because they are not
+  // in that list (cheap .some() short-circuit). The gate must run BEFORE the
+  // PUBLIC_PATH_PREFIXES early return below, because /auth/login etc. are also
+  // in PUBLIC_PATH_PREFIXES and would otherwise pass through. Fail-open: if
+  // the RPC errors we let the request through — a DB hiccup must not lock
+  // everyone out of the login form.
   if (IP_GATED_PATH_PREFIXES.some((p) => path === p || path.startsWith(p + "/"))) {
     const xff = request.headers.get("x-forwarded-for");
     const ip  = xff?.split(",")[0]?.trim();

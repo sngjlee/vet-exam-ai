@@ -21,7 +21,13 @@ async function loadPage(
     .select("id, cidr, reason, created_by, created_at");
 
   if (sp.q) {
-    q = q.or(`cidr::text.ilike.%${sp.q}%,reason.ilike.%${sp.q}%`);
+    // PostgREST filter strings aren't parameterized — strip characters that
+    // could break out of the ILIKE expression. Admin-only surface, but cheap
+    // defense in depth.
+    const safe = sp.q.replace(/[(),%*]/g, "");
+    if (safe.length > 0) {
+      q = q.or(`cidr::text.ilike.%${safe}%,reason.ilike.%${safe}%`);
+    }
   }
 
   const offset = (sp.page - 1) * PAGE_SIZE;
