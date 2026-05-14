@@ -30,7 +30,9 @@ export default withSentryConfig(nextConfig, {
   useRunAfterProductionCompileHook: true,
 
   // Route Sentry traffic through our own domain so ad-blockers (uBlock, Brave,
-  // Privacy Badger, …) don't drop client events. Next.js auto-proxies
-  // /monitoring/* to sentry.io.
-  tunnelRoute: "/monitoring",
+  // Privacy Badger, …) don't drop client events. Path is intentionally opaque
+  // because EasyPrivacy/Brave rules also pattern-match "monitoring",
+  // "tracking", "analytics" on first-party domains. Next.js auto-proxies
+  // this route to sentry.io.
+  tunnelRoute: "/api/_qx",
 });
