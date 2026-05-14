@@ -213,7 +213,12 @@ export default async function AdminDashboardPage() {
             desc="가입/로그인 진입 차단 — 도배·다중 계정 봉합 용도."
             icon={Ban}
           />
-          <HubCard href="#" label="시험 회차" desc="회차별 문제 수/공개 상태 집계." icon={GraduationCap} disabled />
+          <HubCard
+            href="/admin/exams"
+            label="시험 회차"
+            desc="회차별 문제 수/활성 비율/카테고리 집계."
+            icon={GraduationCap}
+          />
           <HubCard
             href="/admin/reports"
             label="신고"

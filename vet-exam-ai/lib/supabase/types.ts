@@ -800,6 +800,16 @@ export interface Database {
         Args: { col: string };
         Returns: number;
       };
+      list_rounds_with_stats: {
+        Args: Record<string, never>;
+        Returns: Array<{
+          round:          number;
+          total_count:    number;
+          active_count:   number;
+          category_count: number;
+          latest_year:    number | null;
+        }>;
+      };
       ensure_my_profile_public: {
         Args: Record<string, never>;
         Returns: string;
