@@ -1,4 +1,4 @@
-import { Shield, BadgeCheck, Flame, Sparkles, Award } from "lucide-react";
+import { Shield, BadgeCheck, Flame, Sparkles, Award, BookOpen } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Database } from "../supabase/types";
 
@@ -69,12 +69,32 @@ export const BADGE_META: Record<BadgeType, BadgeMeta> = {
     showInline: true,
     manualGrant: true,
   },
+  passer: {
+    label: "합격생",
+    description: "수의사 국가시험 합격자",
+    icon: Award,
+    color: "var(--teal)",
+    background: "var(--teal-dim)",
+    showInline: true,
+    manualGrant: true,
+  },
+  candidate: {
+    label: "수험생",
+    description: "수의사 국가시험 준비 중",
+    icon: BookOpen,
+    color: "var(--teal)",
+    background: "var(--teal-dim)",
+    showInline: true,
+    manualGrant: true,
+  },
 };
 
 export const BADGE_DISPLAY_ORDER: BadgeType[] = [
   "operator",
   "reviewer",
   "adopter",
+  "passer",
+  "candidate",
   "popular_comment",
   "first_contrib",
   "newbie",

@@ -19,6 +19,15 @@ const PUBLIC_PATH_PREFIXES = [
   "/auth/reset",
 ];
 
+// IP ban gate is enforced on the narrow set of paths a banned visitor would
+// hit to recover/create an account. Read-only browsing and authed app routes
+// are not gated (suspend/RLS already cover account-level actions).
+const IP_GATED_PATH_PREFIXES = [
+  "/auth/login",
+  "/auth/callback",
+  "/auth/pending-proof",
+];
+
 const READ_ONLY_OK_PREFIXES = [
   "/",                  // landing
   "/questions",
@@ -71,6 +80,33 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+
+  // IP ban gate — only fires for the three auth-entry paths in
+  // IP_GATED_PATH_PREFIXES. /_next and /api are excluded because they are not
+  // in that list (cheap .some() short-circuit). The gate must run BEFORE the
+  // PUBLIC_PATH_PREFIXES early return below, because /auth/login etc. are also
+  // in PUBLIC_PATH_PREFIXES and would otherwise pass through. Fail-open: if
+  // the RPC errors we let the request through — a DB hiccup must not lock
+  // everyone out of the login form.
+  if (IP_GATED_PATH_PREFIXES.some((p) => path === p || path.startsWith(p + "/"))) {
+    const xff = request.headers.get("x-forwarded-for");
+    const ip  = xff?.split(",")[0]?.trim();
+    if (ip) {
+      const { data, error } = await supabase.rpc("is_ip_banned", { p_ip: ip });
+      if (!error && data === true) {
+        return new NextResponse(
+          `<!doctype html><html lang="ko"><head><meta charset="utf-8">` +
+          `<title>접근 차단</title>` +
+          `<style>body{font-family:sans-serif;padding:2rem;max-width:480px;margin:auto;color:#222}h1{font-size:20px;margin-bottom:12px}p{line-height:1.6}</style>` +
+          `</head><body>` +
+          `<h1>접근이 차단된 IP입니다</h1>` +
+          `<p>이 네트워크에서의 접근이 제한되었습니다. 운영자에게 문의해 주세요.</p>` +
+          `</body></html>`,
+          { status: 403, headers: { "Content-Type": "text/html; charset=utf-8" } },
+        );
+      }
+    }
+  }
 
   // Public prefixes (and internals) — never gate.
   if (PUBLIC_PATH_PREFIXES.some((p) => path === p || path.startsWith(p + "/"))) {

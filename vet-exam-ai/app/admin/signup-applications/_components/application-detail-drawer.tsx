@@ -20,6 +20,7 @@ type Row = {
   proof_kind:         Database["public"]["Enums"]["signup_proof_kind"];
   proof_storage_path: string | null;
   proof_text:         string | null;
+  applicant_type:     Database["public"]["Enums"]["applicant_type"];
   submitted_at:       string;
   rejection_count:    number;
 };
@@ -72,6 +73,14 @@ export function ApplicationDetailDrawer({
         <dd>{row.email ?? "—"}</dd>
         <dt style={{ color: "var(--text-muted)" }}>대학</dt>
         <dd>{row.university}</dd>
+        <dt style={{ color: "var(--text-muted)" }}>신분</dt>
+        <dd>
+          {row.applicant_type === "passer" ? (
+            <>🎓 합격생 <span style={{ color: "var(--text-muted)", fontSize: 12 }}>(승인 시 합격생 뱃지 자동 부여)</span></>
+          ) : (
+            <>📚 수험생 <span style={{ color: "var(--text-muted)", fontSize: 12 }}>(승인 시 수험생 뱃지 자동 부여)</span></>
+          )}
+        </dd>
         <dt style={{ color: "var(--text-muted)" }}>목표 회차</dt>
         <dd>{row.target_round}회</dd>
         <dt style={{ color: "var(--text-muted)" }}>제출</dt>

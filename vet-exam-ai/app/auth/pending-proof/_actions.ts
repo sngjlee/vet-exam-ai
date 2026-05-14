@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "../../../lib/supabase/server";
 import type { Database } from "../../../lib/supabase/types";
 
-type ProofKind = Database["public"]["Enums"]["signup_proof_kind"];
+type ProofKind     = Database["public"]["Enums"]["signup_proof_kind"];
+type ApplicantType = Database["public"]["Enums"]["applicant_type"];
 
 export type SubmitInput = {
   university:         string;
@@ -16,6 +17,7 @@ export type SubmitInput = {
   proofKind:          ProofKind;
   proofStoragePath:   string | null;
   proofText:          string | null;
+  applicantType:      ApplicantType;
 };
 
 export type SubmitResult =
@@ -48,6 +50,7 @@ export async function submitSignupApplicationAction(input: SubmitInput): Promise
     p_university:          input.university,
     p_target_round:        input.targetRound,
     p_proof_kind:          input.proofKind,
+    p_applicant_type:      input.applicantType,
     p_real_name:           input.realName,
     p_student_number:      input.studentNumber,
     p_free_note:           input.freeNote,
