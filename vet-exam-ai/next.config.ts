@@ -28,4 +28,9 @@ export default withSentryConfig(nextConfig, {
 
   // Upload all source maps in one pass after the build completes (Next.js 15.4.1+).
   useRunAfterProductionCompileHook: true,
+
+  // Route Sentry traffic through our own domain so ad-blockers (uBlock, Brave,
+  // Privacy Badger, …) don't drop client events. Next.js auto-proxies
+  // /monitoring/* to sentry.io.
+  tunnelRoute: "/monitoring",
 });
