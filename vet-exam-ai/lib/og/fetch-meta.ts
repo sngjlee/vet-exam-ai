@@ -80,17 +80,26 @@ export async function fetchBoardPostMeta(
 
   const { data: post } = await supabase
     .from("board_posts")
-    .select("id, title, kind, visibility, user_id, comment_count, upvote_count")
+    .select("id, title, kind, visibility, user_id, is_anonymized, comment_count, upvote_count")
     .eq("id", id)
     .eq("kind", kind)
     .maybeSingle();
 
   if (!post) return null;
 
+  // Narrow kind without an unchecked cast. If the enum gains a new value
+  // (e.g. "study_info" on roadmap), this returns null instead of silently
+  // letting an invalid kind through to consumers.
+  if (post.kind !== "announcement" && post.kind !== "suggestion") {
+    return null;
+  }
+  const narrowedKind: BoardKind = post.kind;
+
   const visible = post.visibility === "visible";
 
+  // 익명 글 작성자 닉네임 절대 노출 금지.
   let authorNickname: string | null = null;
-  if (visible && post.user_id) {
+  if (visible && post.user_id && !post.is_anonymized) {
     const { data: prof } = await supabase
       .from("user_profiles_public")
       .select("nickname")
@@ -100,8 +109,8 @@ export async function fetchBoardPostMeta(
   }
 
   return {
-    title: post.title ?? "",
-    kind: post.kind as BoardKind,
+    title: post.title,
+    kind: narrowedKind,
     authorNickname,
     commentsCount: post.comment_count ?? 0,
     upvoteCount: post.upvote_count ?? 0,
