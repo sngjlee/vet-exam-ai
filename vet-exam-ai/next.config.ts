@@ -19,8 +19,11 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  // Org / project / authToken come from env (SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN).
-  // When unset, source-map upload is skipped but the SDK still works at runtime.
+  org: "sngjlee",
+  project: "javascript-nextjs",
+
+  // SENTRY_AUTH_TOKEN env enables source-map upload during build.
+  // Unset → upload is skipped, SDK still works at runtime.
   silent: !process.env.CI,
 
   // Upload all source maps in one pass after the build completes (Next.js 15.4.1+).
