@@ -3,8 +3,34 @@ import { createClient } from "@/lib/supabase/server";
 import { BoardPostCard } from "@/components/board/BoardPostCard";
 import { BoardCommentList } from "@/components/board/BoardCommentList";
 import { BoardCommentComposer } from "@/components/board/BoardCommentComposer";
+import type { Metadata } from "next";
+import { fetchBoardPostMeta } from "@/lib/og/fetch-meta";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const meta = await fetchBoardPostMeta(id, "announcement");
+  if (!meta || !meta.visible) {
+    return {
+      title: "KVLE — 공지",
+      robots: { index: false },
+    };
+  }
+  const title = `${meta.title} — KVLE 공지`;
+  const description =
+    meta.commentsCount > 0
+      ? `댓글 ${meta.commentsCount}개 · 추천 ${meta.upvoteCount}`
+      : `KVLE 공지 — 추천 ${meta.upvoteCount}`;
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "article" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function AnnouncementDetailPage({
   params,
