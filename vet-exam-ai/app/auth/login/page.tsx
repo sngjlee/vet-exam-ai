@@ -61,7 +61,9 @@ function LoginForm() {
         return;
       } else {
         setMessage({
-          text: "계정이 생성되었습니다. 이메일로 전송된 인증 링크를 확인해 주세요.",
+          text:
+            "계정이 생성되었습니다. 이메일로 전송된 인증 링크를 확인해 주세요. " +
+            "메일이 오지 않으면 이미 가입된 계정일 수 있습니다 — 로그인 또는 비밀번호 찾기를 시도해 주세요.",
           type: "success",
         });
       }
@@ -74,7 +76,9 @@ function LoginForm() {
         setMessage({ text: error.message, type: "error" });
       } else {
         setMessage({
-          text: "메일을 보냈습니다. 받은편지함을 확인해 주세요. (도착하지 않으면 스팸함도 확인)",
+          text:
+            "메일을 보냈습니다. 받은편지함을 확인해 주세요. (도착하지 않으면 스팸함도 확인) " +
+            "메일이 오지 않으면 가입되지 않은 이메일일 수 있습니다 — 회원가입을 시도해 주세요.",
           type: "success",
         });
       }
