@@ -30,7 +30,12 @@ export function ClientCaptureButton() {
         );
         alert(`Sent. event id: ${id}`);
       }}
-      className="kvle-btn-secondary"
+      className="kvle-btn-primary"
+      style={{
+        background: "var(--surface-raised)",
+        borderColor: "var(--rule)",
+        color: "var(--text)",
+      }}
     >
       Client captureException (silent)
     </button>

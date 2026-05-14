@@ -41,7 +41,12 @@ export function ServerCaptureButton() {
             setResult(`event id: ${eventId}`);
           });
         }}
-        className="kvle-btn-secondary"
+        className="kvle-btn-primary"
+        style={{
+          background: "var(--surface-raised)",
+          borderColor: "var(--rule)",
+          color: "var(--text)",
+        }}
       >
         {pending ? "Sending…" : "Server captureException (silent)"}
       </button>
