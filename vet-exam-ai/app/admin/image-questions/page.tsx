@@ -10,7 +10,12 @@ import { TriageList, type TriageListItem } from "./_components/triage-list";
 import { TriageFilters } from "./_components/triage-filters";
 import { TriageImage } from "./_components/triage-image";
 import type { TriageCardData } from "./_components/triage-card";
-import type { ImageTriageStatus } from "../../../lib/admin/triage-labels";
+import {
+  TRIAGE_STATUS_COLOR,
+  TRIAGE_STATUS_ORDER,
+  TRIAGE_STATUS_SHORT,
+  type ImageTriageStatus,
+} from "../../../lib/admin/triage-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +43,12 @@ type TriageRow = {
   note: string | null;
 };
 
+type TriageSummary = {
+  total: number;
+  unclassified: number;
+  counts: Record<ImageTriageStatus, number>;
+};
+
 async function loadFilterOptions(): Promise<{ categories: string[]; rounds: number[] }> {
   const supabase = await createClient();
 
@@ -63,71 +74,94 @@ async function loadFilterOptions(): Promise<{ categories: string[]; rounds: numb
 async function loadQueue(sp: ReturnType<typeof parseTriageSearchParams>): Promise<{
   items: QuestionRow[];
   triageMap: Map<string, TriageRow>;
+  summary: TriageSummary;
   total: number;
 }> {
   const supabase = await createClient();
 
-  // 1. has_image 문제 + 필터
-  let q = supabase
-    .from("questions")
-    .select(
-      "id, public_id, round, category, question, choices, answer, explanation, question_image_files, explanation_image_files, question_image_files_original, explanation_image_files_original, tags",
-      { count: "exact" },
-    )
-    .contains("tags", ["has_image"]);
+  const allRows: QuestionRow[] = [];
+  const batchSize = 1000;
+  for (let offset = 0; ; offset += batchSize) {
+    let q = supabase
+      .from("questions")
+      .select(
+        "id, public_id, round, category, question, choices, answer, explanation, question_image_files, explanation_image_files, question_image_files_original, explanation_image_files_original, tags",
+      )
+      .contains("tags", ["has_image"]);
 
-  if (sp.category) q = q.eq("category", sp.category);
-  if (sp.round != null) q = q.eq("round", sp.round);
+    if (sp.category) q = q.eq("category", sp.category);
+    if (sp.round != null) q = q.eq("round", sp.round);
 
-  // status 필터: triage 테이블과 left join 효과를 두 단계로 처리
-  let triageIdsForStatus: string[] | null = null;
-  if (sp.status === "unclassified") {
-    // triage row 없는 question만 — 첫 쿼리 후 코드에서 필터
-  } else if (sp.status === "all") {
-    // 필터 없음
-  } else {
-    // 특정 status 매칭 — triage row 먼저 가져와서 question_id로 in 필터
-    const { data: tr } = await supabase
-      .from("question_image_triage")
-      .select("question_id")
-      .eq("status", sp.status);
-    triageIdsForStatus = (tr ?? []).map((r) => r.question_id);
-    if (triageIdsForStatus.length === 0) {
-      return { items: [], triageMap: new Map(), total: 0 };
+    const { data, error } = await q
+      .order("round", { ascending: true })
+      .order("public_id", { ascending: true })
+      .range(offset, offset + batchSize - 1);
+
+    if (error || !data) {
+      return {
+        items: [],
+        triageMap: new Map(),
+        summary: emptySummary(),
+        total: 0,
+      };
     }
-    q = q.in("id", triageIdsForStatus);
+
+    allRows.push(...(data as QuestionRow[]));
+    if (data.length < batchSize) break;
+  }
+
+  const ids = allRows.map((r) => r.id);
+  const triageMap = new Map<string, TriageRow>();
+  if (ids.length > 0) {
+    for (let offset = 0; offset < ids.length; offset += 500) {
+      const idBatch = ids.slice(offset, offset + 500);
+      const { data: tr } = await supabase
+        .from("question_image_triage")
+        .select("question_id, status, note")
+        .in("question_id", idBatch);
+      for (const r of (tr ?? []) as TriageRow[]) {
+        triageMap.set(r.question_id, r);
+      }
+    }
+  }
+
+  const summary = summarizeTriage(allRows, triageMap);
+  let filtered = allRows;
+  if (sp.status === "unclassified") {
+    filtered = allRows.filter((r) => !triageMap.has(r.id));
+  } else if (sp.status !== "all") {
+    filtered = allRows.filter((r) => triageMap.get(r.id)?.status === sp.status);
   }
 
   const offset = (sp.page - 1) * PAGE_SIZE;
-  const { data, count, error } = await q
-    .order("round", { ascending: true })
-    .order("public_id", { ascending: true })
-    .range(offset, offset + PAGE_SIZE - 1);
+  return {
+    items: filtered.slice(offset, offset + PAGE_SIZE),
+    triageMap,
+    summary,
+    total: filtered.length,
+  };
+}
 
-  if (error || !data) {
-    return { items: [], triageMap: new Map(), total: 0 };
-  }
+function emptySummary(): TriageSummary {
+  return {
+    total: 0,
+    unclassified: 0,
+    counts: Object.fromEntries(TRIAGE_STATUS_ORDER.map((status) => [status, 0])) as Record<ImageTriageStatus, number>,
+  };
+}
 
-  // 2. 같은 페이지 question id로 triage rows 일괄 fetch
-  const ids = (data as QuestionRow[]).map((r) => r.id);
-  let triageMap = new Map<string, TriageRow>();
-  if (ids.length > 0) {
-    const { data: tr } = await supabase
-      .from("question_image_triage")
-      .select("question_id, status, note")
-      .in("question_id", ids);
-    for (const r of (tr ?? []) as TriageRow[]) {
-      triageMap.set(r.question_id, r);
+function summarizeTriage(rows: QuestionRow[], triageMap: Map<string, TriageRow>): TriageSummary {
+  const summary = emptySummary();
+  summary.total = rows.length;
+  for (const row of rows) {
+    const triage = triageMap.get(row.id);
+    if (!triage) {
+      summary.unclassified += 1;
+    } else {
+      summary.counts[triage.status] += 1;
     }
   }
-
-  // 3. unclassified 필터 후처리
-  let items = data as QuestionRow[];
-  if (sp.status === "unclassified") {
-    items = items.filter((r) => !triageMap.has(r.id));
-  }
-
-  return { items, triageMap, total: count ?? 0 };
+  return summary;
 }
 
 async function buildListItems(
@@ -229,10 +263,11 @@ export default async function AdminImageQuestionsPage({
             이미지 큐
           </h1>
           <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
-            has_image 문제 {queue.total.toLocaleString("ko-KR")}건 — 현재 페이지 {items.length}건 표시
+            선택 조건 {queue.total.toLocaleString("ko-KR")}건 — 현재 페이지 {items.length}건 표시
           </p>
         </header>
 
+        <TriageSummaryBar summary={queue.summary} current={sp} />
         <TriageList items={items} />
 
         {totalPages > 1 && (
@@ -263,5 +298,68 @@ export default async function AdminImageQuestionsPage({
         )}
       </div>
     </div>
+  );
+}
+
+function TriageSummaryBar({
+  summary,
+  current,
+}: {
+  summary: TriageSummary;
+  current: ReturnType<typeof parseTriageSearchParams>;
+}) {
+  const entries: Array<{ status: "unclassified" | "all" | ImageTriageStatus; label: string; count: number }> = [
+    { status: "all", label: "전체", count: summary.total },
+    { status: "unclassified", label: "미분류", count: summary.unclassified },
+    ...TRIAGE_STATUS_ORDER.filter((status) => status !== "pending").map((status) => ({
+      status,
+      label: TRIAGE_STATUS_SHORT[status],
+      count: summary.counts[status],
+    })),
+  ];
+
+  return (
+    <section
+      className="mb-4 rounded-lg p-3"
+      style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)" }}
+      aria-label="이미지 큐 상태 요약"
+    >
+      <div className="mb-2 text-xs font-medium" style={{ color: "var(--text-muted)" }}>
+        현재 범위 상태 요약
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {entries.map((entry) => {
+          const active = current.status === entry.status;
+          const color =
+            entry.status === "unclassified" || entry.status === "all"
+              ? TRIAGE_STATUS_COLOR.pending
+              : TRIAGE_STATUS_COLOR[entry.status];
+          const href = `/admin/image-questions${buildTriageSearchString(current, {
+            status: entry.status === "unclassified" ? undefined : entry.status,
+            page: undefined,
+          })}`;
+
+          return (
+            <Link
+              key={entry.status}
+              href={href}
+              className="inline-flex items-center gap-1.5 rounded-full text-xs"
+              style={{
+                padding: "5px 9px",
+                background: active ? color.bg : "var(--surface)",
+                border: active ? `1px solid ${color.fg}` : "1px solid var(--rule)",
+                color: active ? color.fg : "var(--text-muted)",
+                textDecoration: "none",
+              }}
+            >
+              <span>{entry.label}</span>
+              <span className="kvle-mono" style={{ color: active ? color.fg : "var(--text)" }}>
+                {entry.count.toLocaleString("ko-KR")}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
   );
 }
