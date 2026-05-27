@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, Pencil } from "lucide-react";
 import { createClient } from "../../../../lib/supabase/server";
 import { formatKstDateTime } from "../../../../lib/utils/datetime";
+import {
+  formatAdminExamRef,
+  formatQuestionSource,
+} from "../../../../lib/admin/question-display";
 
 export const dynamic = "force-dynamic";
 
@@ -123,14 +127,12 @@ export default async function AdminQuestionDetailPage({
           운영 메타
         </h2>
         <MetaRow label="raw id" value={<span className="kvle-mono text-xs">{q.id}</span>} />
-        <MetaRow label="회차" value={q.round != null ? `${q.round}회` : null} />
-        <MetaRow label="교시" value={q.session != null ? `${q.session}교시` : null} />
-        <MetaRow label="연도" value={q.year} />
+        <MetaRow label="운영 기준" value={formatAdminExamRef(q)} />
         <MetaRow label="과목" value={q.subject} />
         <MetaRow label="카테고리" value={q.category} />
         <MetaRow label="토픽" value={q.topic} />
         <MetaRow label="난이도" value={q.difficulty} />
-        <MetaRow label="출처" value={q.source} />
+        <MetaRow label="출처" value={formatQuestionSource(q.source)} />
         <MetaRow label="태그" value={q.tags && q.tags.length > 0 ? q.tags.join(", ") : null} />
         <MetaRow
           label="상태"

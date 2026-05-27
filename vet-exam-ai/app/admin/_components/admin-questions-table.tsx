@@ -4,6 +4,10 @@ import {
   QUESTION_QUALITY_LABELS,
   type QuestionQualityIssue,
 } from "../../../lib/admin/question-quality";
+import {
+  formatAdminExamRef,
+  formatQuestionSource,
+} from "../../../lib/admin/question-display";
 
 export type AdminQuestionRow = {
   id: string;
@@ -13,6 +17,7 @@ export type AdminQuestionRow = {
   year: number | null;
   subject: string | null;
   category: string;
+  source: string | null;
   question: string;
   answer: string;
   choices: string[];
@@ -24,13 +29,6 @@ export type AdminQuestionRow = {
 function truncate(s: string, n: number): string {
   if (s.length <= n) return s;
   return s.slice(0, n) + "…";
-}
-
-function formatRoundSession(round: number | null, session: number | null): string {
-  if (round == null && session == null) return "—";
-  const r = round == null ? "" : `${round}회`;
-  const s = session == null ? "" : `${session}교시`;
-  return [r, s].filter(Boolean).join(" · ");
 }
 
 function answerNumber(answer: string, choices: string[]): string {
@@ -124,7 +122,8 @@ export function AdminQuestionsTable({ rows }: { rows: AdminQuestionRow[] }) {
         <thead>
           <tr>
             <th style={head}>KVLE-ID</th>
-            <th style={head}>회차/교시</th>
+            <th style={head}>운영 기준</th>
+            <th style={head}>출처</th>
             <th style={head}>과목</th>
             <th style={head}>카테고리</th>
             <th style={head}>문제</th>
@@ -148,7 +147,10 @@ export function AdminQuestionsTable({ rows }: { rows: AdminQuestionRow[] }) {
                 </Link>
               </td>
               <td style={{ ...cell, whiteSpace: "nowrap", color: "var(--text-muted)" }}>
-                {formatRoundSession(r.round, r.session)}
+                {formatAdminExamRef(r)}
+              </td>
+              <td style={{ ...cell, whiteSpace: "nowrap", color: "var(--text-muted)" }}>
+                {formatQuestionSource(r.source)}
               </td>
               <td style={{ ...cell, whiteSpace: "nowrap", color: "var(--text-muted)" }}>
                 {r.subject ?? "—"}

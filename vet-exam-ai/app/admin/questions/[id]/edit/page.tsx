@@ -4,6 +4,10 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 import { createClient } from "../../../../../lib/supabase/server";
 import { getFilterOptions } from "../../../../../lib/admin/filter-options";
 import { formatKstDateTime } from "../../../../../lib/utils/datetime";
+import {
+  formatAdminExamRef,
+  formatQuestionSource,
+} from "../../../../../lib/admin/question-display";
 import { updateQuestion } from "./_actions";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +23,7 @@ type EditQuestion = {
   subject: string | null;
   topic: string | null;
   difficulty: "easy" | "medium" | "hard" | null;
+  source: string | null;
   community_notes: string | null;
   tags: string[] | null;
   is_active: boolean;
@@ -51,7 +56,7 @@ async function loadQuestion(rawId: string): Promise<EditQuestion | null> {
   const { data } = await supabase
     .from("questions")
     .select(
-      "id, public_id, question, choices, answer, explanation, category, subject, topic, difficulty, community_notes, tags, is_active, round, session, year, created_at",
+      "id, public_id, question, choices, answer, explanation, category, subject, topic, difficulty, source, community_notes, tags, is_active, round, session, year, created_at",
     )
     .or(`id.eq.${id},public_id.eq.${id}`)
     .limit(1)
@@ -173,9 +178,8 @@ export default async function AdminQuestionEditPage({
             잠금 (편집 불가)
           </h2>
           <MetaRow label="raw id" value={<span className="kvle-mono">{q.id}</span>} />
-          <MetaRow label="회차" value={q.round != null ? `${q.round}회` : null} />
-          <MetaRow label="교시" value={q.session != null ? `${q.session}교시` : null} />
-          <MetaRow label="연도" value={q.year} />
+          <MetaRow label="운영 기준" value={formatAdminExamRef(q)} />
+          <MetaRow label="출처" value={formatQuestionSource(q.source)} />
           <MetaRow label="등록일" value={formatKstDateTime(q.created_at)} />
         </section>
 

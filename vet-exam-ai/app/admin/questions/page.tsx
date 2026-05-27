@@ -25,7 +25,7 @@ const SORT_MAP: Record<SortKey, { col: string; ascending: boolean }> = {
 };
 
 const QUESTION_SELECT =
-  "id, public_id, round, session, year, subject, category, question, answer, choices, explanation, tags, is_active, created_at";
+  "id, public_id, round, session, year, subject, category, source, question, answer, choices, explanation, tags, is_active, created_at";
 
 type AdminQuestionRecord = AdminQuestionRow & QuestionQualityFields & {
   explanation: string;
