@@ -26,6 +26,7 @@ const STORAGE_TTL_MS = 30 * 60 * 1000; // 30분
 
 type StoredFilter = {
   selectedCategory: string;
+  selectedTopic?: string;
   recentYears: RecentYearsWindow | "all";
   onlyWrong: boolean;
   skipEasy: boolean;
@@ -78,6 +79,7 @@ export default function QuestionsListPage() {
   const { notes: wrongNotes, loading: notesLoading } = useWrongNotes();
 
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [selectedTopic, setSelectedTopic] = useState<string>("All");
   const [recentYears, setRecentYears] = useState<RecentYearsWindow | "all">(
     "all",
   );
@@ -105,6 +107,11 @@ export default function QuestionsListPage() {
           ? stored.recentYears
           : "all";
       setSelectedCategory(safeCategory);
+      setSelectedTopic(
+        typeof stored.selectedTopic === "string" && stored.selectedTopic.length > 0
+          ? stored.selectedTopic
+          : "All",
+      );
       setRecentYears(safeRecent);
       setOnlyWrong(stored.onlyWrong);
       setSkipEasy(stored.skipEasy);
@@ -116,6 +123,7 @@ export default function QuestionsListPage() {
   const hasMeaningfulFilter =
     recentYears !== "all" ||
     selectedCategory !== "All" ||
+    selectedTopic !== "All" ||
     onlyWrong ||
     skipEasy;
 
@@ -147,6 +155,7 @@ export default function QuestionsListPage() {
     if (shouldFetch) {
       saveStoredFilter({
         selectedCategory,
+        selectedTopic,
         recentYears,
         onlyWrong,
         skipEasy,
@@ -160,6 +169,7 @@ export default function QuestionsListPage() {
     hydrated,
     shouldFetch,
     selectedCategory,
+    selectedTopic,
     recentYears,
     onlyWrong,
     skipEasy,
@@ -183,6 +193,7 @@ export default function QuestionsListPage() {
     return applyQuestionFilters(questions, {
       categories:
         selectedCategory === "All" ? undefined : [selectedCategory],
+      topics: selectedTopic === "All" ? undefined : [selectedTopic],
       recentYears: recentYears === "all" ? undefined : recentYears,
       onlyWrong,
       skipEasy,
@@ -192,6 +203,7 @@ export default function QuestionsListPage() {
     shouldFetch,
     questions,
     selectedCategory,
+    selectedTopic,
     recentYears,
     onlyWrong,
     skipEasy,
@@ -209,6 +221,16 @@ export default function QuestionsListPage() {
     updater();
     setPage(0);
   }
+
+  const topicOptions = useMemo(() => {
+    const topics = new Set<string>();
+    for (const q of questions) {
+      if (selectedCategory !== "All" && q.category !== selectedCategory) continue;
+      const topic = q.topic?.trim();
+      if (topic) topics.add(topic);
+    }
+    return Array.from(topics).sort((a, b) => a.localeCompare(b, "ko"));
+  }, [questions, selectedCategory]);
 
   if (authLoading || !user) {
     return (
@@ -266,6 +288,7 @@ export default function QuestionsListPage() {
               type="button"
               onClick={() => {
                 setSelectedCategory("All");
+                setSelectedTopic("All");
                 setRecentYears("all");
                 setOnlyWrong(false);
                 setSkipEasy(false);
@@ -296,13 +319,39 @@ export default function QuestionsListPage() {
             <select
               id="filter-category"
               value={selectedCategory}
-              onChange={(e) => changeFilter(() => setSelectedCategory(e.target.value))}
+              onChange={(e) =>
+                changeFilter(() => {
+                  setSelectedCategory(e.target.value);
+                  setSelectedTopic("All");
+                })
+              }
               className="kvle-input"
               style={{ minWidth: 160 }}
             >
               <option value="All">전체</option>
               {FIXED_CATEGORIES.map((c) => (
                 <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Topic */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <label className="kvle-label" htmlFor="filter-topic">토픽</label>
+            <select
+              id="filter-topic"
+              value={selectedTopic}
+              onChange={(e) => changeFilter(() => setSelectedTopic(e.target.value))}
+              className="kvle-input"
+              disabled={!shouldFetch || questionsLoading || topicOptions.length === 0}
+              style={{ minWidth: 180, opacity: !shouldFetch || topicOptions.length === 0 ? 0.55 : 1 }}
+            >
+              <option value="All">전체</option>
+              {selectedTopic !== "All" && !topicOptions.includes(selectedTopic) && (
+                <option value={selectedTopic}>{selectedTopic}</option>
+              )}
+              {topicOptions.map((topic) => (
+                <option key={topic} value={topic}>{topic}</option>
               ))}
             </select>
           </div>
@@ -365,7 +414,7 @@ export default function QuestionsListPage() {
               lineHeight: 1.6,
             }}
           >
-            과목, 최근 기출 연도, 또는 학습 모드 중 하나를 선택해
+            과목, 토픽, 최근 기출 연도, 또는 학습 모드 중 하나를 선택해
             <br />
             볼 문제 범위를 좁혀 주세요.
           </p>
