@@ -51,6 +51,11 @@ def build_row(doc: dict, q: dict) -> dict[str, Any]:
     tags = ["vet40"]
     if has_image:
         tags.append("has_image")
+    topic = q.get("topic")
+    if isinstance(topic, str):
+        topic = topic.strip() or None
+    else:
+        topic = None
 
     return {
         "id":              q["id"],
@@ -60,7 +65,7 @@ def build_row(doc: dict, q: dict) -> dict[str, Any]:
         "explanation":     q["explanation"],
         "category":        doc["subject_full"],
         "subject":         doc["subject_full"],
-        "topic":           None,
+        "topic":           topic,
         "difficulty":      None,
         "source":          "past_exam",
         "year":            doc["year"],

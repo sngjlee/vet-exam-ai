@@ -78,6 +78,7 @@ REWRITE_SYSTEM_PROMPT = """너는 한국 수의사 국가시험 기출문제를 
 
 ## 출력 형식
 JSON schema를 엄격히 준수. `answer`는 반드시 `choices` 배열의 한 요소와 문자열이 정확히 일치.
+`topic`은 과목명보다 좁은 핵심 개념명으로 작성한다. 예: 심장사상충, 난산, 항생제 감수성.
 """
 
 OUTPUT_SCHEMA: dict[str, Any] = {
@@ -100,8 +101,12 @@ OUTPUT_SCHEMA: dict[str, Any] = {
             "type": "string",
             "description": "새로 작성한 해설",
         },
+        "topic": {
+            "type": "string",
+            "description": "문제의 핵심 개념을 나타내는 짧은 한국어 토픽명. 과목명을 반복하지 말고 2~20자로 작성.",
+        },
     },
-    "required": ["question", "choices", "answer", "explanation"],
+    "required": ["question", "choices", "answer", "explanation", "topic"],
     "additionalProperties": False,
 }
 
@@ -185,6 +190,9 @@ def rewrite_one(
             f"정답이 choices에 없음: answer={parsed['answer']!r}, "
             f"choices={parsed['choices']}"
         )
+    parsed["topic"] = parsed["topic"].strip()
+    if not parsed["topic"]:
+        raise ValueError("topic is empty")
     return parsed, response.usage
 
 
@@ -254,6 +262,7 @@ def process_file(
                 "choices": result["choices"],
                 "answer": result["answer"],
                 "explanation": result["explanation"],
+                "topic": result["topic"],
                 "community_notes": q.get("community_notes"),
                 "has_question_image": q.get("has_question_image", False),
                 "question_images": q.get("question_images", []),

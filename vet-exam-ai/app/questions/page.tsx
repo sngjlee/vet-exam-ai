@@ -232,6 +232,20 @@ export default function QuestionsListPage() {
     return Array.from(topics).sort((a, b) => a.localeCompare(b, "ko"));
   }, [questions, selectedCategory]);
 
+  const topicSelectDisabled =
+    !shouldFetch || questionsLoading || topicOptions.length === 0;
+  const topicStatus = !shouldFetch
+    ? "과목을 선택하거나 전체 문제를 불러오면 토픽을 확인할 수 있습니다."
+    : questionsLoading
+      ? "토픽을 불러오는 중입니다."
+      : topicOptions.length === 0
+        ? "이 과목은 아직 토픽 메타데이터가 없어 필터를 사용할 수 없습니다."
+        : `${topicOptions.length}개 토픽`;
+  const topicAllLabel =
+    shouldFetch && !questionsLoading && topicOptions.length === 0
+      ? "토픽 데이터 없음"
+      : "전체";
+
   if (authLoading || !user) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
@@ -340,13 +354,14 @@ export default function QuestionsListPage() {
             <label className="kvle-label" htmlFor="filter-topic">토픽</label>
             <select
               id="filter-topic"
+              aria-describedby="filter-topic-status"
               value={selectedTopic}
               onChange={(e) => changeFilter(() => setSelectedTopic(e.target.value))}
               className="kvle-input"
-              disabled={!shouldFetch || questionsLoading || topicOptions.length === 0}
-              style={{ minWidth: 180, opacity: !shouldFetch || topicOptions.length === 0 ? 0.55 : 1 }}
+              disabled={topicSelectDisabled}
+              style={{ minWidth: 180, opacity: topicSelectDisabled ? 0.55 : 1 }}
             >
-              <option value="All">전체</option>
+              <option value="All">{topicAllLabel}</option>
               {selectedTopic !== "All" && !topicOptions.includes(selectedTopic) && (
                 <option value={selectedTopic}>{selectedTopic}</option>
               )}
@@ -354,6 +369,12 @@ export default function QuestionsListPage() {
                 <option key={topic} value={topic}>{topic}</option>
               ))}
             </select>
+            <span
+              id="filter-topic-status"
+              style={{ color: "var(--text-faint)", fontSize: 11, lineHeight: 1.35 }}
+            >
+              {topicStatus}
+            </span>
           </div>
 
           {/* Recent years */}
