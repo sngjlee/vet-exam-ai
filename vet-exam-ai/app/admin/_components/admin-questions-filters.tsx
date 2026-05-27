@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 import type { FilterOptions } from "../../../lib/admin/filter-options";
+import { QUESTION_QUALITY_FILTERS } from "../../../lib/admin/question-quality";
 import {
   buildSearchString,
   type ParsedSearchParams,
@@ -18,12 +19,10 @@ export function AdminQuestionsFilters({
   options: FilterOptions;
 }) {
   const router = useRouter();
-  const [qInput, setQInput] = useState(current.q ?? "");
+  const currentQ = current.q ?? "";
+  const [qState, setQState] = useState({ source: currentQ, value: currentQ });
+  const qInput = qState.source === currentQ ? qState.value : currentQ;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setQInput(current.q ?? "");
-  }, [current.q]);
 
   function navigate(override: Partial<Record<keyof ParsedSearchParams, string | number | boolean | undefined>>) {
     const next = buildSearchString(current, { ...override, page: 1 });
@@ -31,7 +30,7 @@ export function AdminQuestionsFilters({
   }
 
   function onQChange(v: string) {
-    setQInput(v);
+    setQState({ source: currentQ, value: v });
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       navigate({ q: v.trim() === "" ? undefined : v.trim() });
@@ -40,7 +39,7 @@ export function AdminQuestionsFilters({
 
   function reset() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    setQInput("");
+    setQState({ source: "", value: "" });
     router.replace("/admin/questions");
   }
 
@@ -146,6 +145,19 @@ export function AdminQuestionsFilters({
         <option value="">활성 상태</option>
         <option value="active">활성</option>
         <option value="inactive">비활성</option>
+      </select>
+
+      <select
+        value={current.quality ?? "all"}
+        onChange={(e) => navigate({ quality: e.target.value === "all" ? undefined : e.target.value })}
+        aria-label="품질 상태"
+        style={inputStyle}
+      >
+        {QUESTION_QUALITY_FILTERS.map((filter) => (
+          <option key={filter.value} value={filter.value}>
+            {filter.label}
+          </option>
+        ))}
       </select>
 
       <select

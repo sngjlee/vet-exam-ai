@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
+import {
+  QUESTION_QUALITY_LABELS,
+  type QuestionQualityIssue,
+} from "../../../lib/admin/question-quality";
 
 export type AdminQuestionRow = {
   id: string;
@@ -13,6 +17,7 @@ export type AdminQuestionRow = {
   answer: string;
   choices: string[];
   is_active: boolean;
+  quality_issues?: QuestionQualityIssue[];
   created_at: string;
 };
 
@@ -37,6 +42,42 @@ function answerNumber(answer: string, choices: string[]): string {
 function formatKoreanDate(iso: string): string {
   const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function QualityBadges({ issues }: { issues?: QuestionQualityIssue[] }) {
+  if (!issues || issues.length === 0) {
+    return (
+      <span
+        className="inline-block rounded-full text-[10px] font-medium"
+        style={{
+          padding: "2px 8px",
+          background: "var(--teal-dim)",
+          color: "var(--teal)",
+        }}
+      >
+        정상
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex max-w-[220px] flex-wrap gap-1">
+      {issues.map((issue) => (
+        <span
+          key={issue}
+          className="inline-block rounded-full text-[10px] font-medium"
+          style={{
+            padding: "2px 8px",
+            background: "var(--wrong-dim)",
+            color: "var(--wrong)",
+            border: "1px solid rgba(192,74,58,0.25)",
+          }}
+        >
+          {QUESTION_QUALITY_LABELS[issue]}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 export function AdminQuestionsTable({ rows }: { rows: AdminQuestionRow[] }) {
@@ -88,6 +129,7 @@ export function AdminQuestionsTable({ rows }: { rows: AdminQuestionRow[] }) {
             <th style={head}>카테고리</th>
             <th style={head}>문제</th>
             <th style={head}>정답</th>
+            <th style={head}>품질</th>
             <th style={head}>활성</th>
             <th style={head}>등록일</th>
             <th style={{ ...head, width: 48, textAlign: "center" }} aria-label="작업"></th>
@@ -117,6 +159,9 @@ export function AdminQuestionsTable({ rows }: { rows: AdminQuestionRow[] }) {
               <td style={{ ...cell, color: "var(--text)" }}>{truncate(r.question, 80)}</td>
               <td style={{ ...cell, color: "var(--text-muted)" }}>
                 {answerNumber(r.answer, r.choices)}
+              </td>
+              <td style={cell}>
+                <QualityBadges issues={r.quality_issues} />
               </td>
               <td style={{ ...cell, whiteSpace: "nowrap" }}>
                 <span

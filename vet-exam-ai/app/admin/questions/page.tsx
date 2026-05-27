@@ -4,6 +4,11 @@ import { AdminQuestionsFilters } from "../_components/admin-questions-filters";
 import { AdminQuestionsTable, type AdminQuestionRow } from "../_components/admin-questions-table";
 import { AdminQuestionsPager } from "../_components/admin-questions-pager";
 import {
+  getQuestionQualityIssues,
+  matchesQuestionQualityFilter,
+  type QuestionQualityFields,
+} from "../../../lib/admin/question-quality";
+import {
   parseAdminQuestionsSearchParams,
   type ParsedSearchParams,
   type SortKey,
@@ -19,26 +24,66 @@ const SORT_MAP: Record<SortKey, { col: string; ascending: boolean }> = {
   kvle:   { col: "public_id",  ascending: true  },
 };
 
+const QUESTION_SELECT =
+  "id, public_id, round, session, year, subject, category, question, answer, choices, explanation, tags, is_active, created_at";
+
+type AdminQuestionRecord = AdminQuestionRow & QuestionQualityFields & {
+  explanation: string;
+  tags: string[] | null;
+};
+
+function withQualityIssues(row: AdminQuestionRecord): AdminQuestionRow {
+  return {
+    ...row,
+    quality_issues: getQuestionQualityIssues(row),
+  };
+}
+
 async function loadQuestions(
   sp: ParsedSearchParams
 ): Promise<{ rows: AdminQuestionRow[]; total: number }> {
   const supabase = await createClient();
-  let q = supabase
-    .from("questions")
-    .select(
-      "id, public_id, round, session, year, subject, category, question, answer, choices, is_active, created_at",
-      { count: "exact" }
-    );
 
-  if (sp.round != null)    q = q.eq("round",    sp.round);
-  if (sp.year != null)     q = q.eq("year",     sp.year);
-  if (sp.session != null)  q = q.eq("session",  sp.session);
-  if (sp.subject)          q = q.eq("subject",  sp.subject);
-  if (sp.category)         q = q.eq("category", sp.category);
-  if (sp.is_active != null) q = q.eq("is_active", sp.is_active);
-  if (sp.q) {
-    q = q.or(`public_id.ilike.%${sp.q}%,question.ilike.%${sp.q}%`);
+  if (sp.quality) {
+    const { col, ascending } = SORT_MAP[sp.sort];
+    const allRows: AdminQuestionRecord[] = [];
+    const batchSize = 1000;
+
+    for (let offset = 0; ; offset += batchSize) {
+      let q = supabase.from("questions").select(QUESTION_SELECT);
+      if (sp.round != null) q = q.eq("round", sp.round);
+      if (sp.year != null) q = q.eq("year", sp.year);
+      if (sp.session != null) q = q.eq("session", sp.session);
+      if (sp.subject) q = q.eq("subject", sp.subject);
+      if (sp.category) q = q.eq("category", sp.category);
+      if (sp.is_active != null) q = q.eq("is_active", sp.is_active);
+      if (sp.q) q = q.or(`public_id.ilike.%${sp.q}%,question.ilike.%${sp.q}%`);
+
+      const { data, error } = await q.order(col, { ascending }).range(offset, offset + batchSize - 1);
+
+      if (error || !data) break;
+      allRows.push(...(data as AdminQuestionRecord[]));
+      if (data.length < batchSize) break;
+    }
+
+    const filtered = allRows
+      .map(withQualityIssues)
+      .filter((row) => matchesQuestionQualityFilter(row.quality_issues ?? [], sp.quality));
+    const offset = (sp.page - 1) * PAGE_SIZE;
+    return {
+      rows: filtered.slice(offset, offset + PAGE_SIZE),
+      total: filtered.length,
+    };
   }
+
+  let q = supabase.from("questions").select(QUESTION_SELECT, { count: "exact" });
+  if (sp.round != null) q = q.eq("round", sp.round);
+  if (sp.year != null) q = q.eq("year", sp.year);
+  if (sp.session != null) q = q.eq("session", sp.session);
+  if (sp.subject) q = q.eq("subject", sp.subject);
+  if (sp.category) q = q.eq("category", sp.category);
+  if (sp.is_active != null) q = q.eq("is_active", sp.is_active);
+  if (sp.q) q = q.or(`public_id.ilike.%${sp.q}%,question.ilike.%${sp.q}%`);
 
   const { col, ascending } = SORT_MAP[sp.sort];
   const offset = (sp.page - 1) * PAGE_SIZE;
@@ -47,7 +92,10 @@ async function loadQuestions(
     .range(offset, offset + PAGE_SIZE - 1);
 
   if (error || !data) return { rows: [], total: 0 };
-  return { rows: data as AdminQuestionRow[], total: count ?? 0 };
+  return {
+    rows: (data as AdminQuestionRecord[]).map(withQualityIssues),
+    total: count ?? 0,
+  };
 }
 
 export default async function AdminQuestionsPage({

@@ -1,3 +1,5 @@
+import type { QuestionQualityFilter } from "../../../../lib/admin/question-quality";
+
 export type SortKey = "recent" | "round" | "kvle";
 
 export type ParsedSearchParams = {
@@ -9,10 +11,21 @@ export type ParsedSearchParams = {
   subject?: string;
   category?: string;
   is_active?: boolean;
+  quality?: QuestionQualityFilter;
   q?: string;
 };
 
 const SORT_KEYS = new Set<SortKey>(["recent", "round", "kvle"]);
+const QUALITY_FILTERS = new Set<QuestionQualityFilter>([
+  "all",
+  "needs_review",
+  "missing_content",
+  "answer_mismatch",
+  "duplicate_choices",
+  "missing_metadata",
+  "round_year_mismatch",
+  "image_pending",
+]);
 
 const Q_RE = /^[\p{L}\p{N}\s\-]+$/u;
 
@@ -53,10 +66,15 @@ export function parseAdminQuestionsSearchParams(
   if (isActiveRaw === "active") is_active = true;
   else if (isActiveRaw === "inactive") is_active = false;
 
+  const qualityRaw = get("quality") as QuestionQualityFilter | undefined;
+  const quality = qualityRaw && QUALITY_FILTERS.has(qualityRaw) && qualityRaw !== "all"
+    ? qualityRaw
+    : undefined;
+
   const qRaw = nonEmpty(get("q"));
   const q = qRaw && Q_RE.test(qRaw) ? qRaw : undefined;
 
-  return { page, sort, round, year, session, subject, category, is_active, q };
+  return { page, sort, round, year, session, subject, category, is_active, quality, q };
 }
 
 export function buildSearchString(
@@ -80,6 +98,7 @@ export function buildSearchString(
   set("category", current.category);
   if (current.is_active === true) merged.is_active = "active";
   else if (current.is_active === false) merged.is_active = "inactive";
+  set("quality", current.quality);
   set("q", current.q);
 
   for (const [k, v] of Object.entries(override)) {
