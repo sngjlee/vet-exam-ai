@@ -9,7 +9,7 @@ This script is intentionally safe by default:
 Examples:
     python backfill_topics.py --from-rewritten --dry-run --limit 20
     python backfill_topics.py --generate-missing --dry-run --limit 20
-    python backfill_topics.py --generate-missing --dry-run --category 내과학 --limit 50 --preview-output pipeline/output/topic-preview.json
+    python backfill_topics.py --generate-missing --dry-run --category 내과학 --limit 50 --preview-output output/topic-preview.json
     python backfill_topics.py --generate-missing --apply --limit 50
     python backfill_topics.py --generate-missing --apply --confirm-all
 """
@@ -52,14 +52,13 @@ TOPIC_SYSTEM_PROMPT = """너는 한국 수의사 국가시험 문제를 topic으
 규칙:
 - topic은 과목명보다 좁은 핵심 개념명으로 쓴다.
 - 2~20자 한국어 명사구로 쓴다.
-- 과목명, 회차, 연도, 난이도, 문제번호를 반복하지 않는다.
+- 과목명, 회차, 연도, 세션, 문제번호를 반복하지 않는다.
 - 쉼표로 여러 topic을 나열하지 말고 가장 대표적인 하나만 고른다.
 - 질병명, 병원체명, 장기/계통, 약물군, 검사법, 처치명처럼 필터로 묶기 좋은 표현을 우선한다.
 - 답을 바꾸거나 문제를 재작성하지 않는다. topic만 반환한다.
 
-예: 심장사상충, 난산, 항생제 감수성, 요검사, 반추위 산증
+예: 자궁축농증, 백신, 학생 감수성, 요검사, 반추위 대사
 """
-
 
 def normalize_topic(value: str) -> str:
     """Trim and normalize model/file topic output."""
@@ -132,19 +131,36 @@ def fetch_missing_topic_rows(
                     rows.append(row)
         return rows[:limit] if limit is not None else rows
 
-    params: dict[str, str] = {
+    base_params: dict[str, str] = {
         "select": select_cols,
         "or": "(topic.is.null,topic.eq.)",
         "order": "category.asc,id.asc",
     }
     if category:
-        params["category"] = f"eq.{category}"
-    if limit is not None:
-        params["limit"] = str(limit)
+        base_params["category"] = f"eq.{category}"
 
-    response = client.get(f"{url}/rest/v1/questions", params=params, timeout=30.0)
-    response.raise_for_status()
-    return response.json()
+    rows: list[dict[str, Any]] = []
+    offset = 0
+    while True:
+        page_size = min(1000, limit - len(rows)) if limit is not None else 1000
+        if page_size <= 0:
+            break
+
+        params = {
+            **base_params,
+            "limit": str(page_size),
+            "offset": str(offset),
+        }
+        response = client.get(f"{url}/rest/v1/questions", params=params, timeout=30.0)
+        response.raise_for_status()
+        page = response.json()
+        rows.extend(page)
+
+        if len(page) < page_size:
+            break
+        offset += len(page)
+
+    return rows
 
 
 def build_topic_user_message(row: dict[str, Any]) -> str:
@@ -236,7 +252,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if not args.from_rewritten and not args.generate_missing:
-        parser.error("--from-rewritten 또는 --generate-missing 중 하나는 필요합니다.")
+        parser.error("--from-rewritten 또는 --generate-missing 중 하나가 필요합니다.")
     if args.apply and args.dry_run:
         parser.error("--apply와 --dry-run은 함께 사용할 수 없습니다.")
     if args.apply and args.limit is None and not args.id and not args.confirm_all:
