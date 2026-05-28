@@ -10,11 +10,13 @@ Usage:
     python normalize_topics.py --apply
     python normalize_topics.py --category 내과학 --dry-run
     python normalize_topics.py --alias-file topic_aliases.json --apply
+    python normalize_topics.py --alias-file output/topic-alias-suggestions.approved.json --apply
 """
 
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import json
 import os
 import sys
@@ -35,56 +37,102 @@ def normalize_topic(value: str) -> str:
     return " ".join(value.strip().split())
 
 
-def load_aliases(path: Path) -> dict[str, str]:
+@dataclass(frozen=True)
+class AliasRule:
+    source: str
+    target: str
+    category: str | None = None
+
+
+def parse_alias_rule(raw: dict[str, Any]) -> AliasRule | None:
+    source = raw.get("source")
+    target = raw.get("target")
+    category = raw.get("category")
+    if not isinstance(source, str) or not isinstance(target, str):
+        raise ValueError("rich aliases require string source and target")
+    if category is not None and not isinstance(category, str):
+        raise ValueError("rich alias category must be a string when present")
+
+    source_topic = normalize_topic(source)
+    target_topic = normalize_topic(target)
+    category_name = normalize_topic(category) if isinstance(category, str) else None
+    if not source_topic or not target_topic:
+        raise ValueError("alias source and target must not be empty")
+    if source_topic == target_topic:
+        return None
+    return AliasRule(source=source_topic, target=target_topic, category=category_name or None)
+
+
+def load_aliases(path: Path) -> list[AliasRule]:
+    """Load either a flat {source: target} map or rich {"aliases": [...]} JSON."""
     with open(path, encoding="utf-8") as f:
         raw = json.load(f)
-    if not isinstance(raw, dict):
-        raise ValueError("alias file must be a JSON object")
 
-    aliases: dict[str, str] = {}
-    for source, target in raw.items():
-        if not isinstance(source, str) or not isinstance(target, str):
-            raise ValueError("alias keys and values must be strings")
-        source_topic = normalize_topic(source)
-        target_topic = normalize_topic(target)
-        if not source_topic or not target_topic:
-            raise ValueError("alias keys and values must not be empty")
-        if source_topic != target_topic:
-            aliases[source_topic] = target_topic
-    return aliases
+    rules: list[AliasRule] = []
+    if isinstance(raw, dict) and isinstance(raw.get("aliases"), list):
+        for item in raw["aliases"]:
+            if not isinstance(item, dict):
+                raise ValueError("rich alias entries must be JSON objects")
+            rule = parse_alias_rule(item)
+            if rule is not None:
+                rules.append(rule)
+    elif isinstance(raw, list):
+        for item in raw:
+            if not isinstance(item, dict):
+                raise ValueError("rich alias entries must be JSON objects")
+            rule = parse_alias_rule(item)
+            if rule is not None:
+                rules.append(rule)
+    elif isinstance(raw, dict):
+        for source, target in raw.items():
+            if not isinstance(source, str) or not isinstance(target, str):
+                raise ValueError("flat alias keys and values must be strings")
+            rule = parse_alias_rule({"source": source, "target": target})
+            if rule is not None:
+                rules.append(rule)
+    else:
+        raise ValueError("alias file must be a JSON object or array")
+
+    unique: dict[tuple[str | None, str, str], AliasRule] = {}
+    for rule in rules:
+        unique[(rule.category, rule.source, rule.target)] = rule
+    return list(unique.values())
 
 
 def fetch_alias_rows(
     client: httpx.Client,
     url: str,
     *,
-    aliases: dict[str, str],
+    rule: AliasRule,
     category: str | None,
 ) -> list[dict[str, Any]]:
     """Fetch rows that currently use one of the alias source topics."""
     select_cols = "id,category,subject,topic"
     rows: list[dict[str, Any]] = []
 
-    for source_topic in sorted(aliases):
-        offset = 0
-        while True:
-            params = {
-                "select": select_cols,
-                "topic": f"eq.{source_topic}",
-                "order": "id.asc",
-                "limit": "1000",
-                "offset": str(offset),
-            }
-            if category:
-                params["category"] = f"eq.{category}"
+    if category and rule.category and category != rule.category:
+        return rows
 
-            response = client.get(f"{url}/rest/v1/questions", params=params, timeout=30.0)
-            response.raise_for_status()
-            page = response.json()
-            rows.extend(page)
-            if len(page) < 1000:
-                break
-            offset += len(page)
+    offset = 0
+    while True:
+        params = {
+            "select": select_cols,
+            "topic": f"eq.{rule.source}",
+            "order": "id.asc",
+            "limit": "1000",
+            "offset": str(offset),
+        }
+        effective_category = rule.category or category
+        if effective_category:
+            params["category"] = f"eq.{effective_category}"
+
+        response = client.get(f"{url}/rest/v1/questions", params=params, timeout=30.0)
+        response.raise_for_status()
+        page = response.json()
+        rows.extend(page)
+        if len(page) < 1000:
+            break
+        offset += len(page)
 
     return rows
 
@@ -136,13 +184,27 @@ def main() -> None:
     failed = 0
 
     with httpx.Client(headers=headers) as supabase:
-        rows = fetch_alias_rows(supabase, url, aliases=aliases, category=args.category)
+        work: list[tuple[AliasRule, dict[str, Any]]] = []
+        for rule in aliases:
+            rows = fetch_alias_rows(supabase, url, rule=rule, category=args.category)
+            work.extend((rule, row) for row in rows)
+
+        seen_ids: set[tuple[str, str]] = set()
+        deduped: list[tuple[AliasRule, dict[str, Any]]] = []
+        for rule, row in work:
+            key = (str(row["id"]), rule.target)
+            if key in seen_ids:
+                continue
+            seen_ids.add(key)
+            deduped.append((rule, row))
+
+        rows = [row for _, row in deduped]
         print(f"[normalize] 대상 row {len(rows)}개")
 
-        for index, row in enumerate(rows, 1):
+        for index, (rule, row) in enumerate(deduped, 1):
             qid = str(row["id"])
             source_topic = normalize_topic(str(row.get("topic") or ""))
-            target_topic = aliases[source_topic]
+            target_topic = rule.target
             category = str(row.get("category") or "")
             print(f"  [{index}/{len(rows)}] {qid} ({category}): {source_topic} -> {target_topic}")
 
