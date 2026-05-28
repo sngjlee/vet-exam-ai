@@ -96,7 +96,37 @@ def load_aliases(path: Path) -> list[AliasRule]:
     unique: dict[tuple[str | None, str, str], AliasRule] = {}
     for rule in rules:
         unique[(rule.category, rule.source, rule.target)] = rule
-    return list(unique.values())
+    return validate_alias_rules(list(unique.values()))
+
+
+def validate_alias_rules(rules: list[AliasRule]) -> list[AliasRule]:
+    """Reject ambiguous alias maps that could flip topics back and forth."""
+    by_source: dict[tuple[str | None, str], str] = {}
+    errors: list[str] = []
+
+    for rule in rules:
+        source_key = (rule.category, rule.source)
+        existing_target = by_source.get(source_key)
+        if existing_target is not None and existing_target != rule.target:
+            errors.append(
+                f"{rule.category or '*'}: {rule.source!r} maps to both "
+                f"{existing_target!r} and {rule.target!r}"
+            )
+        by_source[source_key] = rule.target
+
+    for rule in rules:
+        reverse_target = by_source.get((rule.category, rule.target))
+        if reverse_target == rule.source:
+            errors.append(
+                f"{rule.category or '*'}: conflicting two-way alias "
+                f"{rule.source!r} <-> {rule.target!r}"
+            )
+
+    if errors:
+        joined = "\n  - ".join(errors)
+        raise ValueError(f"alias file has conflicting rules:\n  - {joined}")
+
+    return rules
 
 
 def fetch_alias_rows(
