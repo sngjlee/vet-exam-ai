@@ -10,6 +10,8 @@ Examples:
     python backfill_topics.py --from-rewritten --dry-run --limit 20
     python backfill_topics.py --generate-missing --dry-run --limit 20
     python backfill_topics.py --generate-missing --dry-run --category 내과학 --limit 50 --preview-output output/topic-preview.json
+    python backfill_topics.py --generate-missing --dry-run --category 외과학 --force --model claude-sonnet-4-6 --limit 20
+    python backfill_topics.py --generate-missing --apply --category 외과학 --force --model claude-sonnet-4-6 --limit 50
     python backfill_topics.py --generate-missing --apply --limit 50
     python backfill_topics.py --generate-missing --apply --confirm-all
 """
@@ -133,9 +135,10 @@ def fetch_missing_topic_rows(
 
     base_params: dict[str, str] = {
         "select": select_cols,
-        "or": "(topic.is.null,topic.eq.)",
         "order": "category.asc,id.asc",
     }
+    if not force:
+        base_params["or"] = "(topic.is.null,topic.eq.)"
     if category:
         base_params["category"] = f"eq.{category}"
 
@@ -244,7 +247,7 @@ def main() -> None:
     parser.add_argument("--category", help="특정 category만 처리")
     parser.add_argument("--id", action="append", default=[], help="특정 question id만 처리. 여러 번 지정 가능")
     parser.add_argument("--limit", type=int, help="처리 row 수 제한")
-    parser.add_argument("--force", action="store_true", help="--id 사용 시 기존 topic이 있어도 새 topic 제안")
+    parser.add_argument("--force", action="store_true", help="기존 topic이 있어도 새 topic 제안")
     parser.add_argument("--dry-run", action="store_true", help="DB write 없이 제안만 출력")
     parser.add_argument("--apply", action="store_true", help="Supabase에 topic PATCH 실행")
     parser.add_argument("--confirm-all", action="store_true", help="--apply에서 --limit 없이 전체 처리 허용")
