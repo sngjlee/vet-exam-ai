@@ -23,6 +23,7 @@ type Props = {
 };
 
 type Status = "loading" | "ready" | "error";
+type TypeFilter = CommentType | "all";
 
 type CommentRow = {
   id: string;
@@ -45,6 +46,15 @@ const VISIBLE_STATUSES: CommentStatus[] = [
   "blinded_by_report",
 ];
 
+const TYPE_FILTERS: Array<{ value: TypeFilter; label: string }> = [
+  { value: "all", label: "전체" },
+  { value: "memorization", label: "암기법" },
+  { value: "correction", label: "정정" },
+  { value: "explanation", label: "추가 설명" },
+  { value: "question", label: "질문" },
+  { value: "discussion", label: "토론" },
+];
+
 export default function CommentThread({ questionId, highlightCommentId }: Props) {
   const [status, setStatus] = useState<Status>("loading");
   const [roots, setRoots] = useState<RootWithReplies[]>([]);
@@ -53,6 +63,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [sortMode, setSortMode] = useState<SortMode>("score");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserNickname, setCurrentUserNickname] = useState<string | null>(null);
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
@@ -737,6 +748,24 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
   }, [pinnedCommentId, pinnedInListSentinel]);
 
   const pinnedDisplay = pinnedFromList ?? pinnedFallback;
+  const rootTypeCounts = roots.reduce(
+    (acc, root) => {
+      if (!root.isPlaceholder) {
+        acc.total += 1;
+        acc.byType.set(root.type, (acc.byType.get(root.type) ?? 0) + 1);
+      }
+      return acc;
+    },
+    { total: 0, byType: new Map<CommentType, number>() },
+  );
+  const visibleRoots =
+    typeFilter === "all"
+      ? roots
+      : roots.filter((root) => !root.isPlaceholder && root.type === typeFilter);
+  const visiblePinned =
+    pinnedDisplay && (typeFilter === "all" || pinnedDisplay.item.type === typeFilter)
+      ? pinnedDisplay
+      : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
@@ -793,7 +822,64 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
 
       {status === "ready" && (
         <>
-          {pinnedDisplay && (
+          {roots.length > 0 && (
+            <section
+              aria-label="댓글 타입 필터"
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                padding: 12,
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              {TYPE_FILTERS.map((item) => {
+                const count =
+                  item.value === "all"
+                    ? rootTypeCounts.total
+                    : rootTypeCounts.byType.get(item.value) ?? 0;
+                const active = typeFilter === item.value;
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setTypeFilter(item.value)}
+                    aria-pressed={active}
+                    style={{
+                      minHeight: 34,
+                      borderRadius: 999,
+                      padding: "7px 11px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      border: `1px solid ${active ? "var(--teal-border)" : "var(--border)"}`,
+                      background: active ? "var(--teal-dim)" : "var(--bg)",
+                      color: active ? "var(--teal)" : "var(--text-muted)",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {item.label}
+                    <span
+                      className="kvle-mono"
+                      style={{
+                        color: active ? "var(--teal)" : "var(--text-faint)",
+                        fontSize: 10,
+                      }}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </section>
+          )}
+
+          {visiblePinned && (
             <section
               aria-label="내 암기팁"
               style={{
@@ -821,28 +907,28 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
                 내 암기팁
               </div>
               <CommentItem
-                comment={pinnedDisplay.item}
-                score={pinnedDisplay.score}
-                myVote={myVoteById.get(pinnedDisplay.item.id) ?? null}
-                status={pinnedDisplay.status}
-                isOwner={pinnedDisplay.item.user_id === currentUserId}
+                comment={visiblePinned.item}
+                score={visiblePinned.score}
+                myVote={myVoteById.get(visiblePinned.item.id) ?? null}
+                status={visiblePinned.status}
+                isOwner={visiblePinned.item.user_id === currentUserId}
                 isAuthed={currentUserId !== null}
-                isReported={reportedIds.has(pinnedDisplay.item.id)}
-                canDelete={pinnedDisplay.item.user_id === currentUserId}
+                isReported={reportedIds.has(visiblePinned.item.id)}
+                canDelete={visiblePinned.item.user_id === currentUserId}
                 isPinned
                 authorBadges={
-                  pinnedDisplay.item.user_id
-                    ? authorBadgesById.get(pinnedDisplay.item.user_id) ?? []
+                  visiblePinned.item.user_id
+                    ? authorBadgesById.get(visiblePinned.item.user_id) ?? []
                     : []
                 }
-                isEditing={editingId === pinnedDisplay.item.id}
+                isEditing={editingId === visiblePinned.item.id}
                 onDelete={handleDelete}
                 onReport={handleReport}
                 onVoteChange={handleVoteChange}
                 onUnauthedAttempt={handleUnauthedAttempt}
                 onTogglePin={handleTogglePin}
                 onStartEdit={
-                  pinnedDisplay.item.user_id === currentUserId ? handleStartEdit : undefined
+                  visiblePinned.item.user_id === currentUserId ? handleStartEdit : undefined
                 }
                 onCancelEdit={handleCancelEdit}
                 onSaved={handleSaved}
@@ -853,7 +939,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           )}
           <CommentList
             questionId={questionId}
-            roots={roots}
+            roots={visibleRoots}
             scoreById={scoreById}
             myVoteById={myVoteById}
             reportedIds={reportedIds}
