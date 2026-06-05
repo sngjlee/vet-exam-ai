@@ -824,6 +824,32 @@ export interface Database {
           categories: string[];
         };
       };
+      get_my_stats_summary: {
+        Args: Record<string, never>;
+        Returns: {
+          totalAttempts: number;
+          totalCorrect: number;
+          accuracy: number;
+          last7DaysAttempts: number;
+          byCategory: Array<{
+            category: string;
+            attempts: number;
+            correct: number;
+            accuracy: number;
+          }>;
+          recentAttempts: Array<{
+            id: string;
+            user_id: string;
+            session_id: string;
+            question_id: string;
+            category: string;
+            selected_answer: string;
+            correct_answer: string;
+            is_correct: boolean;
+            answered_at: string;
+          }>;
+        };
+      };
       log_admin_action: {
         Args: {
           p_action:      Database["public"]["Enums"]["audit_action"];

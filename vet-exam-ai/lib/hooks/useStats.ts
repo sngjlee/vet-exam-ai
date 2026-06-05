@@ -20,84 +20,51 @@ export type Stats = {
   recentAttempts: AttemptRow[];
 };
 
+function emptyStats(): Stats {
+  return {
+    totalAttempts: 0,
+    totalCorrect: 0,
+    accuracy: 0,
+    last7DaysAttempts: 0,
+    byCategory: [],
+    recentAttempts: [],
+  };
+}
+
 export function useStats(userId: string | null, authLoading: boolean) {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<{
+    userId: string;
+    stats: Stats | null;
+  } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
+    if (!userId) return;
 
-    if (!userId) {
-      setStats(null);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
+    let cancelled = false;
     const supabase = createClient();
 
     void supabase
-      .from("attempts")
-      .select("*")
-      .eq("user_id", userId)
-      .order("answered_at", { ascending: false })
+      .rpc("get_my_stats_summary")
       .then(({ data, error }) => {
+        if (cancelled) return;
         if (error) {
-          console.error("Failed to fetch attempts:", error);
-          setLoading(false);
+          console.error("Failed to fetch stats summary:", error);
+          setState({ userId, stats: null });
           return;
         }
 
-        const rows = (data as AttemptRow[] | null) ?? [];
-        const sevenDaysAgo = new Date(
-          Date.now() - 7 * 24 * 60 * 60 * 1000,
-        ).toISOString();
-
-        const totalAttempts = rows.length;
-        const totalCorrect = rows.filter((r) => r.is_correct).length;
-        const accuracy =
-          totalAttempts > 0
-            ? Math.round((totalCorrect / totalAttempts) * 100)
-            : 0;
-        const last7DaysAttempts = rows.filter(
-          (r) => r.answered_at >= sevenDaysAgo,
-        ).length;
-
-        const categoryMap = new Map<
-          string,
-          { attempts: number; correct: number }
-        >();
-        for (const row of rows) {
-          const existing = categoryMap.get(row.category) ?? {
-            attempts: 0,
-            correct: 0,
-          };
-          categoryMap.set(row.category, {
-            attempts: existing.attempts + 1,
-            correct: existing.correct + (row.is_correct ? 1 : 0),
-          });
-        }
-
-        const byCategory: CategoryStat[] = Array.from(categoryMap.entries())
-          .map(([category, { attempts, correct }]) => ({
-            category,
-            attempts,
-            correct,
-            accuracy: Math.round((correct / attempts) * 100),
-          }))
-          .sort((a, b) => b.attempts - a.attempts);
-
-        setStats({
-          totalAttempts,
-          totalCorrect,
-          accuracy,
-          last7DaysAttempts,
-          byCategory,
-          recentAttempts: rows.slice(0, 20),
-        });
-        setLoading(false);
+        setState({ userId, stats: (data as Stats | null) ?? emptyStats() });
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [userId, authLoading]);
 
-  return { stats, loading };
+  if (authLoading) return { stats: null, loading: true };
+  if (!userId) return { stats: null, loading: false };
+  if (state?.userId !== userId) return { stats: null, loading: true };
+
+  return { stats: state.stats, loading: false };
 }
