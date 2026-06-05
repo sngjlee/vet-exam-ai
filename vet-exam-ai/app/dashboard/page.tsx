@@ -54,7 +54,7 @@ function ReviewStatusCard({
   dueCount: number;
   allNotes: WrongAnswerNote[];
 }) {
-  const now = Date.now();
+  const [now] = useState(() => Date.now());
   const futureNotes = allNotes
     .filter((note) => note.nextReviewAt && new Date(note.nextReviewAt).getTime() > now)
     .sort((a, b) =>
@@ -390,10 +390,10 @@ function StudyFirstPanel({
       border: "var(--teal-border)",
     },
     {
-      href: "/board",
+      href: "/questions",
       icon: MessageSquare,
-      label: "댓글 암기법 보기",
-      meta: "수험생들이 외우는 방식과 정정 제안",
+      label: "해설 댓글 같이 보기",
+      meta: "문제별 해설에서 암기법과 정정 제안 확인",
       tone: "var(--blue)",
       background: "var(--blue-dim)",
       border: "rgba(74,127,168,0.28)",
@@ -507,6 +507,7 @@ export default function DashboardPage() {
   const { stats, loading: statsLoading } = useStats(user?.id ?? null, authLoading);
   const { allNotes } = useReview();
   const dueCount = useDueCountCtx();
+  const [today] = useState(() => new Date());
 
   const weakest = useMemo(
     () => (stats ? findWeakestCategory(stats.byCategory) : null),
@@ -523,8 +524,8 @@ export default function DashboardPage() {
       };
     }
     const attempts = stats.recentAttempts;
-    const todayStr = new Date().toDateString();
-    const yestStr = new Date(Date.now() - 86400000).toDateString();
+    const todayStr = today.toDateString();
+    const yestStr = new Date(today.getTime() - 86400000).toDateString();
     const todayCount = attempts.filter(
       (a) => new Date(a.answered_at).toDateString() === todayStr && a.is_correct
     ).length;
@@ -536,7 +537,7 @@ export default function DashboardPage() {
       attempts.map((a) => new Date(a.answered_at).toDateString())
     );
     let streakCount = 0;
-    let d = new Date();
+    let d = new Date(today);
     while (activeDays.has(d.toDateString())) {
       streakCount++;
       d = new Date(d.getTime() - 86400000);
@@ -548,7 +549,7 @@ export default function DashboardPage() {
       byCategory: stats.byCategory.length > 0 ? stats.byCategory : FALLBACK_CATEGORIES,
       recentAttempts: attempts,
     };
-  }, [stats]);
+  }, [stats, today]);
 
   if (authLoading || statsLoading) {
     return (

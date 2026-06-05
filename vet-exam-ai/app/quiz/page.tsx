@@ -28,10 +28,10 @@ function StudyModeShortcuts() {
       color: "var(--teal)",
     },
     {
-      href: "/board",
+      href: "/questions",
       icon: MessageSquare,
-      label: "댓글 암기법 보기",
-      meta: "외우는 방식, 정정, 질문을 먼저 훑습니다",
+      label: "해설 댓글 같이 보기",
+      meta: "문제별 해설에서 암기법과 정정 제안을 봅니다",
       color: "var(--blue)",
     },
   ];

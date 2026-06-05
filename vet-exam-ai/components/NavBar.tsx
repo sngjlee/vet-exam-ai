@@ -7,7 +7,6 @@ import {
   BarChart3,
   BookOpen,
   CirclePlay,
-  Lightbulb,
   ListChecks,
   LogOut,
   MessageSquare,
@@ -85,17 +84,7 @@ export default function NavBar() {
         <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto text-sm font-medium">
           {!loading && user && (
             <>
-              <Link
-                href="/questions"
-                className={`${linkClass("/questions")} border border-[var(--teal-border)]`}
-                aria-label="해설보기"
-                title="해설보기"
-              >
-                <Lightbulb size={16} />
-                <span className="hidden sm:inline">해설보기</span>
-              </Link>
-
-              {MAIN_LINKS.slice(1).map(({ href, label, icon: Icon, section }) => (
+              {MAIN_LINKS.map(({ href, label, icon: Icon, section }) => (
                 <Link
                   key={href}
                   href={href}
