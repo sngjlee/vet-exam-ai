@@ -2,6 +2,7 @@
 
 import { useMemo, useEffect, useState } from "react";
 import Link from "next/link";
+import { BookOpen, CirclePlay, MessageSquare, RotateCcw } from "lucide-react";
 import { useAuth } from "../../lib/hooks/useAuth";
 import { useStats, type CategoryStat } from "../../lib/hooks/useStats";
 import { useReview } from "../../lib/hooks/useReview";
@@ -371,6 +372,136 @@ function AnnouncementBannerWrapper() {
   );
 }
 
+function StudyFirstPanel({
+  dueCount,
+  weakestName,
+}: {
+  dueCount: number;
+  weakestName: string;
+}) {
+  const actions = [
+    {
+      href: "/questions",
+      icon: BookOpen,
+      label: "해설부터 공부하기",
+      meta: "기출 문항, 공식 해설, 댓글 노하우",
+      tone: "var(--teal)",
+      background: "var(--teal-dim)",
+      border: "var(--teal-border)",
+    },
+    {
+      href: "/board",
+      icon: MessageSquare,
+      label: "댓글 암기법 보기",
+      meta: "수험생들이 외우는 방식과 정정 제안",
+      tone: "var(--blue)",
+      background: "var(--blue-dim)",
+      border: "rgba(74,127,168,0.28)",
+    },
+    {
+      href: dueCount > 0 ? "/review" : "/wrong-notes",
+      icon: RotateCcw,
+      label: dueCount > 0 ? `오답 복습 ${dueCount}문제` : "오답노트 보기",
+      meta: "틀린 문제는 다시 만나는 흐름으로",
+      tone: "var(--amber)",
+      background: "var(--amber-dim)",
+      border: "rgba(200,137,90,0.28)",
+    },
+    {
+      href: "/quiz",
+      icon: CirclePlay,
+      label: "문제풀기는 가볍게",
+      meta: `${weakestName} 포함, 필요한 만큼만`,
+      tone: "var(--text-muted)",
+      background: "var(--surface-raised)",
+      border: "var(--border)",
+    },
+  ];
+
+  return (
+    <section
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        padding: 18,
+        marginBottom: 22,
+      }}
+    >
+      <div style={{ marginBottom: 16 }}>
+        <span className="kvle-label" style={{ fontSize: 12 }}>
+          오늘의 학습 입구
+        </span>
+        <h1
+          style={{
+            color: "var(--text)",
+            fontFamily: "var(--font-serif)",
+            fontSize: 26,
+            fontWeight: 800,
+            lineHeight: 1.22,
+            margin: "8px 0 6px",
+          }}
+        >
+          먼저 해설을 보고, 댓글로 외우는 법을 잡으세요
+        </h1>
+        <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.55, margin: 0 }}>
+          vet40에서 힘이 생겼던 흐름처럼, 문제 자체보다 해설과 수험생 노하우를 앞에 둡니다.
+        </p>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 10,
+        }}
+      >
+        {actions.map(({ href, icon: Icon, label, meta, tone, background, border }) => (
+          <Link
+            key={href + label}
+            href={href}
+            style={{
+              minHeight: 108,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: 16,
+              borderRadius: 10,
+              border: `1px solid ${border}`,
+              background,
+              color: "var(--text)",
+              textDecoration: "none",
+            }}
+          >
+            <span
+              style={{
+                width: 32,
+                height: 32,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.05)",
+                color: tone,
+              }}
+            >
+              <Icon size={17} />
+            </span>
+            <span>
+              <strong style={{ display: "block", fontSize: 14, marginBottom: 4 }}>
+                {label}
+              </strong>
+              <span style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.35 }}>
+                {meta}
+              </span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const { stats, loading: statsLoading } = useStats(user?.id ?? null, authLoading);
@@ -455,6 +586,7 @@ export default function DashboardPage() {
     <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px 64px" }}>
       <DDayPlanWidget />
       <AnnouncementBannerWrapper />
+      <StudyFirstPanel dueCount={dueCount} weakestName={weakestName} />
       {/* ── Header ── */}
       <div style={{ marginBottom: 24 }}>
         <span className="kvle-label" style={{ marginBottom: 10, fontSize: 13 }}>오늘의 학습</span>
