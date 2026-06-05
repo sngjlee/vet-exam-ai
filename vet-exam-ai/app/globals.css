@@ -252,7 +252,87 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     word-break: keep-all;
   }
 
+  .kvle-question-detail-shell {
+    width: 100%;
+  }
+
+  .kvle-question-nav-button {
+    white-space: nowrap;
+  }
+
+  .kvle-question-nav-center {
+    min-width: 96px;
+    text-align: center;
+  }
+
+  .kvle-question-primary-action,
+  .kvle-question-secondary-action {
+    white-space: nowrap;
+  }
+
   @media (max-width: 640px) {
+    .kvle-question-detail-shell {
+      padding: 24px 14px 72px !important;
+      gap: 18px !important;
+    }
+
+    .kvle-question-nav {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px !important;
+      align-items: stretch !important;
+    }
+
+    .kvle-question-nav-center {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      width: 100%;
+      min-width: 0;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+
+    .kvle-question-nav-button {
+      width: 100%;
+      justify-content: center !important;
+      padding: 10px 12px !important;
+    }
+
+    .kvle-question-surface {
+      padding: 20px 16px !important;
+      border-radius: 12px !important;
+    }
+
+    .kvle-question-card-header {
+      align-items: stretch !important;
+      gap: 10px !important;
+      margin-bottom: 12px !important;
+    }
+
+    .kvle-choice-row {
+      align-items: flex-start !important;
+      gap: 12px !important;
+      padding: 14px 12px !important;
+    }
+
+    .kvle-question-submit-row {
+      justify-content: stretch !important;
+    }
+
+    .kvle-question-action-row {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px !important;
+    }
+
+    .kvle-question-primary-action,
+    .kvle-question-secondary-action {
+      width: 100%;
+      justify-content: center !important;
+    }
+
     .kvle-question-stem {
       font-size: 19px;
       line-height: 1.55;
@@ -264,6 +344,20 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     .kvle-prose {
       font-size: 15px;
       line-height: 1.8;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .kvle-question-detail-shell {
+      max-width: 760px !important;
+    }
+
+    .kvle-question-nav-button {
+      padding: 10px 18px !important;
+    }
+
+    .kvle-question-surface {
+      padding: 26px 28px !important;
     }
   }
   .kvle-input:focus {

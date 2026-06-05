@@ -43,6 +43,7 @@ type Props = {
 export default function QuestionReadOnly({ question }: Props) {
   return (
     <div
+      className="kvle-question-surface"
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",

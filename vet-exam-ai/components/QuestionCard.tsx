@@ -124,6 +124,7 @@ export default function QuestionCard({
     <div>
       {/* ── Progress header ──────────────────────────────────────────────── */}
       <div
+        className="kvle-question-card-header"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -197,7 +198,7 @@ export default function QuestionCard({
 
       {/* ── Card ─────────────────────────────────────────────────────────── */}
       <div
-        className="fade-in"
+        className="fade-in kvle-question-surface"
         style={{
           background: "var(--surface)",
           border: "1px solid var(--border)",
@@ -240,6 +241,7 @@ export default function QuestionCard({
 
             return (
               <button
+                className="kvle-choice-row"
                 key={choice}
                 onClick={() => !submitted && setSelected(choice)}
                 disabled={submitted}
@@ -292,8 +294,9 @@ export default function QuestionCard({
         {/* Action area */}
         <div style={{ marginTop: 24 }}>
           {!submitted ? (
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div className="kvle-question-submit-row" style={{ display: "flex", justifyContent: "flex-end" }}>
               <button
+                className="kvle-question-primary-action"
                 onClick={handleSubmit}
                 disabled={selected === null}
                 style={{
@@ -452,6 +455,7 @@ export default function QuestionCard({
 
               {/* Action row */}
               <div
+                className="kvle-question-action-row"
                 style={{
                   display: "flex",
                   gap: 10,
@@ -461,6 +465,7 @@ export default function QuestionCard({
               >
                 {!isCorrect ? (
                   <button
+                    className="kvle-question-secondary-action"
                     style={{
                       background: "transparent",
                       border: "1px solid var(--border)",
@@ -479,6 +484,7 @@ export default function QuestionCard({
                   <div />
                 )}
                 <button
+                  className="kvle-question-primary-action"
                   onClick={onNext}
                   style={{
                     background: "var(--teal)",

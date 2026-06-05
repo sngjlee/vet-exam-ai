@@ -96,6 +96,7 @@ export default function QuestionDetailPage() {
 
   return (
     <main
+      className="kvle-question-detail-shell"
       style={{
         maxWidth: 880,
         margin: "0 auto",
@@ -222,12 +223,13 @@ function QuestionNavBar({
     if (position === "bottom") return null;
     return (
       <nav
+        className="kvle-question-nav"
         aria-label="문제 탐색"
         style={{ display: "flex", justifyContent: "flex-start" }}
       >
         <Link
           href="/questions"
-          className="kvle-btn-ghost text-sm"
+          className="kvle-btn-ghost kvle-question-nav-button text-sm"
           style={{ minHeight: 44, padding: "10px 16px" }}
         >
           <ListChecks size={14} />
@@ -241,6 +243,7 @@ function QuestionNavBar({
 
   return (
     <nav
+      className="kvle-question-nav"
       aria-label="문제 탐색"
       style={{
         display: "flex",
@@ -254,7 +257,7 @@ function QuestionNavBar({
         type="button"
         onClick={() => prevId && onNavigate(prevId)}
         disabled={!prevId}
-        className="kvle-btn-ghost text-sm"
+        className="kvle-btn-ghost kvle-question-nav-button text-sm"
         style={{ minHeight: 44, padding: "10px 16px" }}
       >
         <ChevronLeft size={16} />
@@ -262,6 +265,7 @@ function QuestionNavBar({
       </button>
 
       <div
+        className="kvle-question-nav-center"
         style={{
           display: "inline-flex",
           flexDirection: "column",
@@ -299,7 +303,7 @@ function QuestionNavBar({
         type="button"
         onClick={() => nextId && onNavigate(nextId)}
         disabled={!nextId}
-        className="kvle-btn-ghost text-sm"
+        className="kvle-btn-ghost kvle-question-nav-button text-sm"
         style={{ minHeight: 44, padding: "10px 16px" }}
       >
         다음 문제
