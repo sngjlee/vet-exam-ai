@@ -349,14 +349,23 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     highlightedRef.current = highlightCommentId;
     el.scrollIntoView({ block: "center", behavior: "smooth" });
 
+    const prevBackground = el.style.background;
+    const prevOutline = el.style.outline;
+    const prevOutlineOffset = el.style.outlineOffset;
     const prev = el.style.boxShadow;
     const prevTransition = el.style.transition;
-    el.style.transition = "box-shadow 200ms ease-out";
-    el.style.boxShadow = "0 0 0 2px var(--teal)";
+    el.style.transition = "background 200ms ease-out, box-shadow 200ms ease-out, outline 200ms ease-out";
+    el.style.background = "var(--teal-dim)";
+    el.style.outline = "3px solid var(--teal)";
+    el.style.outlineOffset = "2px";
+    el.style.boxShadow = "0 10px 28px rgba(30,167,187,0.18)";
     const timer = window.setTimeout(() => {
+      el.style.background = prevBackground;
+      el.style.outline = prevOutline;
+      el.style.outlineOffset = prevOutlineOffset;
       el.style.boxShadow = prev;
       el.style.transition = prevTransition;
-    }, 1500);
+    }, 2800);
     return () => window.clearTimeout(timer);
   }, [highlightCommentId, status, roots]);
 

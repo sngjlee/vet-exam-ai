@@ -110,6 +110,7 @@ export default function CommentItem({
           fontSize: 12,
           color: "var(--text-faint)",
           fontStyle: "italic",
+          scrollMarginTop: 96,
         }}
       >
         [작성자에 의해 삭제된 댓글]
@@ -137,6 +138,7 @@ export default function CommentItem({
         display: "flex",
         flexDirection: "column",
         gap: 8,
+        scrollMarginTop: 96,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>

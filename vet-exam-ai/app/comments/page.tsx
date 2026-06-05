@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpen, ChevronRight, MessageSquare, Search, TrendingUp } from "lucide-react";
+import { BookOpen, ChevronRight, Lightbulb, MessageSquare, Search, TrendingUp } from "lucide-react";
 import { createClient } from "../../lib/supabase/server";
 import type { CommentType } from "../../lib/comments/schema";
 
@@ -43,6 +43,7 @@ const TYPE_FILTERS: Array<{ value: CommentType; label: string }> = [
   { value: "correction", label: "정정" },
   { value: "explanation", label: "추가설명" },
   { value: "question", label: "질문" },
+  { value: "discussion", label: "토론" },
 ];
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -137,13 +138,42 @@ export default async function CommentsPage({ searchParams }: PageProps) {
       : query.order("created_at", { ascending: false });
   query = query.range(from, to);
 
-  const { data: commentRows, error, count } = await query;
+  const makeCountQuery = (countType: CommentType | null) => {
+    let countQuery = supabase
+      .from("comments")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "visible")
+      .is("parent_id", null);
+    if (countType) {
+      countQuery = countQuery.eq("type", countType);
+    }
+    if (searchable) {
+      countQuery = countQuery.ilike("body_text", `%${q}%`);
+    }
+    return countQuery;
+  };
+
+  const [commentsRes, allCountRes, ...typeCountResults] = await Promise.all([
+    query,
+    makeCountQuery(null),
+    ...TYPE_FILTERS.map((item) => makeCountQuery(item.value)),
+  ]);
+
+  const { data: commentRows, error, count } = commentsRes;
   if (error) {
     throw new Error(error.message);
+  }
+  if (allCountRes.error) throw new Error(allCountRes.error.message);
+  for (const result of typeCountResults) {
+    if (result.error) throw new Error(result.error.message);
   }
 
   const rows = commentRows ?? [];
   const total = count ?? 0;
+  const allCount = allCountRes.count ?? 0;
+  const typeCounts = new Map<CommentType, number>(
+    TYPE_FILTERS.map((item, index) => [item.value, typeCountResults[index]?.count ?? 0]),
+  );
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const questionIds = Array.from(new Set(rows.map((row) => row.question_id)));
   const userIds = Array.from(
@@ -213,6 +243,56 @@ export default async function CommentsPage({ searchParams }: PageProps) {
         </p>
       </header>
 
+      <section
+        style={{
+          background: "linear-gradient(135deg, rgba(30,167,187,0.10), rgba(255,255,255,0.92))",
+          border: "1px solid var(--teal-border)",
+          borderRadius: 12,
+          padding: 16,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 14,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start", minWidth: 0 }}>
+          <div
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              background: "var(--teal-dim)",
+              border: "1px solid var(--teal-border)",
+              display: "grid",
+              placeItems: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Lightbulb size={18} style={{ color: "var(--teal)" }} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <strong style={{ display: "block", color: "var(--text)", fontSize: 14, marginBottom: 3 }}>
+              암기법만 빠르게 훑기
+            </strong>
+            <p style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.55, margin: 0 }}>
+              추천순으로 정렬해 다른 수험생이 실제로 외운 방식을 먼저 봅니다.
+            </p>
+          </div>
+        </div>
+        <Link
+          href={buildCommentsHref({ type: "memorization", sort: "popular", q })}
+          className="kvle-btn-primary text-sm"
+          style={{ minHeight: 42, padding: "9px 16px", textDecoration: "none" }}
+        >
+          암기법만 보기
+          <span className="kvle-mono" style={{ opacity: 0.75 }}>
+            {typeCounts.get("memorization") ?? 0}
+          </span>
+          <ChevronRight size={15} />
+        </Link>
+      </section>
+
       <form
         action="/comments"
         method="get"
@@ -275,7 +355,11 @@ export default async function CommentsPage({ searchParams }: PageProps) {
         }}
       >
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <FilterLink href={buildCommentsHref({ type: null, sort, q })} active={!type}>
+          <FilterLink
+            href={buildCommentsHref({ type: null, sort, q })}
+            active={!type}
+            count={allCount}
+          >
             전체
           </FilterLink>
           {TYPE_FILTERS.map((item) => (
@@ -283,6 +367,7 @@ export default async function CommentsPage({ searchParams }: PageProps) {
               key={item.value}
               href={buildCommentsHref({ type: item.value, sort, q })}
               active={type === item.value}
+              count={typeCounts.get(item.value) ?? 0}
             >
               {item.label}
             </FilterLink>
@@ -412,10 +497,12 @@ function PageLink({
 function FilterLink({
   href,
   active,
+  count,
   children,
 }: {
   href: string;
   active: boolean;
+  count?: number;
   children: React.ReactNode;
 }) {
   return (
@@ -424,6 +511,7 @@ function FilterLink({
       style={{
         display: "inline-flex",
         alignItems: "center",
+        gap: 6,
         minHeight: 34,
         padding: "7px 12px",
         borderRadius: 999,
@@ -436,6 +524,18 @@ function FilterLink({
       }}
     >
       {children}
+      {typeof count === "number" && (
+        <span
+          className="kvle-mono"
+          style={{
+            color: active ? "var(--teal)" : "var(--text-faint)",
+            fontSize: 10,
+            opacity: active ? 0.95 : 0.8,
+          }}
+        >
+          {count}
+        </span>
+      )}
     </Link>
   );
 }

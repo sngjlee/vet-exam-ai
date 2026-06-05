@@ -36,6 +36,7 @@ export default function CommentCollapsedRow({
         gap: 8,
         fontSize: 12,
         color: "var(--text-faint)",
+        scrollMarginTop: 96,
       }}
     >
       <span>{label}</span>
