@@ -4,12 +4,12 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../../components/QuestionCard";
 import SessionSetup from "../../components/SessionSetup";
-import { createSessionQuestions, type Question } from "../../lib/questions";
+import type { Question } from "../../lib/questions";
 import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 import { useAttempts } from "../../lib/hooks/useAttempts";
 import { useAuth } from "../../lib/hooks/useAuth";
 import { useDueCountCtx } from "../../lib/context/DueCountContext";
-import { useQuestions } from "../../lib/hooks/useQuestions";
+import { useQuestionMeta } from "../../lib/hooks/useQuestionMeta";
 import {
   Sparkles, BookOpen, Clock,
   ArrowRight, CheckCircle2, RotateCcw,
@@ -18,11 +18,17 @@ import {
 const TOTAL_QUESTIONS = 5;
 
 export default function QuizPage() {
-  const { questions, categories, loading: questionsLoading, error: questionsError } = useQuestions();
+  const {
+    meta,
+    loading: metaLoading,
+    error: metaError,
+  } = useQuestionMeta();
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [started, setStarted] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map());
   const { notes: wrongNotes, addNote } = useWrongNotes();
   const { logAttempt } = useAttempts();
@@ -33,12 +39,30 @@ export default function QuizPage() {
   const currentQuestion = sessionQuestions[currentIndex];
   const finished = started && currentIndex >= sessionQuestions.length;
 
-  function startSession(payload?: { subjects: string[]; count: number }) {
+  async function startSession(payload?: { subjects: string[]; count: number }) {
     const subjects = payload?.subjects ?? [];
     const count = payload?.count ?? TOTAL_QUESTIONS;
 
-    const categoryFilters = subjects.length > 0 ? subjects : undefined;
-    const newSession = createSessionQuestions(questions, count, categoryFilters);
+    setSessionLoading(true);
+    setSessionError(null);
+
+    const params = new URLSearchParams({
+      session: "1",
+      count: String(count),
+    });
+    if (subjects.length > 0) {
+      params.set("categories", subjects.join(","));
+    }
+
+    const res = await fetch(`/api/questions?${params.toString()}`);
+    if (!res.ok) {
+      setSessionError("failed");
+      setSessionLoading(false);
+      return;
+    }
+
+    const newSession = (await res.json()) as Question[];
+    setSessionLoading(false);
     if (newSession.length === 0) return;
 
     sessionIdRef.current = crypto.randomUUID();
@@ -209,10 +233,15 @@ export default function QuizPage() {
                   </p>
                 </div>
                 <SessionSetup
-                  questions={questions}
-                  categories={categories}
-                  loading={questionsLoading}
-                  error={questionsError ? "문제를 불러오지 못했습니다" : null}
+                  categories={meta?.categories ?? []}
+                  countsByCategory={meta?.countsByCategory ?? {}}
+                  totalCount={meta?.total ?? 0}
+                  loading={metaLoading || sessionLoading}
+                  error={
+                    metaError || sessionError
+                      ? "문제를 불러오지 못했습니다"
+                      : null
+                  }
                   onStart={startSession}
                 />
               </div>
@@ -390,10 +419,15 @@ export default function QuizPage() {
               </p>
             </div>
             <SessionSetup
-              questions={questions}
-              categories={categories}
-              loading={questionsLoading}
-              error={questionsError ? "문제를 불러오지 못했습니다" : null}
+              categories={meta?.categories ?? []}
+              countsByCategory={meta?.countsByCategory ?? {}}
+              totalCount={meta?.total ?? 0}
+              loading={metaLoading || sessionLoading}
+              error={
+                metaError || sessionError
+                  ? "문제를 불러오지 못했습니다"
+                  : null
+              }
               onStart={startSession}
             />
           </div>

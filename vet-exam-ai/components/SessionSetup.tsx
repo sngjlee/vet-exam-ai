@@ -3,22 +3,23 @@
 
 import { useEffect, useMemo } from "react";
 import { Play } from "lucide-react";
-import type { Question } from "../lib/questions/types";
 import { groupCategories, SUBJECT_GROUPS } from "../lib/subjectGroups";
 import { useQuizConfig, VALID_COUNTS } from "../lib/hooks/useQuizConfig";
 import SubjectChipGroup from "./SubjectChipGroup";
 
 type Props = {
-  questions: Question[];
   categories: string[];
+  countsByCategory: Record<string, number>;
+  totalCount: number;
   loading: boolean;
   error: string | null;
   onStart: (config: { subjects: string[]; count: number }) => void;
 };
 
 export default function SessionSetup({
-  questions,
   categories,
+  countsByCategory,
+  totalCount,
   loading,
   error,
   onStart,
@@ -37,14 +38,13 @@ export default function SessionSetup({
   const grouped = useMemo(() => groupCategories(categories), [categories]);
 
   // 활성 풀 사이즈 계산 (selected 기준, 빈 선택 = active 전체)
-  const activeQuestions = useMemo(
-    () => questions.filter((q) => q.isActive !== false),
-    [questions],
-  );
   const availablePoolSize = useMemo(() => {
-    if (validSubjects.length === 0) return activeQuestions.length;
-    return activeQuestions.filter((q) => selectedSet.has(q.category)).length;
-  }, [activeQuestions, selectedSet, validSubjects]);
+    if (validSubjects.length === 0) return totalCount;
+    return validSubjects.reduce(
+      (sum, subject) => sum + (countsByCategory[subject] ?? 0),
+      0,
+    );
+  }, [countsByCategory, totalCount, validSubjects]);
 
   // 자동 reduce: count > 풀 → 가능한 가장 큰 valid preset 또는 풀 사이즈로
   useEffect(() => {

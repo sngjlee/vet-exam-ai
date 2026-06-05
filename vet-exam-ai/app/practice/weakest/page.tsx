@@ -1,12 +1,10 @@
 // app/practice/weakest/page.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../../../components/QuestionCard";
 import type { Question } from "../../../lib/questions";
-import { createSessionQuestions } from "../../../lib/questions";
-import { useQuestions } from "../../../lib/hooks/useQuestions";
 import type { WrongAnswerNote } from "../../../lib/types";
 import { useAuth } from "../../../lib/hooks/useAuth";
 import { useStats, type CategoryStat } from "../../../lib/hooks/useStats";
@@ -23,26 +21,42 @@ export default function PracticeWeakestPage() {
   const { stats, loading: statsLoading } = useStats(user?.id ?? null, authLoading);
   const { logAttempt } = useAttempts();
   const { addNote } = useWrongNotes();
-  const { questions, loading: questionsLoading } = useQuestions();
 
   const sessionIdRef = useRef<string>(crypto.randomUUID());
-  const [weakest, setWeakest] = useState<CategoryStat | null>(null);
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [started, setStarted] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(false);
+
+  const weakest: CategoryStat | null = useMemo(
+    () => (stats ? findWeakestCategory(stats.byCategory) : null),
+    [stats],
+  );
 
   const currentQuestion = sessionQuestions[currentIndex];
   const finished = started && currentIndex >= sessionQuestions.length;
 
-  useEffect(() => {
-    if (statsLoading || !stats) return;
-    setWeakest(findWeakestCategory(stats.byCategory));
-  }, [stats, statsLoading]);
-
-  function startPractice() {
+  async function startPractice() {
     if (!weakest) return;
-    const qs = createSessionQuestions(questions, PRACTICE_COUNT, [weakest.category]);
+
+    setSessionLoading(true);
+
+    const params = new URLSearchParams({
+      session: "1",
+      count: String(PRACTICE_COUNT),
+      categories: weakest.category,
+    });
+    const res = await fetch(`/api/questions?${params.toString()}`);
+    if (!res.ok) {
+      setSessionLoading(false);
+      return;
+    }
+
+    const qs = (await res.json()) as Question[];
+    setSessionLoading(false);
+    if (qs.length === 0) return;
+
     sessionIdRef.current = crypto.randomUUID();
     setSessionQuestions(qs);
     setCurrentIndex(0);
@@ -87,7 +101,7 @@ export default function PracticeWeakestPage() {
     setCurrentIndex((prev) => prev + 1);
   }
 
-  if (authLoading || statsLoading || questionsLoading) {
+  if (authLoading || statsLoading) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-12">
         <LoadingSpinner />
@@ -196,7 +210,11 @@ export default function PracticeWeakestPage() {
             <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
               이 과목에서 {PRACTICE_COUNT}문제가 출제됩니다.
             </p>
-            <button onClick={startPractice} className="kvle-btn-primary">
+            <button
+              onClick={startPractice}
+              disabled={sessionLoading}
+              className="kvle-btn-primary"
+            >
               연습 시작
             </button>
           </div>

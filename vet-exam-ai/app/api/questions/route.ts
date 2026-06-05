@@ -23,6 +23,12 @@ type QuestionApiRow = Pick<
   | "explanation_image_files"
 >;
 
+const QUESTION_SELECT =
+  "id, public_id, question, choices, answer, explanation, category, subject, topic, difficulty, source, year, tags, is_active, question_image_files, explanation_image_files";
+const PAGE_SIZE = 1000;
+const SESSION_POOL_LIMIT = 300;
+const MAX_SESSION_COUNT = 50;
+
 function toQuestion(row: QuestionApiRow): Question {
   return {
     id: row.id,
@@ -39,58 +45,76 @@ function toQuestion(row: QuestionApiRow): Question {
     year: row.year ?? undefined,
     tags: row.tags ?? undefined,
     isActive: row.is_active,
-    questionImageFiles:    row.question_image_files ?? undefined,
+    questionImageFiles: row.question_image_files ?? undefined,
     explanationImageFiles: row.explanation_image_files ?? undefined,
   };
 }
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
-
   const url = new URL(req.url);
+
+  const lookupId = url.searchParams.get("id");
+  const metaOnly = url.searchParams.get("meta") === "1";
+  const sessionMode = url.searchParams.get("session") === "1";
   const recentYearsRaw = url.searchParams.get("recent_years");
   const category = url.searchParams.get("category");
 
-  // Resolve year cutoff for `recent_years` if present.
-  let yearCutoff: number | null = null;
-  if (recentYearsRaw) {
-    const n = Number.parseInt(recentYearsRaw, 10);
-    if (Number.isFinite(n) && n > 0 && n < 100) {
-      const { data: latest, error: latestErr } = await supabase
-        .from("questions")
-        .select("year")
-        .eq("is_active", true)
-        .not("year", "is", null)
-        .order("year", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (latestErr) {
-        return NextResponse.json(
-          { error: "Failed to resolve latest year" },
-          { status: 500 }
-        );
-      }
-      if (latest?.year != null) {
-        yearCutoff = latest.year - n + 1;
-      }
+  if (lookupId) {
+    const question = await loadQuestionById(lookupId);
+    if (question.error) {
+      return NextResponse.json(
+        { error: "Failed to load question" },
+        { status: 500 },
+      );
     }
+    if (!question.data) {
+      return NextResponse.json({ error: "Question not found" }, { status: 404 });
+    }
+    return NextResponse.json(toQuestion(question.data));
   }
 
-  // Supabase PostgREST가 db-max-rows=1000으로 응답을 자른다 (.range만으로는 우회 불가).
-  // 풀 전체(현재 ~2k+, 추후 증가)를 받기 위해 page 단위 반복.
-  const PAGE_SIZE = 1000;
-  const all: QuestionApiRow[] = [];
+  if (metaOnly) {
+    const meta = await loadQuestionMeta();
+    if (meta.error) {
+      return NextResponse.json(
+        { error: "Failed to load question metadata" },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json(meta.data);
+  }
 
+  if (sessionMode) {
+    const count = clampSessionCount(url.searchParams.get("count"));
+    const categories = parseCategories(url.searchParams.get("categories"));
+    const session = await loadSessionQuestions(count, categories);
+    if (session.error) {
+      return NextResponse.json(
+        { error: "Failed to load session questions" },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json(session.data.map(toQuestion));
+  }
+
+  const yearCutoff = await resolveYearCutoff(recentYearsRaw);
+  if (yearCutoff.error) {
+    return NextResponse.json(
+      { error: "Failed to resolve latest year" },
+      { status: 500 },
+    );
+  }
+
+  const all: QuestionApiRow[] = [];
   for (let from = 0; ; from += PAGE_SIZE) {
     let query = supabase
       .from("questions")
-      .select(
-        "id, public_id, question, choices, answer, explanation, category, subject, topic, difficulty, source, year, tags, is_active, question_image_files, explanation_image_files"
-      )
+      .select(QUESTION_SELECT)
       .eq("is_active", true);
 
-    if (yearCutoff !== null) {
-      query = query.gte("year", yearCutoff);
+    if (yearCutoff.value !== null) {
+      query = query.gte("year", yearCutoff.value);
     }
     if (category) {
       query = query.eq("category", category);
@@ -104,7 +128,7 @@ export async function GET(req: NextRequest) {
     if (error) {
       return NextResponse.json(
         { error: "Failed to load questions" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -114,4 +138,151 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(all.map(toQuestion));
+
+  async function loadQuestionById(id: string): Promise<{
+    data: QuestionApiRow | null;
+    error: unknown;
+  }> {
+    const byPublicId = await supabase
+      .from("questions")
+      .select(QUESTION_SELECT)
+      .eq("is_active", true)
+      .eq("public_id", id)
+      .maybeSingle();
+    if (byPublicId.error) return { data: null, error: byPublicId.error };
+    if (byPublicId.data) return { data: byPublicId.data, error: null };
+
+    const byId = await supabase
+      .from("questions")
+      .select(QUESTION_SELECT)
+      .eq("is_active", true)
+      .eq("id", id)
+      .maybeSingle();
+    return { data: byId.data ?? null, error: byId.error };
+  }
+
+  async function loadQuestionMeta(): Promise<{
+    data: {
+      categories: string[];
+      countsByCategory: Record<string, number>;
+      total: number;
+    };
+    error: unknown;
+  }> {
+    const counts = new Map<string, number>();
+
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from("questions")
+        .select("category")
+        .eq("is_active", true)
+        .order("category", { ascending: true })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (error) {
+        return {
+          data: { categories: [], countsByCategory: {}, total: 0 },
+          error,
+        };
+      }
+
+      const page = data ?? [];
+      for (const row of page) {
+        counts.set(row.category, (counts.get(row.category) ?? 0) + 1);
+      }
+      if (page.length < PAGE_SIZE) break;
+    }
+
+    const categories = Array.from(counts.keys()).sort((a, b) =>
+      a.localeCompare(b, "ko"),
+    );
+    return {
+      data: {
+        categories,
+        countsByCategory: Object.fromEntries(counts),
+        total: Array.from(counts.values()).reduce((sum, n) => sum + n, 0),
+      },
+      error: null,
+    };
+  }
+
+  async function loadSessionQuestions(
+    count: number,
+    categories: string[],
+  ): Promise<{ data: QuestionApiRow[]; error: unknown }> {
+    let countQuery = supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true);
+    if (categories.length > 0) {
+      countQuery = countQuery.in("category", categories);
+    }
+
+    const { count: total, error: countError } = await countQuery;
+    if (countError) return { data: [], error: countError };
+    if (!total) return { data: [], error: null };
+
+    const poolSize = Math.min(SESSION_POOL_LIMIT, total);
+    const maxStart = Math.max(0, total - poolSize);
+    const from = maxStart > 0 ? Math.floor(Math.random() * (maxStart + 1)) : 0;
+
+    let query = supabase
+      .from("questions")
+      .select(QUESTION_SELECT)
+      .eq("is_active", true)
+      .order("id", { ascending: true })
+      .range(from, from + poolSize - 1);
+    if (categories.length > 0) {
+      query = query.in("category", categories);
+    }
+
+    const { data, error } = await query;
+    if (error) return { data: [], error };
+    return { data: shuffle(data ?? []).slice(0, count), error: null };
+  }
+
+  async function resolveYearCutoff(raw: string | null): Promise<{
+    value: number | null;
+    error: unknown;
+  }> {
+    if (!raw) return { value: null, error: null };
+    const n = Number.parseInt(raw, 10);
+    if (!Number.isFinite(n) || n <= 0 || n >= 100) {
+      return { value: null, error: null };
+    }
+
+    const { data, error } = await supabase
+      .from("questions")
+      .select("year")
+      .eq("is_active", true)
+      .not("year", "is", null)
+      .order("year", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) return { value: null, error };
+    return { value: data?.year != null ? data.year - n + 1 : null, error: null };
+  }
+}
+
+function parseCategories(raw: string | null): string[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((category) => category.trim())
+    .filter(Boolean);
+}
+
+function clampSessionCount(raw: string | null): number {
+  const parsed = Number.parseInt(raw ?? "", 10);
+  if (!Number.isFinite(parsed)) return 5;
+  return Math.min(MAX_SESSION_COUNT, Math.max(1, parsed));
+}
+
+function shuffle<T>(items: T[]): T[] {
+  const copied = [...items];
+  for (let i = copied.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
+  }
+  return copied;
 }

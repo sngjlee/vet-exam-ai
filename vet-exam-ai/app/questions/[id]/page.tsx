@@ -5,13 +5,12 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, ListChecks } from "lucide-react";
 import { useAuth } from "../../../lib/hooks/useAuth";
-import { useQuestions } from "../../../lib/hooks/useQuestions";
+import { useQuestion } from "../../../lib/hooks/useQuestion";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import QuestionReadOnly from "../../../components/QuestionReadOnly";
 import CommentThread from "../../../components/comments/CommentThread";
 import {
   readQuestionsListContext,
-  type Question,
   type QuestionsListContext,
 } from "../../../lib/questions";
 
@@ -22,11 +21,6 @@ export default function QuestionDetailPage() {
   const search = useSearchParams();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const {
-    questions,
-    loading: questionsLoading,
-    error: questionsError,
-  } = useQuestions();
 
   // Next 16 useParams returns the URL segment without decoding non-ASCII —
   // `2.4_공보_57회_q001` arrives as `2.4_%EA%B3%B5%EB%B3%B4_57%ED%9A%8C_q001`.
@@ -36,9 +30,13 @@ export default function QuestionDetailPage() {
   const rawId = params?.id ?? "";
   const questionId = decodeMaybe(rawId);
   const highlightCommentId = search?.get("comment") ?? undefined;
+  const {
+    question,
+    loading: questionLoading,
+    error: questionError,
+    notFound,
+  } = useQuestion(questionId);
 
-  const [status, setStatus] = useState<Status>("loading");
-  const [question, setQuestion] = useState<Question | null>(null);
   const [listContext, setListContext] = useState<QuestionsListContext | null>(null);
 
   // Read sessionStorage list context (set by /questions card click).
@@ -80,31 +78,13 @@ export default function QuestionDetailPage() {
     }
   }, [user, authLoading, router]);
 
-  // Resolve from the same question payload used by the list. This keeps the
-  // list/detail ID contract in one place and also supports public IDs in URLs.
-  useEffect(() => {
-    if (authLoading || !user || !questionId) return;
-    if (questionsLoading) {
-      setStatus("loading");
-      return;
-    }
-    if (questionsError) {
-      setStatus("error");
-      return;
-    }
-
-    const found = questions.find(
-      (item) => item.id === questionId || item.publicId === questionId,
-    );
-    if (!found) {
-      setQuestion(null);
-      setStatus("not_found");
-      return;
-    }
-
-    setQuestion(found);
-    setStatus("ready");
-  }, [questionId, user, authLoading, questions, questionsLoading, questionsError]);
+  const status: Status = questionLoading
+    ? "loading"
+    : questionError
+      ? "error"
+      : notFound
+        ? "not_found"
+        : "ready";
 
   if (authLoading || !user) {
     return (
