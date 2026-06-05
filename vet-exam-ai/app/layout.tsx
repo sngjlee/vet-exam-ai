@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import ConditionalNavBar from "../components/ConditionalNavBar";
+import { AuthProvider } from "../lib/context/AuthContext";
 import { DueCountProvider } from "../lib/context/DueCountContext";
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -46,10 +47,12 @@ export default function RootLayout({
       <body
         className={`${ibmPlexMono.variable} antialiased`}
       >
-        <DueCountProvider>
-          <ConditionalNavBar />
-          {children}
-        </DueCountProvider>
+        <AuthProvider>
+          <DueCountProvider>
+            <ConditionalNavBar />
+            {children}
+          </DueCountProvider>
+        </AuthProvider>
         {/* Scroll-reveal fallback for browsers without animation-timeline: view() */}
         <script
           dangerouslySetInnerHTML={{

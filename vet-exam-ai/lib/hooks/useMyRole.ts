@@ -2,30 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "../supabase/client";
+import { useAuth } from "./useAuth";
 
 type Role = "user" | "reviewer" | "admin";
 
 export type MyRoleState = { role: Role; isActive: boolean } | null;
 
-/**
- * Returns the current user's role + active flag.
- * Subscribes to onAuthStateChange so account switches in the same tab
- * (logout A → login B) refresh instead of leaving stale admin/operator
- * badges visible.
- */
 export function useMyRole(): MyRoleState {
-  const [state, setState] = useState<MyRoleState>(null);
+  const { user, loading } = useAuth();
+  const [state, setState] = useState<{
+    userId: string;
+    value: MyRoleState;
+  } | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    const supabase = createClient();
+    if (loading) return;
 
-    async function loadFor(userId: string | null) {
-      if (cancelled) return;
-      if (!userId) {
-        setState(null);
-        return;
-      }
+    let cancelled = false;
+
+    if (!user) {
+      return;
+    }
+
+    const userId = user.id;
+
+    async function loadRole() {
+      const supabase = createClient();
       const { data } = await supabase
         .from("profiles")
         .select("role, is_active")
@@ -33,27 +35,22 @@ export function useMyRole(): MyRoleState {
         .maybeSingle();
       if (cancelled) return;
       if (!data) {
-        setState(null);
+        setState({ userId, value: null });
         return;
       }
-      setState({ role: data.role, isActive: data.is_active });
+      setState({
+        userId,
+        value: { role: data.role, isActive: data.is_active },
+      });
     }
 
-    supabase.auth.getUser().then(({ data }) => {
-      loadFor(data.user?.id ?? null);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      loadFor(session?.user?.id ?? null);
-    });
+    void loadRole();
 
     return () => {
       cancelled = true;
-      subscription.unsubscribe();
     };
-  }, []);
+  }, [user, loading]);
 
-  return state;
+  if (!user || state?.userId !== user.id) return null;
+  return state.value;
 }
