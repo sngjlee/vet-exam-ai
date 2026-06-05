@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpen, ChevronRight, MessageSquare, TrendingUp } from "lucide-react";
+import { BookOpen, ChevronRight, MessageSquare, Search, TrendingUp } from "lucide-react";
 import { createClient } from "../../lib/supabase/server";
 import type { CommentType } from "../../lib/comments/schema";
 
@@ -11,6 +11,8 @@ type PageProps = {
 };
 
 type SortMode = "recent" | "popular";
+
+const PAGE_SIZE = 20;
 
 type CommentPreview = {
   id: string;
@@ -36,8 +38,7 @@ const TYPE_META: Record<CommentType, { label: string; color: string; bg: string 
   discussion: { label: "토론", color: "#334155", bg: "#E2E8F0" },
 };
 
-const TYPE_FILTERS: Array<{ value: "all" | CommentType; label: string }> = [
-  { value: "all", label: "전체" },
+const TYPE_FILTERS: Array<{ value: CommentType; label: string }> = [
   { value: "memorization", label: "암기법" },
   { value: "correction", label: "정정" },
   { value: "explanation", label: "추가설명" },
@@ -50,6 +51,31 @@ function firstParam(value: string | string[] | undefined): string | undefined {
 
 function isCommentType(value: string | undefined): value is CommentType {
   return Boolean(value && value in TYPE_META);
+}
+
+function parsePage(value: string | undefined): number {
+  const page = Number.parseInt(value ?? "1", 10);
+  return Number.isFinite(page) && page > 0 ? page : 1;
+}
+
+function buildCommentsHref({
+  type,
+  sort,
+  q,
+  page,
+}: {
+  type: CommentType | null;
+  sort: SortMode;
+  q: string;
+  page?: number;
+}) {
+  const params = new URLSearchParams();
+  if (type) params.set("type", type);
+  if (sort === "popular") params.set("sort", sort);
+  if (q) params.set("q", q);
+  if (page && page > 1) params.set("page", String(page));
+  const query = params.toString();
+  return query ? `/comments?${query}` : "/comments";
 }
 
 function truncate(value: string, max: number) {
@@ -79,6 +105,11 @@ export default async function CommentsPage({ searchParams }: PageProps) {
   const sort: SortMode = firstParam(params.sort) === "popular" ? "popular" : "recent";
   const typeRaw = firstParam(params.type);
   const type = isCommentType(typeRaw) ? typeRaw : null;
+  const q = (firstParam(params.q) ?? "").trim().slice(0, 80);
+  const searchable = q.length >= 2;
+  const page = parsePage(firstParam(params.page));
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
   const supabase = await createClient();
   const {
@@ -88,25 +119,32 @@ export default async function CommentsPage({ searchParams }: PageProps) {
 
   let query = supabase
     .from("comments")
-    .select("id, question_id, user_id, type, body_text, vote_score, reply_count, created_at")
+    .select("id, question_id, user_id, type, body_text, vote_score, reply_count, created_at", {
+      count: "exact",
+    })
     .eq("status", "visible")
-    .is("parent_id", null)
-    .limit(40);
+    .is("parent_id", null);
 
   if (type) {
     query = query.eq("type", type);
+  }
+  if (searchable) {
+    query = query.ilike("body_text", `%${q}%`);
   }
   query =
     sort === "popular"
       ? query.order("vote_score", { ascending: false }).order("created_at", { ascending: false })
       : query.order("created_at", { ascending: false });
+  query = query.range(from, to);
 
-  const { data: commentRows, error } = await query;
+  const { data: commentRows, error, count } = await query;
   if (error) {
     throw new Error(error.message);
   }
 
   const rows = commentRows ?? [];
+  const total = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const questionIds = Array.from(new Set(rows.map((row) => row.question_id)));
   const userIds = Array.from(
     new Set(rows.map((row) => row.user_id).filter((value): value is string => Boolean(value))),
@@ -175,6 +213,54 @@ export default async function CommentsPage({ searchParams }: PageProps) {
         </p>
       </header>
 
+      <form
+        action="/comments"
+        method="get"
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: 12,
+          padding: 12,
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+        }}
+      >
+        {type && <input type="hidden" name="type" value={type} />}
+        {sort === "popular" && <input type="hidden" name="sort" value={sort} />}
+        <Search size={17} style={{ color: "var(--text-faint)", flexShrink: 0 }} />
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="암기법, 질환명, 헷갈린 표현 검색"
+          aria-label="댓글 노하우 검색"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            background: "transparent",
+            border: "none",
+            color: "var(--text)",
+            outline: "none",
+            fontSize: 14,
+          }}
+        />
+        {q && (
+          <Link
+            href={buildCommentsHref({ type, sort, q: "" })}
+            style={{ color: "var(--text-faint)", fontSize: 12, textDecoration: "none" }}
+          >
+            지우기
+          </Link>
+        )}
+        <button
+          type="submit"
+          className="kvle-btn-ghost text-sm"
+          style={{ minHeight: 38, padding: "8px 14px" }}
+        >
+          검색
+        </button>
+      </form>
+
       <section
         style={{
           background: "var(--surface)",
@@ -189,13 +275,13 @@ export default async function CommentsPage({ searchParams }: PageProps) {
         }}
       >
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <FilterLink href="/comments" active={!type}>
+          <FilterLink href={buildCommentsHref({ type: null, sort, q })} active={!type}>
             전체
           </FilterLink>
-          {TYPE_FILTERS.slice(1).map((item) => (
+          {TYPE_FILTERS.map((item) => (
             <FilterLink
               key={item.value}
-              href={`/comments?type=${item.value}${sort === "popular" ? "&sort=popular" : ""}`}
+              href={buildCommentsHref({ type: item.value, sort, q })}
               active={type === item.value}
             >
               {item.label}
@@ -205,13 +291,13 @@ export default async function CommentsPage({ searchParams }: PageProps) {
 
         <div style={{ display: "flex", gap: 6 }}>
           <FilterLink
-            href={`/comments${type ? `?type=${type}` : ""}`}
+            href={buildCommentsHref({ type, sort: "recent", q })}
             active={sort === "recent"}
           >
             최근순
           </FilterLink>
           <FilterLink
-            href={`/comments?${type ? `type=${type}&` : ""}sort=popular`}
+            href={buildCommentsHref({ type, sort: "popular", q })}
             active={sort === "popular"}
           >
             인기순
@@ -231,16 +317,95 @@ export default async function CommentsPage({ searchParams }: PageProps) {
             fontSize: 14,
           }}
         >
-          아직 볼 수 있는 댓글이 없습니다. 문제 상세에서 첫 노하우를 남겨보세요.
+          {q
+            ? "검색 조건에 맞는 댓글이 없습니다. 검색어를 조금 넓혀 보세요."
+            : "아직 볼 수 있는 댓글이 없습니다. 문제 상세에서 첫 노하우를 남겨보세요."}
         </section>
       ) : (
-        <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {comments.map((comment) => (
-            <CommentCard key={comment.id} comment={comment} />
-          ))}
-        </section>
+        <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              color: "var(--text-muted)",
+              fontSize: 12,
+            }}
+          >
+            <span>
+              댓글 <strong style={{ color: "var(--teal)" }}>{total}</strong>개
+            </span>
+            <span className="kvle-mono">
+              {page} / {totalPages}
+            </span>
+          </div>
+          <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {comments.map((comment) => (
+              <CommentCard key={comment.id} comment={comment} />
+            ))}
+          </section>
+          {totalPages > 1 && (
+            <nav
+              aria-label="댓글 페이지 이동"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <PageLink
+                href={buildCommentsHref({ type, sort, q, page: Math.max(1, page - 1) })}
+                disabled={page <= 1}
+              >
+                이전
+              </PageLink>
+              <span className="kvle-mono" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                {page} / {totalPages}
+              </span>
+              <PageLink
+                href={buildCommentsHref({ type, sort, q, page: Math.min(totalPages, page + 1) })}
+                disabled={page >= totalPages}
+              >
+                다음
+              </PageLink>
+            </nav>
+          )}
+        </>
       )}
     </main>
+  );
+}
+
+function PageLink({
+  href,
+  disabled,
+  children,
+}: {
+  href: string;
+  disabled: boolean;
+  children: React.ReactNode;
+}) {
+  if (disabled) {
+    return (
+      <span
+        className="kvle-btn-ghost text-sm"
+        aria-disabled="true"
+        style={{ minHeight: 44, padding: "10px 16px", opacity: 0.45 }}
+      >
+        {children}
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className="kvle-btn-ghost text-sm"
+      style={{ minHeight: 44, padding: "10px 16px", textDecoration: "none" }}
+    >
+      {children}
+    </Link>
   );
 }
 
