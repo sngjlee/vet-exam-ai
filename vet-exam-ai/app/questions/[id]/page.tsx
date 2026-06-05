@@ -165,6 +165,21 @@ export default function QuestionDetailPage() {
             >
               커뮤니티 토론
             </h3>
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: 10,
+                border: "1px solid var(--teal-border)",
+                background: "var(--teal-dim)",
+              }}
+            >
+              <strong style={{ display: "block", color: "var(--text)", fontSize: 14, marginBottom: 4 }}>
+                수험생 노하우
+              </strong>
+              <p style={{ color: "var(--text-muted)", fontSize: 13, lineHeight: 1.55, margin: 0 }}>
+                외우는 방식, 헷갈린 선택지, 정정 제안을 함께 남기는 공간입니다.
+              </p>
+            </div>
             <CommentThread
               questionId={question.id}
               highlightCommentId={highlightCommentId}

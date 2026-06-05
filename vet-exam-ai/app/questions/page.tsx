@@ -14,7 +14,7 @@ import {
   type RecentYearsWindow,
 } from "../../lib/questions";
 import LoadingSpinner from "../../components/LoadingSpinner";
-import { BookOpen, Filter, ChevronRight } from "lucide-react";
+import { BookOpen, Filter, ChevronRight, ListChecks, MessageSquare, RotateCcw } from "lucide-react";
 
 const PAGE_SIZE = 30;
 const RECENT_OPTIONS: ReadonlyArray<RecentYearsWindow> = [5, 7, 10] as const;
@@ -71,6 +71,161 @@ function clearStoredFilter() {
   } catch {
     /* ignore */
   }
+}
+
+function ExplanationStudyLanding({
+  onShowAll,
+  onRecent,
+  onWrongOnly,
+}: {
+  onShowAll: () => void;
+  onRecent: () => void;
+  onWrongOnly: () => void;
+}) {
+  const actions = [
+    {
+      label: "전체 해설 열기",
+      description: "과목을 정하지 않고 해설 카드부터 훑습니다",
+      icon: ListChecks,
+      onClick: onShowAll,
+      tone: "var(--teal)",
+    },
+    {
+      label: "최근 5개년 해설",
+      description: "최근 기출 흐름을 먼저 잡습니다",
+      icon: BookOpen,
+      onClick: onRecent,
+      tone: "var(--blue)",
+    },
+    {
+      label: "오답 해설만",
+      description: "틀린 문제의 해설과 선택지를 다시 봅니다",
+      icon: RotateCcw,
+      onClick: onWrongOnly,
+      tone: "var(--amber)",
+    },
+  ];
+
+  return (
+    <section
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        padding: 18,
+      }}
+    >
+      <div style={{ marginBottom: 16 }}>
+        <span className="kvle-label">해설 공부</span>
+        <h2
+          style={{
+            color: "var(--text)",
+            fontFamily: "var(--font-serif)",
+            fontSize: 22,
+            fontWeight: 800,
+            lineHeight: 1.25,
+            margin: "8px 0 6px",
+          }}
+        >
+          문제를 풀기 전, 해설과 수험생 노하우부터 볼 수 있어요
+        </h2>
+        <p style={{ color: "var(--text-muted)", fontSize: 13, lineHeight: 1.55, margin: 0 }}>
+          vet40처럼 해설을 읽고 댓글에서 암기법과 정정 포인트를 확인하는 흐름을 앞에 둡니다.
+        </p>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+          gap: 10,
+        }}
+      >
+        {actions.map(({ label, description, icon: Icon, onClick, tone }) => (
+          <button
+            key={label}
+            type="button"
+            onClick={onClick}
+            style={{
+              minHeight: 102,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: 16,
+              borderRadius: 10,
+              border: "1px solid var(--border)",
+              background: "var(--bg)",
+              color: "var(--text)",
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            <span
+              style={{
+                width: 30,
+                height: 30,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 8,
+                background: "var(--surface-raised)",
+                color: tone,
+              }}
+            >
+              <Icon size={16} />
+            </span>
+            <span>
+              <strong style={{ display: "block", fontSize: 14, marginBottom: 4 }}>
+                {label}
+              </strong>
+              <span style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.35 }}>
+                {description}
+              </span>
+            </span>
+          </button>
+        ))}
+        <Link
+          href="/board"
+          style={{
+            minHeight: 102,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            gap: 12,
+            padding: 16,
+            borderRadius: 10,
+            border: "1px solid var(--teal-border)",
+            background: "var(--teal-dim)",
+            color: "var(--text)",
+            textDecoration: "none",
+          }}
+        >
+          <span
+            style={{
+              width: 30,
+              height: 30,
+              display: "grid",
+              placeItems: "center",
+              borderRadius: 8,
+              background: "rgba(255,255,255,0.06)",
+              color: "var(--teal)",
+            }}
+          >
+            <MessageSquare size={16} />
+          </span>
+          <span>
+            <strong style={{ display: "block", fontSize: 14, marginBottom: 4 }}>
+              댓글 노하우 보기
+            </strong>
+            <span style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.35 }}>
+              암기법, 질문, 정정 제안을 모아 봅니다
+            </span>
+          </span>
+        </Link>
+      </div>
+    </section>
+  );
 }
 
 export default function QuestionsListPage() {
@@ -418,6 +573,12 @@ export default function QuestionsListPage() {
 
       {/* Body */}
       {!shouldFetch ? (
+        <ExplanationStudyLanding
+          onShowAll={() => setForceAll(true)}
+          onRecent={() => changeFilter(() => setRecentYears(5))}
+          onWrongOnly={() => changeFilter(() => setOnlyWrong(true))}
+        />
+      ) : false ? (
         <section
           className="kvle-card text-center"
           style={{ padding: "3rem 1.5rem" }}
