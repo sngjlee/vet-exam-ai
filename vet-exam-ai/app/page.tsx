@@ -41,6 +41,142 @@ function ArrowSVG({ size = 14 }: { size?: number }) {
   );
 }
 
+function HeroProductPreview() {
+  return (
+    <div
+      style={{
+        background: "rgba(240,237,216,0.04)",
+        border: "1px solid var(--border)",
+        borderRadius: 18,
+        padding: 16,
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ display: "flex", gap: 6 }}>
+          {["문제 풀이", "해설", "오답노트"].map((label, index) => (
+            <span
+              key={label}
+              style={{
+                borderRadius: 999,
+                padding: "5px 9px",
+                background: index === 0 ? "var(--teal-dim)" : "var(--surface-raised)",
+                border: `1px solid ${index === 0 ? "var(--teal-border)" : "var(--border)"}`,
+                color: index === 0 ? "var(--teal)" : "var(--text-muted)",
+                fontSize: 11,
+                fontWeight: 800,
+              }}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+        <span className="kvle-mono" style={{ color: "var(--text-faint)", fontSize: 11 }}>
+          KVLE-0421
+        </span>
+      </div>
+
+      <div style={{ display: "grid", gap: 12 }}>
+        <section
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 12,
+            padding: 18,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+            <span className="kvle-label">오늘 풀 문제</span>
+            <span style={{ color: "var(--text-faint)", fontSize: 12 }}>약리학</span>
+          </div>
+          <h3 style={{ color: "var(--text)", fontSize: 16, fontWeight: 800, lineHeight: 1.45, margin: "0 0 14px" }}>
+            베타-2 수용체 작용제의 대표적인 임상 효과는?
+          </h3>
+          <div style={{ display: "grid", gap: 8 }}>
+            {["심박수 감소", "기관지 확장", "위장관 운동 증가"].map((choice, index) => (
+              <div
+                key={choice}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  borderRadius: 10,
+                  border: `1px solid ${index === 1 ? "var(--teal-border)" : "var(--border)"}`,
+                  background: index === 1 ? "var(--teal-dim)" : "var(--bg)",
+                  color: index === 1 ? "var(--teal)" : "var(--text-muted)",
+                  padding: "10px 12px",
+                  fontSize: 13,
+                  fontWeight: index === 1 ? 800 : 600,
+                }}
+              >
+                <span className="kvle-mono">{index + 1}</span>
+                {choice}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1.05fr 0.95fr", gap: 12 }} className="landing-preview-grid">
+          <section
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              padding: 16,
+            }}
+          >
+            <span className="kvle-label">해설보기</span>
+            <p style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.55, margin: "9px 0 12px" }}>
+              베타-2 자극은 기관지 평활근을 이완시켜 호흡 저항을 낮춥니다.
+            </p>
+            <div
+              style={{
+                background: "var(--bg)",
+                border: "1px solid var(--teal-border)",
+                borderRadius: 10,
+                padding: 10,
+              }}
+            >
+              <strong style={{ color: "var(--text)", fontSize: 12 }}>댓글 암기법</strong>
+              <p style={{ color: "var(--text-muted)", fontSize: 11, lineHeight: 1.45, margin: "4px 0 0" }}>
+                “B2는 Breath”로 묶어 기관지 확장부터 떠올려요.
+              </p>
+            </div>
+          </section>
+
+          <section
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              padding: 16,
+            }}
+          >
+            <span className="kvle-label">오답노트</span>
+            <div style={{ marginTop: 12 }}>
+              <div style={{ color: "var(--teal)", fontSize: 30, fontWeight: 800, lineHeight: 1 }} className="kvle-mono">
+                D+3
+              </div>
+              <p style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.5, margin: "8px 0 0" }}>
+                틀린 문제는 다음 복습 날짜에 자동으로 다시 올라옵니다.
+              </p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   return (
     <>
@@ -91,14 +227,14 @@ export default function LandingPage() {
               border: "1px solid var(--border)", color: "var(--text-muted)",
               fontSize: "13px", fontWeight: 600, background: "transparent",
             }}>로그인</Link>
-            <Link href="/auth/login?mode=signup" className="btn-primary-pill landing-nav-primary" style={{
+            <Link href="/quiz" className="btn-primary-pill landing-nav-primary" style={{
               display: "inline-flex", alignItems: "center", gap: "8px",
               padding: "8px 8px 8px 16px", borderRadius: "999px",
               background: "var(--teal)", color: "#061218",
               fontSize: "13px", fontWeight: 700,
               boxShadow: "0 8px 20px rgba(30,167,187,0.2), inset 0 1px 0 rgba(255,255,255,0.2)",
             }}>
-              무료로 시작
+              문제 풀기
               <span style={{ width: "26px", height: "26px", borderRadius: "999px", background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center" }}>
                 <ArrowSVG size={11} />
               </span>
@@ -115,52 +251,39 @@ export default function LandingPage() {
 
             {/* LEFT: copy */}
             <div>
-              {/* Eyebrow pill */}
-              <div style={{
-                display: "inline-flex", alignItems: "center", gap: "8px",
-                padding: "6px 12px 6px 10px", borderRadius: "999px",
-                background: "var(--teal-dim)", border: "1px solid var(--teal-border)",
-                color: "var(--teal)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.14em",
-                marginBottom: "28px",
-              }}>
-                <span className="pulse-dot" style={{ width: "6px", height: "6px", borderRadius: "999px", background: "var(--teal)", display: "block", flexShrink: 0 }} />
-                수의미래연구소 공식 학습 플랫폼
-              </div>
-
               {/* Headline */}
-              <h1 className="landing-hero-title" style={{ fontSize: "clamp(40px, 6vw, 76px)", lineHeight: 1.02, letterSpacing: "-0.035em", fontWeight: 800, margin: "0 0 24px" }}>
-                검수된 문제 +<br />
-                <em style={{ fontStyle: "normal", color: "var(--teal)", position: "relative", whiteSpace: "nowrap" }}>수험생이 외우는 방식</em>
+              <h1 className="landing-hero-title" style={{ fontSize: "clamp(38px, 5.5vw, 64px)", lineHeight: 1.08, letterSpacing: 0, fontWeight: 800, margin: "0 0 22px" }}>
+                수의사 국가시험,<br />
+                <em style={{ fontStyle: "normal", color: "var(--teal)", position: "relative" }}>오늘 풀 문제부터 오답 복습까지</em>
               </h1>
 
               {/* Sub-copy */}
-              <p className="landing-hero-copy" style={{ fontSize: "17px", lineHeight: 1.65, color: "var(--text-muted)", maxWidth: "48ch", margin: "0 0 32px" }}>
-                수의미래연구소가 직접 검수한 1,500+ 문제와 수험생들의 실제 암기법·토론을 함께 학습합니다.
-                공식 해설로 부족할 때, 다른 수험생이 어떻게 외웠는지 바로 확인하세요.
+              <p className="landing-hero-copy" style={{ fontSize: "16px", lineHeight: 1.6, color: "var(--text-muted)", maxWidth: "46ch", margin: "0 0 28px" }}>
+                문제를 풀고, 해설을 확인하고, 틀린 문제는 자동으로 다시 봅니다.
+                댓글 노하우까지 한 화면에서 이어집니다.
               </p>
 
               {/* CTA row */}
               <div className="landing-hero-actions" style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                <Link href="/auth/login?mode=signup" className="btn-primary-pill" style={{
+                <Link href="/quiz" className="btn-primary-pill" style={{
                   display: "inline-flex", alignItems: "center", gap: "10px",
                   padding: "12px 12px 12px 22px", borderRadius: "999px",
                   background: "var(--teal)", color: "#061218",
                   fontSize: "14px", fontWeight: 700,
                   boxShadow: "0 8px 20px rgba(30,167,187,0.2), inset 0 1px 0 rgba(255,255,255,0.2)",
                 }}>
-                  무료로 시작하기
+                  바로 문제 풀기
                   <span style={{ width: "32px", height: "32px", borderRadius: "999px", background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center" }}>
                     <ArrowSVG />
                   </span>
                 </Link>
-                <Link href="/auth/login" className="btn-ghost-pill" style={{
+                <Link href="/review" className="btn-ghost-pill" style={{
                   display: "inline-flex", alignItems: "center", gap: "8px",
                   padding: "12px 22px", borderRadius: "999px",
                   border: "1px solid var(--border)", color: "var(--text-muted)",
                   fontSize: "14px", fontWeight: 600, background: "transparent",
                 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M10 8l6 4-6 4z" fill="currentColor" /></svg>
-                  로그인
+                  오답 복습하기
                 </Link>
               </div>
 
@@ -168,112 +291,14 @@ export default function LandingPage() {
               <div className="landing-stats-strip" style={{ marginTop: "32px", display: "inline-flex", gap: "22px", fontSize: "12px", color: "var(--text-faint)", fontFamily: "var(--font-mono)" }}>
                 <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>20</span> 과목</span>
                 <span style={{ color: "var(--border)" }}>·</span>
-                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>1,500+</span> 검수 문제</span>
+                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>문제</span> 풀이</span>
                 <span style={{ color: "var(--border)" }}>·</span>
-                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>수험생</span> 토론 + 암기법</span>
+                <span><span style={{ color: "var(--text-muted)", fontWeight: 700 }}>해설</span> + 오답 복습</span>
               </div>
             </div>
 
-            {/* RIGHT: viz-card */}
-            <div>
-            <div style={{
-              background: "linear-gradient(180deg, rgba(26,37,64,0.5) 0%, rgba(15,23,41,0.6) 100%)",
-              border: "1px solid var(--border)", borderRadius: "16px",
-              padding: "22px", position: "relative", overflow: "hidden",
-            }}>
-              {/* Top shimmer line */}
-              <div aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, var(--teal-border), transparent)" }} />
-
-              {/* Card header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px", gap: "12px" }}>
-                <div>
-                  <div style={{ fontSize: "10px", letterSpacing: "0.14em", fontWeight: 700, color: "var(--teal)" }}>망각 곡선 · 14일 추적</div>
-                  <h3 style={{ fontSize: "15px", fontWeight: 700, margin: "6px 0 2px", color: "var(--text)", letterSpacing: "-0.01em" }}>잊기 직전에 다시 보여드립니다</h3>
-                  <div style={{ marginTop: "10px", display: "flex", gap: "14px" }}>
-                    {[
-                      { bg: "var(--teal)", label: "KVLE 복습" },
-                      { bg: "var(--wrong)", label: "그냥 두면", opacity: 0.6 },
-                    ].map(({ bg, label, opacity }) => (
-                      <span key={label} style={{ display: "inline-flex", gap: "6px", alignItems: "center", fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>
-                        <span style={{ width: "10px", height: "10px", borderRadius: "2px", background: bg, opacity, display: "block", flexShrink: 0 }} />
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ textAlign: "right", fontFamily: "var(--font-mono)", flexShrink: 0 }}>
-                  <div style={{ fontSize: "34px", fontWeight: 800, color: "var(--teal)", lineHeight: 1 }}>84<span style={{ fontSize: "18px" }}>%</span></div>
-                  <div style={{ fontSize: "9px", color: "var(--text-faint)", letterSpacing: "0.14em", fontWeight: 600 }}>유지율</div>
-                </div>
-              </div>
-
-              {/* Forgetting-curve SVG — verbatim from KVLE Landing.html */}
-              <svg viewBox="0 0 560 220" width="100%" style={{ marginTop: "14px", display: "block" }}>
-                <defs>
-                  <linearGradient id="tealFill" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#1ea7bb" stopOpacity="0.22" />
-                    <stop offset="100%" stopColor="#1ea7bb" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <g stroke="rgba(255,255,255,0.04)">
-                  <line x1="50" x2="540" y1="30"  y2="30"  />
-                  <line x1="50" x2="540" y1="75"  y2="75"  />
-                  <line x1="50" x2="540" y1="120" y2="120" />
-                  <line x1="50" x2="540" y1="165" y2="165" />
-                </g>
-                <g fontFamily="IBM Plex Mono, monospace" fontSize="10" fill="#4A5568">
-                  <text x="42"  y="33"  textAnchor="end">100</text>
-                  <text x="42"  y="78"  textAnchor="end">75</text>
-                  <text x="42"  y="123" textAnchor="end">50</text>
-                  <text x="42"  y="168" textAnchor="end">25</text>
-                  <text x="50"  y="200" textAnchor="middle">D+0</text>
-                  <text x="120" y="200" textAnchor="middle">D+1</text>
-                  <text x="225" y="200" textAnchor="middle">D+3</text>
-                  <text x="365" y="200" textAnchor="middle">D+7</text>
-                  <text x="540" y="200" textAnchor="middle">D+14</text>
-                </g>
-                {/* Naked forgetting curve (dashed red) */}
-                <path d="M50,30 C80,90 100,130 130,148 C180,160 250,170 540,182"
-                  fill="none" stroke="#C04A3A" strokeWidth="1.5" strokeDasharray="3 4" opacity="0.55" />
-                {/* KVLE SRS fill areas */}
-                <path d="M50,30 C65,55 85,72 120,88 L120,165 L50,165 Z"   fill="url(#tealFill)" />
-                <path d="M120,30 C160,45 195,60 225,78 L225,165 L120,165 Z" fill="url(#tealFill)" />
-                <path d="M225,30 C270,40 320,50 365,65 L365,165 L225,165 Z" fill="url(#tealFill)" />
-                <path d="M365,30 C410,38 470,45 540,55 L540,165 L365,165 Z" fill="url(#tealFill)" />
-                {/* SRS curve lines */}
-                <path d="M50,30 C65,55 85,72 120,88"  fill="none" stroke="#1ea7bb" strokeWidth="2.2" strokeLinecap="round" />
-                <path d="M120,30 C160,45 195,60 225,78" fill="none" stroke="#1ea7bb" strokeWidth="2.2" strokeLinecap="round" />
-                <path d="M225,30 C270,40 320,50 365,65" fill="none" stroke="#1ea7bb" strokeWidth="2.2" strokeLinecap="round" />
-                <path d="M365,30 C410,38 470,45 540,55" fill="none" stroke="#1ea7bb" strokeWidth="2.2" strokeLinecap="round" />
-                {/* Review markers at D+1, D+3, D+7 */}
-                {([120, 225, 365] as const).map((x) => (
-                  <g key={x}>
-                    <line x1={x} x2={x} y1="30" y2="175" stroke="#1ea7bb" strokeWidth="1" strokeDasharray="2 3" opacity="0.4" />
-                    <circle cx={x} cy="30" r="6" fill="#080D1A" stroke="#1ea7bb" strokeWidth="2" />
-                    <circle cx={x} cy="30" r="2.5" fill="#1ea7bb" />
-                    <text x={x} y="20" textAnchor="middle" fontSize="9" fill="#1ea7bb"
-                      fontFamily="IBM Plex Mono, monospace" fontWeight="700" letterSpacing="0.1em">복습</text>
-                  </g>
-                ))}
-              </svg>
-
-              {/* 3-stat summary row */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", marginTop: "18px", borderTop: "1px solid var(--border)", paddingTop: "14px" }}>
-                <div>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "20px", fontWeight: 800, color: "var(--text)" }}>84<span style={{ fontSize: "13px", color: "var(--text-muted)" }}>%</span></div>
-                  <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "0.12em", fontWeight: 600, marginTop: "2px" }}>KVLE 14일차</div>
-                </div>
-                <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: "16px" }}>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "20px", fontWeight: 800, color: "var(--wrong)" }}>15<span style={{ fontSize: "13px", color: "var(--text-muted)" }}>%</span></div>
-                  <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "0.12em", fontWeight: 600, marginTop: "2px" }}>복습 없이 14일차</div>
-                </div>
-                <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: "16px" }}>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "20px", fontWeight: 800, color: "var(--teal)" }}>5.6x</div>
-                  <div style={{ fontSize: "10px", color: "var(--text-faint)", letterSpacing: "0.12em", fontWeight: 600, marginTop: "2px" }}>기억 효율</div>
-                </div>
-              </div>
-            </div>
-            </div>
+            {/* RIGHT: product preview */}
+            <HeroProductPreview />
           </div>
         </section>
 

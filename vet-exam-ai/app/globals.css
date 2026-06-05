@@ -524,6 +524,10 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     display: none;
   }
 
+  .landing-preview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
   .problem-grid,
   .duo-grid,
   .steps-grid {
