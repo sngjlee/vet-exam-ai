@@ -3,35 +3,53 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  BookOpen,
+  ChevronRight,
+  Filter,
+  Lightbulb,
+  ListChecks,
+  MessageSquare,
+  RotateCcw,
+  Search,
+} from "lucide-react";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import { useAuth } from "../../lib/hooks/useAuth";
 import { useFilteredQuestions } from "../../lib/hooks/useFilteredQuestions";
 import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 import {
+  FIXED_CATEGORIES,
   applyQuestionFilters,
   formatPublicId,
   saveQuestionsListContext,
-  FIXED_CATEGORIES,
   type RecentYearsWindow,
 } from "../../lib/questions";
-import LoadingSpinner from "../../components/LoadingSpinner";
-import { BookOpen, Filter, ChevronRight, ListChecks, MessageSquare, RotateCcw } from "lucide-react";
 
 const PAGE_SIZE = 30;
 const RECENT_OPTIONS: ReadonlyArray<RecentYearsWindow> = [5, 7, 10] as const;
-
 const STORAGE_KEY = "kvle:questions-filter:v1";
-const STORAGE_TTL_MS = 30 * 60 * 1000; // 30분
+const STORAGE_TTL_MS = 30 * 60 * 1000;
 
-// FIXED_CATEGORIES is imported from "../../lib/questions" — single source of truth.
-
-type StoredFilter = {
+type FilterState = {
   selectedCategory: string;
-  selectedTopic?: string;
+  selectedTopic: string;
   recentYears: RecentYearsWindow | "all";
   onlyWrong: boolean;
   skipEasy: boolean;
   forceAll: boolean;
+};
+
+type StoredFilter = FilterState & {
   savedAt: number;
+};
+
+const DEFAULT_FILTER: FilterState = {
+  selectedCategory: "All",
+  selectedTopic: "All",
+  recentYears: "all",
+  onlyWrong: false,
+  skipEasy: false,
+  forceAll: false,
 };
 
 function loadStoredFilter(): StoredFilter | null {
@@ -52,15 +70,15 @@ function loadStoredFilter(): StoredFilter | null {
   }
 }
 
-function saveStoredFilter(f: Omit<StoredFilter, "savedAt">) {
+function saveStoredFilter(filter: FilterState) {
   if (typeof window === "undefined") return;
   try {
     window.sessionStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ ...f, savedAt: Date.now() }),
+      JSON.stringify({ ...filter, savedAt: Date.now() }),
     );
   } catch {
-    /* sessionStorage full or disabled */
+    // sessionStorage can be disabled or full.
   }
 }
 
@@ -69,209 +87,57 @@ function clearStoredFilter() {
   try {
     window.sessionStorage.removeItem(STORAGE_KEY);
   } catch {
-    /* ignore */
+    // Ignore storage failures.
   }
 }
 
-function ExplanationStudyLanding({
-  onShowAll,
-  onRecent,
-  onWrongOnly,
-}: {
-  onShowAll: () => void;
-  onRecent: () => void;
-  onWrongOnly: () => void;
-}) {
-  const actions = [
-    {
-      label: "전체 해설 열기",
-      description: "과목을 정하지 않고 해설 카드부터 훑습니다",
-      icon: ListChecks,
-      onClick: onShowAll,
-      tone: "var(--teal)",
-    },
-    {
-      label: "최근 5개년 해설",
-      description: "최근 기출 흐름을 먼저 잡습니다",
-      icon: BookOpen,
-      onClick: onRecent,
-      tone: "var(--blue)",
-    },
-    {
-      label: "오답 해설만",
-      description: "틀린 문제의 해설과 선택지를 다시 봅니다",
-      icon: RotateCcw,
-      onClick: onWrongOnly,
-      tone: "var(--amber)",
-    },
-  ];
+function sanitizeStoredFilter(stored: StoredFilter): FilterState {
+  const allowedCategories = FIXED_CATEGORIES as readonly string[];
+  const selectedCategory =
+    stored.selectedCategory === "All" ||
+    allowedCategories.includes(stored.selectedCategory)
+      ? stored.selectedCategory
+      : "All";
+  const recentYears =
+    stored.recentYears === "all" ||
+    (RECENT_OPTIONS as readonly number[]).includes(stored.recentYears)
+      ? stored.recentYears
+      : "all";
 
-  return (
-    <section
-      style={{
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
-        borderRadius: 12,
-        padding: 18,
-      }}
-    >
-      <div style={{ marginBottom: 16 }}>
-        <span className="kvle-label">해설 공부</span>
-        <h2
-          style={{
-            color: "var(--text)",
-            fontFamily: "var(--font-serif)",
-            fontSize: 22,
-            fontWeight: 800,
-            lineHeight: 1.25,
-            margin: "8px 0 6px",
-          }}
-        >
-          문제를 풀기 전, 해설과 수험생 노하우부터 볼 수 있어요
-        </h2>
-        <p style={{ color: "var(--text-muted)", fontSize: 13, lineHeight: 1.55, margin: 0 }}>
-          vet40처럼 해설을 읽고 댓글에서 암기법과 정정 포인트를 확인하는 흐름을 앞에 둡니다.
-        </p>
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-          gap: 10,
-        }}
-      >
-        {actions.map(({ label, description, icon: Icon, onClick, tone }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={onClick}
-            style={{
-              minHeight: 102,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 12,
-              padding: 16,
-              borderRadius: 10,
-              border: "1px solid var(--border)",
-              background: "var(--bg)",
-              color: "var(--text)",
-              cursor: "pointer",
-              textAlign: "left",
-            }}
-          >
-            <span
-              style={{
-                width: 30,
-                height: 30,
-                display: "grid",
-                placeItems: "center",
-                borderRadius: 8,
-                background: "var(--surface-raised)",
-                color: tone,
-              }}
-            >
-              <Icon size={16} />
-            </span>
-            <span>
-              <strong style={{ display: "block", fontSize: 14, marginBottom: 4 }}>
-                {label}
-              </strong>
-              <span style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.35 }}>
-                {description}
-              </span>
-            </span>
-          </button>
-        ))}
-        <Link
-          href="/board"
-          style={{
-            minHeight: 102,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            gap: 12,
-            padding: 16,
-            borderRadius: 10,
-            border: "1px solid var(--teal-border)",
-            background: "var(--teal-dim)",
-            color: "var(--text)",
-            textDecoration: "none",
-          }}
-        >
-          <span
-            style={{
-              width: 30,
-              height: 30,
-              display: "grid",
-              placeItems: "center",
-              borderRadius: 8,
-              background: "rgba(255,255,255,0.06)",
-              color: "var(--teal)",
-            }}
-          >
-            <MessageSquare size={16} />
-          </span>
-          <span>
-            <strong style={{ display: "block", fontSize: 14, marginBottom: 4 }}>
-              댓글 노하우 보기
-            </strong>
-            <span style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.35 }}>
-              암기법, 질문, 정정 제안을 모아 봅니다
-            </span>
-          </span>
-        </Link>
-      </div>
-    </section>
-  );
+  return {
+    selectedCategory,
+    selectedTopic:
+      typeof stored.selectedTopic === "string" && stored.selectedTopic.length > 0
+        ? stored.selectedTopic
+        : "All",
+    recentYears,
+    onlyWrong: Boolean(stored.onlyWrong),
+    skipEasy: Boolean(stored.skipEasy),
+    forceAll: Boolean(stored.forceAll),
+  };
 }
 
 export default function QuestionsListPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { notes: wrongNotes, loading: notesLoading } = useWrongNotes();
-
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [selectedTopic, setSelectedTopic] = useState<string>("All");
-  const [recentYears, setRecentYears] = useState<RecentYearsWindow | "all">(
-    "all",
-  );
-  const [onlyWrong, setOnlyWrong] = useState(false);
-  const [skipEasy, setSkipEasy] = useState(false);
-  const [forceAll, setForceAll] = useState(false);
+  const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
   const [page, setPage] = useState(0);
   const [hydrated, setHydrated] = useState(false);
 
-  // sessionStorage hydrate (1회)
-  // FIXED_CATEGORIES가 바뀌면(예: 카테고리 재명명/제거) 이전 세션의 stored 값이 dropdown에 없을 수 있음.
-  // 그 경우 "All"로 fallback해 invisible-selected 상태 방지.
+  const {
+    selectedCategory,
+    selectedTopic,
+    recentYears,
+    onlyWrong,
+    skipEasy,
+    forceAll,
+  } = filter;
+
   useEffect(() => {
     const stored = loadStoredFilter();
-    if (stored) {
-      const allowedCategories = (FIXED_CATEGORIES as readonly string[]);
-      const safeCategory =
-        stored.selectedCategory === "All" ||
-        allowedCategories.includes(stored.selectedCategory)
-          ? stored.selectedCategory
-          : "All";
-      const safeRecent =
-        stored.recentYears === "all" ||
-        (RECENT_OPTIONS as readonly number[]).includes(stored.recentYears as number)
-          ? stored.recentYears
-          : "all";
-      setSelectedCategory(safeCategory);
-      setSelectedTopic(
-        typeof stored.selectedTopic === "string" && stored.selectedTopic.length > 0
-          ? stored.selectedTopic
-          : "All",
-      );
-      setRecentYears(safeRecent);
-      setOnlyWrong(stored.onlyWrong);
-      setSkipEasy(stored.skipEasy);
-      setForceAll(stored.forceAll ?? false);
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFilter(stored ? sanitizeStoredFilter(stored) : DEFAULT_FILTER);
     setHydrated(true);
   }, []);
 
@@ -281,17 +147,24 @@ export default function QuestionsListPage() {
     selectedTopic !== "All" ||
     onlyWrong ||
     skipEasy;
-
-  // 게이트 통과 = 의미있는 필터가 있거나, 사용자가 명시적으로 "전체 보기"를 눌렀거나
   const shouldFetch = hasMeaningfulFilter || forceAll;
 
-  // 서버 필터: recentYears + category만 서버에 보냄 (onlyWrong/skipEasy는 클라)
+  useEffect(() => {
+    if (!hydrated) return;
+    if (shouldFetch) {
+      saveStoredFilter(filter);
+    } else {
+      clearStoredFilter();
+    }
+  }, [filter, hydrated, shouldFetch]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) router.replace("/auth/login");
+  }, [user, authLoading, router]);
+
   const serverFilter = useMemo(() => {
     if (!hydrated || !shouldFetch) return null;
-    if (recentYears === "all" && selectedCategory === "All") {
-      // forceAll 또는 onlyWrong/skipEasy만 켜진 경우 — 전체 fetch
-      return { recentYears: undefined, category: undefined };
-    }
     return {
       recentYears: recentYears === "all" ? undefined : recentYears,
       category: selectedCategory === "All" ? undefined : selectedCategory,
@@ -304,50 +177,15 @@ export default function QuestionsListPage() {
     error: questionsError,
   } = useFilteredQuestions(serverFilter);
 
-  // 필터 변경 시 sessionStorage 갱신 + 페이지 0
-  useEffect(() => {
-    if (!hydrated) return;
-    if (shouldFetch) {
-      saveStoredFilter({
-        selectedCategory,
-        selectedTopic,
-        recentYears,
-        onlyWrong,
-        skipEasy,
-        forceAll,
-      });
-    } else {
-      clearStoredFilter();
-    }
-    setPage(0);
-  }, [
-    hydrated,
-    shouldFetch,
-    selectedCategory,
-    selectedTopic,
-    recentYears,
-    onlyWrong,
-    skipEasy,
-    forceAll,
-  ]);
-
-  // Auth gate (UX only — RLS is the real boundary).
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) router.replace("/auth/login");
-  }, [user, authLoading, router]);
-
   const wrongIdSet = useMemo(
-    () => new Set(wrongNotes.map((n) => n.questionId)),
+    () => new Set(wrongNotes.map((note) => note.questionId)),
     [wrongNotes],
   );
 
-  // 클라사이드 후처리: onlyWrong / skipEasy
   const filtered = useMemo(() => {
     if (!shouldFetch) return [];
     return applyQuestionFilters(questions, {
-      categories:
-        selectedCategory === "All" ? undefined : [selectedCategory],
+      categories: selectedCategory === "All" ? undefined : [selectedCategory],
       topics: selectedTopic === "All" ? undefined : [selectedTopic],
       recentYears: recentYears === "all" ? undefined : recentYears,
       onlyWrong,
@@ -365,41 +203,47 @@ export default function QuestionsListPage() {
     wrongIdSet,
   ]);
 
+  const topicOptions = useMemo(() => {
+    const topics = new Set<string>();
+    for (const question of questions) {
+      if (selectedCategory !== "All" && question.category !== selectedCategory) {
+        continue;
+      }
+      const topic = question.topic?.trim();
+      if (topic) topics.add(topic);
+    }
+    return Array.from(topics).sort((a, b) => a.localeCompare(b, "ko"));
+  }, [questions, selectedCategory]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
   const pageItems = filtered.slice(
     safePage * PAGE_SIZE,
     (safePage + 1) * PAGE_SIZE,
   );
+  const isLoading = questionsLoading || notesLoading;
 
-  function changeFilter(updater: () => void) {
-    updater();
+  function updateFilter(patch: Partial<FilterState>) {
+    setFilter((current) => ({ ...current, ...patch }));
     setPage(0);
   }
 
-  const topicOptions = useMemo(() => {
-    const topics = new Set<string>();
-    for (const q of questions) {
-      if (selectedCategory !== "All" && q.category !== selectedCategory) continue;
-      const topic = q.topic?.trim();
-      if (topic) topics.add(topic);
-    }
-    return Array.from(topics).sort((a, b) => a.localeCompare(b, "ko"));
-  }, [questions, selectedCategory]);
+  function resetFilter() {
+    setFilter(DEFAULT_FILTER);
+    setPage(0);
+  }
 
-  const topicSelectDisabled =
-    !shouldFetch || questionsLoading || topicOptions.length === 0;
-  const topicStatus = !shouldFetch
-    ? "과목을 선택하거나 전체 문제를 불러오면 토픽을 확인할 수 있습니다."
-    : questionsLoading
-      ? "토픽을 불러오는 중입니다."
-      : topicOptions.length === 0
-        ? "이 과목은 아직 토픽 메타데이터가 없어 필터를 사용할 수 없습니다."
-        : `${topicOptions.length}개 토픽`;
-  const topicAllLabel =
-    shouldFetch && !questionsLoading && topicOptions.length === 0
-      ? "토픽 데이터 없음"
-      : "전체";
+  function openAllExplanations() {
+    updateFilter({ forceAll: true });
+  }
+
+  function openRecentExplanations() {
+    updateFilter({ recentYears: 5, forceAll: false });
+  }
+
+  function openWrongExplanations() {
+    updateFilter({ onlyWrong: true, forceAll: false });
+  }
 
   if (authLoading || !user) {
     return (
@@ -410,378 +254,393 @@ export default function QuestionsListPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12 space-y-6">
+    <main className="mx-auto max-w-4xl px-6 py-10 space-y-6">
       <header>
         <span className="kvle-label">해설보기</span>
         <h1
           style={{
-            fontFamily: "var(--font-serif)",
-            fontSize: "clamp(22px, 4vw, 28px)",
-            fontWeight: 800,
-            margin: "8px 0 4px",
-            letterSpacing: "-0.01em",
             color: "var(--text)",
+            fontFamily: "var(--font-serif)",
+            fontSize: "clamp(24px, 4vw, 32px)",
+            fontWeight: 800,
+            lineHeight: 1.2,
+            margin: "8px 0 6px",
           }}
         >
-          {shouldFetch ? (
-            <>
-              전체 문제{" "}
-              <span style={{ color: "var(--teal)" }}>{filtered.length}</span>
-            </>
-          ) : (
-            "해설보기"
-          )}
+          문제보다 해설과 노하우를 먼저 봅니다
         </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>
-          개념별로 살펴보고, 최근 기출만 골라 회독하세요. 정답과 해설은 카드를 열어 확인합니다.
+        <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+          공식 해설을 읽고, 각 문제 댓글에서 다른 수험생의 암기법과 정정 제안을 함께 확인하세요.
         </p>
       </header>
 
-      {/* Filter bar */}
-      <section
-        style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: 12,
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)" }}>
-          <Filter size={14} />
-          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em" }}>필터</span>
-          {shouldFetch && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedCategory("All");
-                setSelectedTopic("All");
-                setRecentYears("all");
-                setOnlyWrong(false);
-                setSkipEasy(false);
-                setForceAll(false);
-                setPage(0);
-              }}
-              style={{
-                marginLeft: "auto",
-                background: "transparent",
-                border: "none",
-                color: "var(--text-faint)",
-                cursor: "pointer",
-                fontSize: 11,
-                padding: 0,
-                textDecoration: "underline",
-                textUnderlineOffset: 2,
-              }}
-            >
-              초기화
-            </button>
-          )}
-        </div>
+      <StudyStartPanel
+        onShowAll={openAllExplanations}
+        onRecent={openRecentExplanations}
+        onWrongOnly={openWrongExplanations}
+      />
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-          {/* Category */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label className="kvle-label" htmlFor="filter-category">과목</label>
-            <select
-              id="filter-category"
-              value={selectedCategory}
-              onChange={(e) =>
-                changeFilter(() => {
-                  setSelectedCategory(e.target.value);
-                  setSelectedTopic("All");
-                })
-              }
-              className="kvle-input"
-              style={{ minWidth: 160 }}
-            >
-              <option value="All">전체</option>
-              {FIXED_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
+      <FilterPanel
+        filter={filter}
+        shouldFetch={shouldFetch}
+        topicOptions={topicOptions}
+        topicSelectDisabled={!shouldFetch || questionsLoading || topicOptions.length === 0}
+        onUpdateFilter={updateFilter}
+        onReset={resetFilter}
+      />
 
-          {/* Topic */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label className="kvle-label" htmlFor="filter-topic">토픽</label>
-            <select
-              id="filter-topic"
-              aria-describedby="filter-topic-status"
-              value={selectedTopic}
-              onChange={(e) => changeFilter(() => setSelectedTopic(e.target.value))}
-              className="kvle-input"
-              disabled={topicSelectDisabled}
-              style={{ minWidth: 180, opacity: topicSelectDisabled ? 0.55 : 1 }}
-            >
-              <option value="All">{topicAllLabel}</option>
-              {selectedTopic !== "All" && !topicOptions.includes(selectedTopic) && (
-                <option value={selectedTopic}>{selectedTopic}</option>
-              )}
-              {topicOptions.map((topic) => (
-                <option key={topic} value={topic}>{topic}</option>
-              ))}
-            </select>
-            <span
-              id="filter-topic-status"
-              style={{ color: "var(--text-faint)", fontSize: 11, lineHeight: 1.35 }}
-            >
-              {topicStatus}
-            </span>
-          </div>
-
-          {/* Recent years */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label className="kvle-label">최근 기출</label>
-            <div style={{ display: "flex", gap: 6 }}>
-              <ChipToggle
-                active={recentYears === "all"}
-                onClick={() => changeFilter(() => setRecentYears("all"))}
-                label="전체"
-              />
-              {RECENT_OPTIONS.map((n) => (
-                <ChipToggle
-                  key={n}
-                  active={recentYears === n}
-                  onClick={() => changeFilter(() => setRecentYears(n))}
-                  label={`${n}개년`}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Toggles */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label className="kvle-label">학습 모드</label>
-            <div style={{ display: "flex", gap: 6 }}>
-              <ChipToggle
-                active={onlyWrong}
-                onClick={() => changeFilter(() => setOnlyWrong((v) => !v))}
-                label="오답문제만"
-              />
-              <ChipToggle
-                active={skipEasy}
-                onClick={() => changeFilter(() => setSkipEasy((v) => !v))}
-                label="쉬운문제 생략"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Body */}
       {!shouldFetch ? (
-        <ExplanationStudyLanding
-          onShowAll={() => setForceAll(true)}
-          onRecent={() => changeFilter(() => setRecentYears(5))}
-          onWrongOnly={() => changeFilter(() => setOnlyWrong(true))}
-        />
-      ) : false ? (
-        <section
-          className="kvle-card text-center"
-          style={{ padding: "3rem 1.5rem" }}
-        >
-          <Filter
-            size={36}
-            className="mx-auto mb-3"
-            style={{ color: "var(--text-faint)" }}
-          />
-          <p
-            style={{
-              color: "var(--text-muted)",
-              fontSize: 14,
-              margin: "0 0 8px",
-              lineHeight: 1.6,
-            }}
-          >
-            과목, 토픽, 최근 기출 연도, 또는 학습 모드 중 하나를 선택해
-            <br />
-            볼 문제 범위를 좁혀 주세요.
-          </p>
-          <p
-            style={{
-              color: "var(--text-faint)",
-              fontSize: 12,
-              margin: "0 0 16px",
-            }}
-          >
-            전체를 한 번에 불러오면 로딩이 길어집니다.
-          </p>
-          <button
-            type="button"
-            onClick={() => setForceAll(true)}
-            className="kvle-btn-ghost text-sm"
-            style={{
-              minHeight: 40,
-              padding: "10px 18px",
-              fontSize: 13,
-            }}
-          >
-            그래도 전체 문제 보기
-          </button>
-        </section>
-      ) : questionsLoading || notesLoading ? (
-        <section
-          className="kvle-card text-center"
-          style={{ padding: "3rem 1.5rem" }}
-        >
+        <QuietPrompt onShowAll={openAllExplanations} />
+      ) : isLoading ? (
+        <section className="kvle-card text-center" style={{ padding: "3rem 1.5rem" }}>
           <LoadingSpinner />
         </section>
       ) : questionsError ? (
-        <section
-          className="kvle-card text-center"
-          style={{ padding: "2rem 1.5rem", color: "var(--wrong)" }}
-        >
-          문제를 불러올 수 없습니다. 다시 시도해주세요.
-        </section>
+        <StatusBox tone="error">
+          문제를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.
+        </StatusBox>
       ) : filtered.length === 0 ? (
-        <section
-          className="kvle-card text-center"
-          style={{ padding: "3rem 1.5rem" }}
-        >
-          <BookOpen
-            size={36}
-            className="mx-auto mb-3"
-            style={{ color: "var(--text-faint)" }}
-          />
-          <p style={{ color: "var(--text-muted)", fontSize: 14, margin: 0 }}>
-            현재 필터에 해당하는 문제가 없습니다. 조건을 완화해 보세요.
-          </p>
-        </section>
+        <StatusBox>
+          현재 조건에 맞는 문제가 없습니다. 필터를 조금 넓혀 보세요.
+        </StatusBox>
       ) : (
-        <section
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-            borderRadius: 12,
-            overflow: "hidden",
-          }}
-        >
-          {pageItems.map((q, i) => (
-            <Link
-              key={q.id}
-              // KVLE public id keeps URLs ASCII-safe and avoids leaking 회차/연도.
-              // Falls back to raw id only for legacy rows missing public_id.
-              href={`/questions/${encodeURIComponent(q.publicId ?? q.id)}`}
-              onClick={() =>
-                saveQuestionsListContext(
-                  filtered.map((f) => f.publicId ?? f.id),
-                )
-              }
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                padding: "16px 20px",
-                borderBottom:
-                  i < pageItems.length - 1 ? "1px solid var(--border)" : "none",
-                color: "inherit",
-                textDecoration: "none",
-                cursor: "pointer",
-                minHeight: 56,
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontFamily: "var(--font-mono)",
-                      color: "var(--text-faint)",
-                      letterSpacing: "0.08em",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {formatPublicId(q)}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      padding: "2px 8px",
-                      borderRadius: 999,
-                      background: "var(--surface-raised)",
-                      border: "1px solid var(--border)",
-                      color: "var(--text-muted)",
-                      fontWeight: 700,
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    {q.category}
-                  </span>
-                  {wrongIdSet.has(q.id) && (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        padding: "2px 8px",
-                        borderRadius: 999,
-                        background: "var(--wrong-dim)",
-                        border: "1px solid rgba(192,74,58,0.3)",
-                        color: "var(--wrong)",
-                        fontWeight: 700,
-                      }}
-                    >
-                      오답
-                    </span>
-                  )}
-                </div>
-                <div
-                  style={{
-                    fontSize: 14,
-                    color: "var(--text)",
-                    fontWeight: 500,
-                    lineHeight: 1.4,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                  }}
-                >
-                  {q.question}
-                </div>
-              </div>
-              <ChevronRight size={16} style={{ color: "var(--text-faint)", flexShrink: 0 }} />
-            </Link>
-          ))}
-        </section>
-      )}
-
-      {/* Pagination */}
-      {hasMeaningfulFilter && filtered.length > PAGE_SIZE && (
-        <nav
-          aria-label="페이지 이동"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          <button
-            onClick={() => setPage(Math.max(0, safePage - 1))}
-            disabled={safePage === 0}
-            className="kvle-btn-ghost text-sm"
-            style={{ minHeight: 44, padding: "10px 16px" }}
-          >
-            이전
-          </button>
-          <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-            {safePage + 1} / {totalPages}
-          </span>
-          <button
-            onClick={() => setPage(Math.min(totalPages - 1, safePage + 1))}
-            disabled={safePage >= totalPages - 1}
-            className="kvle-btn-ghost text-sm"
-            style={{ minHeight: 44, padding: "10px 16px" }}
-          >
-            다음
-          </button>
-        </nav>
+        <>
+          <ResultHeader
+            count={filtered.length}
+            page={safePage + 1}
+            totalPages={totalPages}
+          />
+          <QuestionList
+            items={pageItems}
+            allIds={filtered.map((question) => question.publicId ?? question.id)}
+            wrongIdSet={wrongIdSet}
+          />
+          {filtered.length > PAGE_SIZE && (
+            <Pagination
+              page={safePage}
+              totalPages={totalPages}
+              onPrev={() => setPage(Math.max(0, safePage - 1))}
+              onNext={() => setPage(Math.min(totalPages - 1, safePage + 1))}
+            />
+          )}
+        </>
       )}
     </main>
   );
+}
+
+function StudyStartPanel({
+  onShowAll,
+  onRecent,
+  onWrongOnly,
+}: {
+  onShowAll: () => void;
+  onRecent: () => void;
+  onWrongOnly: () => void;
+}) {
+  const actions = [
+    {
+      label: "전체 해설 열기",
+      description: "범위를 정하지 않고 공식 해설 카드부터 훑어봅니다.",
+      icon: ListChecks,
+      onClick: onShowAll,
+      tone: "var(--teal)",
+    },
+    {
+      label: "최근 5개년 해설",
+      description: "최신 기출 흐름을 먼저 따라갑니다.",
+      icon: BookOpen,
+      onClick: onRecent,
+      tone: "var(--blue)",
+    },
+    {
+      label: "오답 해설만",
+      description: "내가 틀린 문제의 해설과 선택지를 다시 봅니다.",
+      icon: RotateCcw,
+      onClick: onWrongOnly,
+      tone: "var(--amber)",
+    },
+  ];
+
+  return (
+    <section
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        padding: 16,
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 10,
+        }}
+      >
+        {actions.map(({ label, description, icon: Icon, onClick, tone }) => (
+          <button
+            key={label}
+            type="button"
+            onClick={onClick}
+            style={{
+              minHeight: 104,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: 16,
+              borderRadius: 10,
+              border: "1px solid var(--border)",
+              background: "var(--bg)",
+              color: "var(--text)",
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            <span
+              style={{
+                width: 32,
+                height: 32,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: 8,
+                background: "var(--surface-raised)",
+                color: tone,
+              }}
+            >
+              <Icon size={17} />
+            </span>
+            <span>
+              <strong style={{ display: "block", fontSize: 14, marginBottom: 4 }}>
+                {label}
+              </strong>
+              <span style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.4 }}>
+                {description}
+              </span>
+            </span>
+          </button>
+        ))}
+        <Link
+          href="/search"
+          style={{
+            minHeight: 104,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            gap: 12,
+            padding: 16,
+            borderRadius: 10,
+            border: "1px solid var(--teal-border)",
+            background: "var(--teal-dim)",
+            color: "var(--text)",
+            textDecoration: "none",
+          }}
+        >
+          <span
+            style={{
+              width: 32,
+              height: 32,
+              display: "grid",
+              placeItems: "center",
+              borderRadius: 8,
+              background: "rgba(255,255,255,0.06)",
+              color: "var(--teal)",
+            }}
+          >
+            <Search size={17} />
+          </span>
+          <span>
+            <strong style={{ display: "block", fontSize: 14, marginBottom: 4 }}>
+              키워드 검색
+            </strong>
+            <span style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.4 }}>
+              개념, 질환명, 암기 포인트로 바로 찾습니다.
+            </span>
+          </span>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function FilterPanel({
+  filter,
+  shouldFetch,
+  topicOptions,
+  topicSelectDisabled,
+  onUpdateFilter,
+  onReset,
+}: {
+  filter: FilterState;
+  shouldFetch: boolean;
+  topicOptions: string[];
+  topicSelectDisabled: boolean;
+  onUpdateFilter: (patch: Partial<FilterState>) => void;
+  onReset: () => void;
+}) {
+  const topicStatus = !shouldFetch
+    ? "과목이나 전체 해설을 먼저 열면 세부 주제를 고를 수 있습니다."
+    : topicOptions.length === 0
+      ? "이 조건에는 아직 주제 메타데이터가 없습니다."
+      : `${topicOptions.length}개 주제`;
+
+  return (
+    <section
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        padding: 16,
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <Filter size={14} style={{ color: "var(--text-muted)" }} />
+        <span className="kvle-label">필터</span>
+        {shouldFetch && (
+          <button
+            type="button"
+            onClick={onReset}
+            style={{
+              marginLeft: "auto",
+              background: "transparent",
+              border: "none",
+              color: "var(--text-faint)",
+              cursor: "pointer",
+              fontSize: 11,
+              padding: 0,
+              textDecoration: "underline",
+              textUnderlineOffset: 2,
+            }}
+          >
+            초기화
+          </button>
+        )}
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+        <Field label="과목" htmlFor="filter-category">
+          <select
+            id="filter-category"
+            value={filter.selectedCategory}
+            onChange={(event) =>
+              onUpdateFilter({
+                selectedCategory: event.target.value,
+                selectedTopic: "All",
+                forceAll: false,
+              })
+            }
+            className="kvle-input"
+            style={{ minWidth: 160 }}
+          >
+            <option value="All">전체</option>
+            {FIXED_CATEGORIES.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="주제" htmlFor="filter-topic">
+          <select
+            id="filter-topic"
+            aria-describedby="filter-topic-status"
+            value={filter.selectedTopic}
+            onChange={(event) =>
+              onUpdateFilter({ selectedTopic: event.target.value, forceAll: false })
+            }
+            className="kvle-input"
+            disabled={topicSelectDisabled}
+            style={{ minWidth: 180, opacity: topicSelectDisabled ? 0.55 : 1 }}
+          >
+            <option value="All">
+              {topicOptions.length === 0 && shouldFetch ? "주제 없음" : "전체"}
+            </option>
+            {filter.selectedTopic !== "All" &&
+              !topicOptions.includes(filter.selectedTopic) && (
+                <option value={filter.selectedTopic}>{filter.selectedTopic}</option>
+              )}
+            {topicOptions.map((topic) => (
+              <option key={topic} value={topic}>
+                {topic}
+              </option>
+            ))}
+          </select>
+          <span
+            id="filter-topic-status"
+            style={{ color: "var(--text-faint)", fontSize: 11, lineHeight: 1.35 }}
+          >
+            {topicStatus}
+          </span>
+        </Field>
+
+        <Field label="최근 기출">
+          <SegmentedGroup>
+            <ChipToggle
+              active={filter.recentYears === "all"}
+              onClick={() => onUpdateFilter({ recentYears: "all", forceAll: false })}
+              label="전체"
+            />
+            {RECENT_OPTIONS.map((option) => (
+              <ChipToggle
+                key={option}
+                active={filter.recentYears === option}
+                onClick={() => onUpdateFilter({ recentYears: option, forceAll: false })}
+                label={`${option}개년`}
+              />
+            ))}
+          </SegmentedGroup>
+        </Field>
+
+        <Field label="학습 모드">
+          <SegmentedGroup>
+            <ChipToggle
+              active={filter.onlyWrong}
+              onClick={() =>
+                onUpdateFilter({ onlyWrong: !filter.onlyWrong, forceAll: false })
+              }
+              label="오답만"
+            />
+            <ChipToggle
+              active={filter.skipEasy}
+              onClick={() =>
+                onUpdateFilter({ skipEasy: !filter.skipEasy, forceAll: false })
+              }
+              label="쉬운 문제 제외"
+            />
+          </SegmentedGroup>
+        </Field>
+      </div>
+    </section>
+  );
+}
+
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+      <label className="kvle-label" htmlFor={htmlFor}>
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function SegmentedGroup({ children }: { children: React.ReactNode }) {
+  return <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{children}</div>;
 }
 
 function ChipToggle({
@@ -798,19 +657,281 @@ function ChipToggle({
       type="button"
       onClick={onClick}
       style={{
-        padding: "8px 14px",
+        padding: "8px 13px",
         minHeight: 36,
         borderRadius: 999,
         fontSize: 12,
-        fontWeight: 600,
+        fontWeight: 700,
         cursor: "pointer",
         background: active ? "var(--teal-dim)" : "var(--bg)",
         border: `1px solid ${active ? "var(--teal-border)" : "var(--border)"}`,
         color: active ? "var(--teal)" : "var(--text-muted)",
-        transition: "all 150ms",
       }}
     >
       {label}
     </button>
+  );
+}
+
+function QuietPrompt({ onShowAll }: { onShowAll: () => void }) {
+  return (
+    <section
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 16,
+        padding: "16px 18px",
+        background: "var(--bg)",
+        border: "1px dashed var(--border)",
+        borderRadius: 12,
+        flexWrap: "wrap",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <Lightbulb size={18} style={{ color: "var(--teal)" }} />
+        <p style={{ color: "var(--text-muted)", fontSize: 13, lineHeight: 1.5, margin: 0 }}>
+          위에서 공부 방식을 고르면 해설 목록이 열립니다.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onShowAll}
+        className="kvle-btn-ghost text-sm"
+        style={{ minHeight: 40, padding: "9px 15px" }}
+      >
+        전체 해설 보기
+      </button>
+    </section>
+  );
+}
+
+function ResultHeader({
+  count,
+  page,
+  totalPages,
+}: {
+  count: number;
+  page: number;
+  totalPages: number;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        color: "var(--text-muted)",
+        fontSize: 12,
+      }}
+    >
+      <span>
+        해설 <strong style={{ color: "var(--teal)" }}>{count}</strong>개
+      </span>
+      <span className="kvle-mono">
+        {page} / {totalPages}
+      </span>
+    </div>
+  );
+}
+
+function QuestionList({
+  items,
+  allIds,
+  wrongIdSet,
+}: {
+  items: Array<{
+    id: string;
+    publicId?: string;
+    question: string;
+    category: string;
+    topic?: string;
+  }>;
+  allIds: string[];
+  wrongIdSet: Set<string>;
+}) {
+  return (
+    <section
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        overflow: "hidden",
+      }}
+    >
+      {items.map((question, index) => (
+        <Link
+          key={question.id}
+          href={`/questions/${encodeURIComponent(question.publicId ?? question.id)}`}
+          onClick={() => saveQuestionsListContext(allIds)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            padding: "15px 18px",
+            borderBottom:
+              index < items.length - 1 ? "1px solid var(--border)" : "none",
+            color: "inherit",
+            textDecoration: "none",
+            minHeight: 58,
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: 7,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span
+                className="kvle-mono"
+                style={{
+                  fontSize: 10,
+                  color: "var(--text-faint)",
+                  letterSpacing: "0.04em",
+                  fontWeight: 700,
+                }}
+              >
+                {formatPublicId(question)}
+              </span>
+              <Pill>{question.category}</Pill>
+              {question.topic && <Pill>{question.topic}</Pill>}
+              {wrongIdSet.has(question.id) && <Pill tone="wrong">오답</Pill>}
+            </div>
+            <div
+              style={{
+                color: "var(--text)",
+                fontSize: 14,
+                fontWeight: 500,
+                lineHeight: 1.45,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+              }}
+            >
+              {question.question}
+            </div>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              color: "var(--text-faint)",
+              flexShrink: 0,
+            }}
+          >
+            <MessageSquare size={14} />
+            <ChevronRight size={16} />
+          </div>
+        </Link>
+      ))}
+    </section>
+  );
+}
+
+function Pill({
+  children,
+  tone = "default",
+}: {
+  children: React.ReactNode;
+  tone?: "default" | "wrong";
+}) {
+  const isWrong = tone === "wrong";
+  return (
+    <span
+      style={{
+        fontSize: 10,
+        padding: "2px 8px",
+        borderRadius: 999,
+        background: isWrong ? "var(--wrong-dim)" : "var(--surface-raised)",
+        border: isWrong ? "1px solid rgba(192,74,58,0.3)" : "1px solid var(--border)",
+        color: isWrong ? "var(--wrong)" : "var(--text-muted)",
+        fontWeight: 700,
+        lineHeight: 1.5,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function StatusBox({
+  children,
+  tone = "default",
+}: {
+  children: React.ReactNode;
+  tone?: "default" | "error";
+}) {
+  const isError = tone === "error";
+  return (
+    <section
+      className="text-center"
+      style={{
+        padding: "2rem 1.5rem",
+        background: isError ? "var(--wrong-dim)" : "var(--bg)",
+        border: `1px ${isError ? "solid rgba(192,74,58,0.3)" : "dashed var(--border)"}`,
+        borderRadius: 12,
+        color: isError ? "var(--wrong)" : "var(--text-muted)",
+        fontSize: 14,
+      }}
+    >
+      {children}
+    </section>
+  );
+}
+
+function Pagination({
+  page,
+  totalPages,
+  onPrev,
+  onNext,
+}: {
+  page: number;
+  totalPages: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <nav
+      aria-label="페이지 이동"
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 12,
+      }}
+    >
+      <button
+        type="button"
+        onClick={onPrev}
+        disabled={page === 0}
+        className="kvle-btn-ghost text-sm"
+        style={{ minHeight: 44, padding: "10px 16px" }}
+      >
+        이전
+      </button>
+      <span
+        className="kvle-mono"
+        style={{ fontSize: 12, color: "var(--text-muted)" }}
+      >
+        {page + 1} / {totalPages}
+      </span>
+      <button
+        type="button"
+        onClick={onNext}
+        disabled={page >= totalPages - 1}
+        className="kvle-btn-ghost text-sm"
+        style={{ minHeight: 44, padding: "10px 16px" }}
+      >
+        다음
+      </button>
+    </nav>
   );
 }
