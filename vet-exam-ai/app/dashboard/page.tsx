@@ -390,10 +390,10 @@ function StudyFirstPanel({
       border: "var(--teal-border)",
     },
     {
-      href: "/questions",
+      href: "/comments",
       icon: MessageSquare,
-      label: "해설 댓글 같이 보기",
-      meta: "문제별 해설에서 암기법과 정정 제안 확인",
+      label: "댓글 노하우 보기",
+      meta: "암기법과 정정 제안을 모아보기",
       tone: "var(--blue)",
       background: "var(--blue-dim)",
       border: "rgba(74,127,168,0.28)",

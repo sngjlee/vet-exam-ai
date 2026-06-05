@@ -7,6 +7,7 @@ import {
   BarChart3,
   BookOpen,
   CirclePlay,
+  Lightbulb,
   ListChecks,
   LogOut,
   MessageSquare,
@@ -25,6 +26,7 @@ import NotificationBell from "./notifications/NotificationBell";
 
 const MAIN_LINKS = [
   { href: "/questions", label: "해설보기", icon: ListChecks, section: "/questions" },
+  { href: "/comments", label: "노하우", icon: Lightbulb, section: "/comments" },
   { href: "/search", label: "검색", icon: Search, section: "/search" },
   { href: "/quiz", label: "문제풀기", icon: CirclePlay, section: "/quiz" },
   { href: "/wrong-notes", label: "오답노트", icon: RotateCcw, section: "/wrong-notes" },

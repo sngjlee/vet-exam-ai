@@ -11,7 +11,6 @@ import {
   ListChecks,
   MessageSquare,
   RotateCcw,
-  Search,
 } from "lucide-react";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { useAuth } from "../../lib/hooks/useAuth";
@@ -423,7 +422,7 @@ function StudyStartPanel({
           </button>
         ))}
         <Link
-          href="/search"
+          href="/comments"
           style={{
             minHeight: 104,
             display: "flex",
@@ -449,14 +448,14 @@ function StudyStartPanel({
               color: "var(--teal)",
             }}
           >
-            <Search size={17} />
+            <MessageSquare size={17} />
           </span>
           <span>
             <strong style={{ display: "block", fontSize: 14, marginBottom: 4 }}>
-              키워드 검색
+              댓글 노하우 보기
             </strong>
             <span style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.4 }}>
-              개념, 질환명, 암기 포인트로 바로 찾습니다.
+              암기법, 질문, 정정 제안을 모아 봅니다.
             </span>
           </span>
         </Link>
