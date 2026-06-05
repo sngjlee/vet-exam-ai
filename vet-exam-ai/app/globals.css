@@ -415,6 +415,27 @@ p, h1, h2, h3, h4, button, label, span, td, th {
 .landing-nav-link { color: var(--text-muted); transition: color 200ms; }
 .landing-nav-link:hover { color: var(--text); }
 
+.landing-shell {
+  --bg:             #F6FAFB;
+  --surface:        #FFFFFF;
+  --surface-raised: #EEF5F7;
+  --teal-dim:       rgba(30, 167, 187, 0.09);
+  --teal-border:    rgba(30, 167, 187, 0.26);
+  --blue-dim:       rgba(74, 127, 168, 0.10);
+  --amber-dim:      rgba(200, 137, 90, 0.13);
+  --text:           #172033;
+  --text-muted:     #5D6B7A;
+  --text-faint:     #8A98A8;
+  --border:         rgba(28, 45, 64, 0.11);
+  --rule:           rgba(30, 167, 187, 0.18);
+  color-scheme: light;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 76% 5%, rgba(30, 167, 187, 0.10), transparent 32%),
+    linear-gradient(180deg, #F7FBFC 0%, #EEF6F8 48%, #F8FAFC 100%);
+  color: var(--text);
+}
+
 .landing-section-label {
   color: var(--teal);
   font-size: 0.92rem;

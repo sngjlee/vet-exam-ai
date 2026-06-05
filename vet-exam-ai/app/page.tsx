@@ -181,18 +181,19 @@ export default function LandingPage() {
   return (
     <>
       <AuthRedirect />
+      <div className="landing-shell">
       {/* ── Background ambient orbs ─────────────────────────────────────── */}
       <div aria-hidden="true" style={{
         position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0,
       }}>
-        <div style={{ position: "absolute", width: "900px", height: "900px", top: "-320px", right: "-180px", borderRadius: "50%", background: "radial-gradient(circle, rgba(30,167,187,0.06) 0%, transparent 65%)" }} />
-        <div style={{ position: "absolute", width: "700px", height: "700px", top: "55%", left: "-180px", borderRadius: "50%", background: "radial-gradient(circle, rgba(74,127,168,0.04) 0%, transparent 65%)" }} />
+        <div style={{ position: "absolute", width: "900px", height: "900px", top: "-320px", right: "-180px", borderRadius: "50%", background: "radial-gradient(circle, rgba(30,167,187,0.10) 0%, transparent 65%)" }} />
+        <div style={{ position: "absolute", width: "700px", height: "700px", top: "55%", left: "-180px", borderRadius: "50%", background: "radial-gradient(circle, rgba(74,127,168,0.07) 0%, transparent 65%)" }} />
       </div>
 
       {/* ── 1. STICKY NAV ───────────────────────────────────────────────── */}
       <nav style={{
         position: "sticky", top: 0, zIndex: 50,
-        background: "rgba(8,13,26,0.7)", backdropFilter: "blur(20px)",
+        background: "rgba(255,255,255,0.84)", backdropFilter: "blur(20px)",
         borderBottom: "1px solid var(--border)",
       }}>
         <div className="landing-nav-inner" style={{
@@ -552,7 +553,7 @@ export default function LandingPage() {
         {/* ── 7. HOW IT WORKS ─────────────────────────────────────────────── */}
         <section id="how" style={{
           borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
-          background: "linear-gradient(180deg, rgba(15,23,41,0.4) 0%, transparent 100%)",
+          background: "linear-gradient(180deg, rgba(30,167,187,0.05) 0%, transparent 100%)",
           position: "relative",
         }}>
           <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "120px 32px" }}>
@@ -668,6 +669,7 @@ export default function LandingPage() {
           </div>
         </footer>
       </main>
+      </div>
     </>
   );
 }
