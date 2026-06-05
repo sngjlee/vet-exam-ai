@@ -7,7 +7,7 @@ import LandingFinalCta from "../components/LandingFinalCta";
 const RAIL_ITEMS = [
   { markerColor: "#1ea7bb", mono: null,     text: "수의사 국가시험 대비" },
   { markerColor: "#C8895A", mono: "20과목", text: "전과목 커버" },
-  { markerColor: "#F0EDD8", mono: "1,500+", text: "검수된 문제" },
+  { markerColor: "#1C2D40", mono: "3,000+", text: "검수된 문제" },
   { markerColor: "#2D9F6B", mono: null,     text: "수험생 토론 + 암기법" },
   { markerColor: "#9B6FD4", mono: "SM-2",   text: "간격 반복 학습" },
   { markerColor: "#4A7FA8", mono: null,     text: "실시간 약점 분석" },
@@ -255,12 +255,15 @@ export default function LandingPage() {
               {/* Headline */}
               <h1 className="landing-hero-title" style={{ fontSize: "clamp(38px, 5.5vw, 64px)", lineHeight: 1.08, letterSpacing: 0, fontWeight: 800, margin: "0 0 22px" }}>
                 수의사 국가시험,<br />
-                <em style={{ fontStyle: "normal", color: "var(--teal)", position: "relative" }}>오늘 풀 문제부터 오답 복습까지</em>
+                <em style={{ fontStyle: "normal", color: "var(--teal)", position: "relative" }}>
+                  오늘 풀 문제부터<br />
+                  오답 복습까지
+                </em>
               </h1>
 
               {/* Sub-copy */}
               <p className="landing-hero-copy" style={{ fontSize: "16px", lineHeight: 1.6, color: "var(--text-muted)", maxWidth: "46ch", margin: "0 0 28px" }}>
-                문제를 풀고, 해설을 확인하고, 틀린 문제는 자동으로 다시 봅니다.
+                문제를 풀고, 해설을 확인하고, 틀린 문제는 자동으로 다시 봅니다.<br />
                 댓글 노하우까지 한 화면에서 이어집니다.
               </p>
 

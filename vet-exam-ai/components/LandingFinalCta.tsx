@@ -55,7 +55,7 @@ export default function LandingFinalCta() {
       <div
         style={{
           borderRadius: "24px",
-          background: "linear-gradient(135deg, #0F2A33 0%, #0F1729 100%)",
+          background: "linear-gradient(135deg, #FFFFFF 0%, #EAF7FA 100%)",
           border: "1px solid var(--teal-border)",
           padding: "68px 48px",
           textAlign: "center",
@@ -68,7 +68,7 @@ export default function LandingFinalCta() {
           style={{
             position: "absolute",
             inset: "-1px",
-            background: "radial-gradient(circle at 50% 100%, rgba(30,167,187,0.18) 0%, transparent 60%)",
+            background: "radial-gradient(circle at 50% 100%, rgba(30,167,187,0.12) 0%, transparent 60%)",
             pointerEvents: "none",
           }}
         />
