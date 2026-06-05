@@ -79,6 +79,7 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
 
   return (
     <div
+      className="kvle-comment-composer"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -89,11 +90,12 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
         borderRadius: 10,
       }}
     >
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+      <div className="kvle-comment-type-row" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
         {COMMENT_TYPES.map((t) => {
           const active = type === t;
           return (
             <button
+              className="kvle-comment-type-button"
               key={t}
               type="button"
               onClick={() => setType(t)}
@@ -115,6 +117,7 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
       </div>
 
       <textarea
+        className="kvle-comment-textarea"
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder="이 문제에 대한 의견을 남겨주세요..."
@@ -134,7 +137,7 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
 
       <CommentImageAttacher value={imageUrls} onChange={setImageUrls} disabled={submitting} />
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div className="kvle-comment-composer-footer" style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span style={{ fontSize: 11, color: counterColor, fontFamily: "var(--font-mono)" }}>
           {len} / {MAX}자
         </span>
@@ -144,6 +147,7 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
           </span>
         )}
         <button
+          className="kvle-comment-submit-button"
           type="button"
           onClick={handleSubmit}
           disabled={!canSubmit}

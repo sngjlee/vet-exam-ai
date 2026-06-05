@@ -103,6 +103,7 @@ export default function CommentEditComposer({
 
   return (
     <div
+      className="kvle-comment-composer kvle-comment-composer-compact"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -114,6 +115,7 @@ export default function CommentEditComposer({
       }}
     >
       <textarea
+        className="kvle-comment-textarea"
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={4}
@@ -137,7 +139,7 @@ export default function CommentEditComposer({
         disabled={submitting}
       />
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div className="kvle-comment-composer-footer" style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span style={{ fontSize: 11, color: counterColor, fontFamily: "var(--font-mono)" }}>
           {len} / {MAX}자
         </span>
@@ -146,8 +148,9 @@ export default function CommentEditComposer({
             {error}
           </span>
         )}
-        <div style={{ marginLeft: "auto", display: "inline-flex", gap: 6 }}>
+        <div className="kvle-comment-composer-actions" style={{ marginLeft: "auto", display: "inline-flex", gap: 6 }}>
           <button
+            className="kvle-comment-secondary-button"
             type="button"
             onClick={attemptCancel}
             disabled={submitting}
@@ -165,6 +168,7 @@ export default function CommentEditComposer({
             취소
           </button>
           <button
+            className="kvle-comment-submit-button"
             type="button"
             onClick={handleSubmit}
             disabled={!canSubmit}

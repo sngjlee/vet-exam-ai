@@ -90,9 +90,10 @@ export default function CommentImageAttacher({
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+    <div className="kvle-comment-image-attacher" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="kvle-comment-image-toolbar" style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
         <button
+          className="kvle-comment-image-button"
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={!canAdd}
@@ -118,6 +119,7 @@ export default function CommentImageAttacher({
 
       {(value.length > 0 || pending.length > 0) && (
         <div
+          className="kvle-comment-image-strip"
           style={{
             display: "flex",
             gap: 6,
@@ -226,6 +228,7 @@ function Thumb({
       )}
       {onRemove && !disabled && (
         <button
+          className="kvle-comment-image-remove"
           type="button"
           onClick={onRemove}
           style={{

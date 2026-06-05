@@ -270,6 +270,26 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     white-space: nowrap;
   }
 
+  .kvle-comment-textarea {
+    width: 100%;
+    line-height: 1.6;
+  }
+
+  .kvle-comment-type-button,
+  .kvle-comment-submit-button,
+  .kvle-comment-secondary-button,
+  .kvle-comment-image-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .kvle-comment-image-remove {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
   @media (max-width: 640px) {
     .kvle-question-detail-shell {
       padding: 24px 14px 72px !important;
@@ -345,6 +365,80 @@ p, h1, h2, h3, h4, button, label, span, td, th {
       font-size: 15px;
       line-height: 1.8;
     }
+
+    .kvle-comment-composer {
+      padding: 14px !important;
+      gap: 12px !important;
+      border-radius: 12px !important;
+    }
+
+    .kvle-comment-composer-compact {
+      padding: 12px !important;
+    }
+
+    .kvle-comment-type-row {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px !important;
+    }
+
+    .kvle-comment-type-button {
+      width: 100%;
+      justify-content: center;
+      padding: 9px 10px !important;
+      font-size: 12px !important;
+    }
+
+    .kvle-comment-textarea {
+      min-height: 112px !important;
+      padding: 12px 13px !important;
+      font-size: 16px !important;
+      line-height: 1.65 !important;
+    }
+
+    .kvle-comment-composer-footer {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px !important;
+      align-items: stretch !important;
+    }
+
+    .kvle-comment-composer-actions {
+      margin-left: 0 !important;
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px !important;
+    }
+
+    .kvle-comment-submit-button,
+    .kvle-comment-secondary-button {
+      width: 100%;
+      justify-content: center;
+      padding: 10px 14px !important;
+    }
+
+    .kvle-comment-image-toolbar {
+      align-items: stretch !important;
+    }
+
+    .kvle-comment-image-button {
+      width: 100%;
+      justify-content: center;
+      padding: 9px 12px !important;
+      font-size: 12px !important;
+    }
+
+    .kvle-comment-image-strip {
+      gap: 8px !important;
+      margin-left: -2px;
+      margin-right: -2px;
+      padding: 2px 2px 8px !important;
+      scroll-snap-type: x proximity;
+    }
+
+    .kvle-comment-image-strip > * {
+      scroll-snap-align: start;
+    }
   }
 
   @media (min-width: 641px) and (max-width: 1024px) {
@@ -358,6 +452,19 @@ p, h1, h2, h3, h4, button, label, span, td, th {
 
     .kvle-question-surface {
       padding: 26px 28px !important;
+    }
+
+    .kvle-comment-textarea {
+      font-size: 15px !important;
+      min-height: 96px !important;
+    }
+
+    .kvle-comment-type-button,
+    .kvle-comment-submit-button,
+    .kvle-comment-secondary-button,
+    .kvle-comment-image-button {
+      padding-top: 9px !important;
+      padding-bottom: 9px !important;
     }
   }
   .kvle-input:focus {
