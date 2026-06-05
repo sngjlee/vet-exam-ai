@@ -31,6 +31,17 @@ const MATCHED_LABEL: Record<MatchedIn, string> = {
   explanation:     "해설",
   choices:         "선지",
   community_notes: "암기팁",
+  comments:        "댓글",
+};
+
+type CommentTypeKey = "memorization" | "correction" | "explanation" | "question" | "discussion";
+
+const COMMENT_TYPE_LABEL: Record<CommentTypeKey, string> = {
+  memorization: "암기법",
+  correction:   "정정",
+  explanation:  "추가 설명",
+  question:     "질문",
+  discussion:   "토론",
 };
 
 export default function SearchPageRoot() {
@@ -75,10 +86,7 @@ function SearchPage() {
   const { q, searchable } = normalizeQuery(urlQ);
 
   // recent searches sidebar
-  const [recents, setRecents] = useState<string[]>([]);
-  useEffect(() => {
-    setRecents(readRecentSearches());
-  }, [q]);
+  const [recents] = useState<string[]>(() => readRecentSearches());
 
   // KVLE-NNNN shortcut: bypass /api/search round-trip on the client too.
   useEffect(() => {
@@ -188,7 +196,7 @@ function SearchPage() {
           )}
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>
-          문제 본문, 해설, 선지, 암기팁에서 키워드로 찾습니다. KVLE-숫자로 바로 이동도 가능합니다.
+          문제 본문, 해설, 선지, 댓글 암기법에서 키워드로 찾습니다. KVLE-숫자로 바로 이동도 가능합니다.
         </p>
       </header>
 
@@ -343,7 +351,16 @@ function ResultList({
   items,
   allPublicIds,
 }: {
-  items:        Array<{ id: string; publicId: string; question: string; category: string; matchedIn: MatchedIn; headline: string }>;
+  items:        Array<{
+    id: string;
+    publicId: string;
+    question: string;
+    category: string;
+    matchedIn: MatchedIn;
+    headline: string;
+    commentId?: string;
+    commentType?: CommentTypeKey;
+  }>;
   allPublicIds: string[];
 }) {
   return (
@@ -355,12 +372,20 @@ function ResultList({
         overflow:      "hidden",
       }}
     >
-      {items.map((it, i) => (
-        <Link
-          key={it.id}
-          href={`/questions/${encodeURIComponent(it.publicId)}`}
-          onClick={() => saveQuestionsListContext(allPublicIds)}
-          style={{
+      {items.map((it, i) => {
+        const href = it.commentId
+          ? `/questions/${encodeURIComponent(it.publicId)}?comment=${encodeURIComponent(it.commentId)}`
+          : `/questions/${encodeURIComponent(it.publicId)}`;
+        const matchedLabel =
+          it.matchedIn === "comments" && it.commentType
+            ? `댓글 ${COMMENT_TYPE_LABEL[it.commentType]}`
+            : MATCHED_LABEL[it.matchedIn];
+        return (
+          <Link
+            key={it.id}
+            href={href}
+            onClick={() => saveQuestionsListContext(allPublicIds)}
+            style={{
             display:       "flex",
             alignItems:    "flex-start",
             gap:           14,
@@ -409,9 +434,9 @@ function ResultList({
                   color:         "var(--teal)",
                   fontWeight:    700,
                 }}
-                title={`${MATCHED_LABEL[it.matchedIn]}에서 매칭`}
+                title={`${matchedLabel}에서 매칭`}
               >
-                {MATCHED_LABEL[it.matchedIn]}
+                {matchedLabel}
               </span>
             </div>
             <div
@@ -440,8 +465,9 @@ function ResultList({
               </div>
             )}
           </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </section>
   );
 }
@@ -457,7 +483,7 @@ function EmptyLanding({
     <section className="kvle-card text-center" style={{ padding: "3rem 1.5rem" }}>
       <SearchIcon size={36} className="mx-auto mb-3" style={{ color: "var(--text-faint)" }} />
       <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 0 8px", lineHeight: 1.6 }}>
-        키워드를 입력해 문제 / 해설 / 선지 / 암기팁을 찾아보세요.
+        키워드를 입력해 문제 / 해설 / 선지 / 댓글 암기법을 찾아보세요.
       </p>
       <p style={{ color: "var(--text-faint)", fontSize: 12, margin: "0 0 16px" }}>
         2자 이상 입력하면 검색됩니다. KVLE-숫자로 바로 이동도 가능합니다.

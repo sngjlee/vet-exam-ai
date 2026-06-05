@@ -1,14 +1,21 @@
 // DTOs shared between /api/search, useSearch hook, and /search page.
 
-export type MatchedIn = "question" | "explanation" | "choices" | "community_notes";
+export type MatchedIn =
+  | "question"
+  | "explanation"
+  | "choices"
+  | "community_notes"
+  | "comments";
 
 export interface SearchHit {
-  id:        string;
-  publicId:  string;
-  question:  string;
-  category:  string;
+  id: string;
+  publicId: string;
+  question: string;
+  category: string;
   matchedIn: MatchedIn;
-  headline:  string;       // <mark>...</mark> 태그 포함, sanitize-html로 정화 후 렌더
+  headline: string;
+  commentId?: string;
+  commentType?: "memorization" | "correction" | "explanation" | "question" | "discussion";
 }
 
 export interface SearchSuggestion {
@@ -17,13 +24,13 @@ export interface SearchSuggestion {
 }
 
 export interface SearchResponse {
-  items:       SearchHit[];
-  total:       number;
-  page:        number;
-  pageSize:    number;
+  items: SearchHit[];
+  total: number;
+  page: number;
+  pageSize: number;
   suggestions: SearchSuggestion[];
-  redirect:    string | null;   // KVLE-NNNN 정확 일치 시 /questions/<KVLE> 경로
-  error:       null | "too_short" | "internal";
+  redirect: string | null;
+  error: null | "too_short" | "internal";
 }
 
 export const SEARCH_PAGE_SIZE = 30;

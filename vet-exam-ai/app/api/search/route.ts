@@ -57,6 +57,7 @@ export async function GET(req: NextRequest) {
   const pageNum = rawPage ? Number.parseInt(rawPage, 10) : 0;
   const page = Number.isFinite(pageNum) && pageNum >= 0 ? pageNum : 0;
   const offset = page * SEARCH_PAGE_SIZE;
+  const fetchLimit = offset + SEARCH_PAGE_SIZE;
 
   const supabase = await createClient();
 
@@ -64,8 +65,8 @@ export async function GET(req: NextRequest) {
     q,
     category_filter: category,
     recent_years:    recent,
-    page_size:       SEARCH_PAGE_SIZE,
-    page_offset:     offset,
+    page_size:       fetchLimit,
+    page_offset:     0,
   });
 
   if (error) {
@@ -102,7 +103,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const items: SearchHit[] = rows.map((r) => ({
+  const questionHits: SearchHit[] = rows.map((r) => ({
     id:        r.id,
     publicId:  r.public_id,
     question:  r.question,
@@ -111,11 +112,91 @@ export async function GET(req: NextRequest) {
     headline:  r.headline,
   }));
 
+  const commentResult = await supabase
+    .from("comments")
+    .select("id, question_id, type, body_text, vote_score, created_at", { count: "exact" })
+    .eq("status", "visible")
+    .is("parent_id", null)
+    .ilike("body_text", `%${q}%`)
+    .order("vote_score", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(0, Math.max(0, fetchLimit - 1));
+
+  if (commentResult.error) {
+    const fail: SearchResponse = {
+      items:       [],
+      total:       0,
+      page,
+      pageSize:    SEARCH_PAGE_SIZE,
+      suggestions: [],
+      redirect:    null,
+      error:       "internal",
+    };
+    return NextResponse.json(fail, { status: 500 });
+  }
+
+  const commentQuestionIds = Array.from(
+    new Set((commentResult.data ?? []).map((row) => row.question_id)),
+  );
+  const commentQuestionsResult =
+    commentQuestionIds.length > 0
+      ? await supabase
+          .from("questions")
+          .select("id, public_id, question, category, year")
+          .in("id", commentQuestionIds)
+          .eq("is_active", true)
+      : { data: [], error: null };
+
+  if (commentQuestionsResult.error) {
+    const fail: SearchResponse = {
+      items:       [],
+      total:       0,
+      page,
+      pageSize:    SEARCH_PAGE_SIZE,
+      suggestions: [],
+      redirect:    null,
+      error:       "internal",
+    };
+    return NextResponse.json(fail, { status: 500 });
+  }
+
+  const minRecentYear =
+    recent === null ? null : new Date().getFullYear() - recent + 1;
+  const questionById = new Map(
+    (commentQuestionsResult.data ?? []).map((question) => [question.id, question]),
+  );
+  const commentHits: SearchHit[] = (commentResult.data ?? []).flatMap((comment) => {
+    const question = questionById.get(comment.question_id);
+    if (!question) return [];
+    if (category && question.category !== category) return [];
+    if (minRecentYear !== null && (question.year === null || question.year < minRecentYear)) {
+      return [];
+    }
+    return [
+      {
+        id:          `comment:${comment.id}`,
+        publicId:    question.public_id,
+        question:    question.question,
+        category:    question.category,
+        matchedIn:   "comments",
+        headline:    makeCommentHeadline(comment.body_text, q),
+        commentId:   comment.id,
+        commentType: comment.type,
+      },
+    ];
+  });
+
+  const combined = interleave(commentHits, questionHits);
+  const items = combined.slice(offset, offset + SEARCH_PAGE_SIZE);
+  const filteredCommentTotal =
+    category || recent !== null ? commentHits.length : (commentResult.count ?? 0);
+  const combinedTotal = total + filteredCommentTotal;
+
   // 0건이면 trigram 제안 fallback. 1건 이상이면 빈 배열.
   // Note: only triggers when the search genuinely has zero matches (total === 0
   // after the overshoot probe), not for stale-URL overshoot cases.
   let suggestions: SearchSuggestion[] = [];
-  if (total === 0) {
+  if (combinedTotal === 0) {
     const { data: sugg } = await supabase.rpc("suggest_similar_queries", { q });
     if (sugg) {
       suggestions = sugg.map((s) => ({
@@ -127,7 +208,7 @@ export async function GET(req: NextRequest) {
 
   const ok: SearchResponse = {
     items,
-    total,
+    total:       combinedTotal,
     page,
     pageSize:    SEARCH_PAGE_SIZE,
     suggestions,
@@ -135,4 +216,45 @@ export async function GET(req: NextRequest) {
     error:       null,
   };
   return NextResponse.json(ok);
+}
+
+function interleave<T>(first: T[], second: T[]): T[] {
+  const out: T[] = [];
+  const max = Math.max(first.length, second.length);
+  for (let i = 0; i < max; i += 1) {
+    if (first[i]) out.push(first[i]);
+    if (second[i]) out.push(second[i]);
+  }
+  return out;
+}
+
+function makeCommentHeadline(body: string, query: string): string {
+  const normalizedBody = body.replace(/\s+/g, " ").trim();
+  const haystack = normalizedBody.toLocaleLowerCase("ko-KR");
+  const needle = query.toLocaleLowerCase("ko-KR");
+  const idx = haystack.indexOf(needle);
+  const start = idx >= 0 ? Math.max(0, idx - 46) : 0;
+  const end = idx >= 0
+    ? Math.min(normalizedBody.length, idx + query.length + 86)
+    : Math.min(normalizedBody.length, 140);
+  const prefix = start > 0 ? "..." : "";
+  const suffix = end < normalizedBody.length ? "..." : "";
+  const snippet = `${prefix}${normalizedBody.slice(start, end)}${suffix}`;
+  return escapeHtml(snippet).replace(
+    new RegExp(escapeRegExp(query), "gi"),
+    (match) => `<mark>${match}</mark>`,
+  );
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
