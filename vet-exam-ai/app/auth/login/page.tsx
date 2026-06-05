@@ -153,8 +153,8 @@ function LoginForm() {
           maxWidth: "400px",
           padding: "6px",
           borderRadius: "22px",
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.07)",
+          background: "var(--surface-raised)",
+          border: "1px solid var(--border)",
         }}
       >
         <div
@@ -163,7 +163,7 @@ function LoginForm() {
             padding: "2rem",
             background: "var(--surface)",
             borderTop: "3px solid var(--teal)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+            boxShadow: "inset 0 1px 0 rgba(28,45,64,0.04)",
             position: "relative",
             overflow: "hidden",
           }}

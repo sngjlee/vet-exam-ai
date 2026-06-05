@@ -260,8 +260,8 @@ export default function QuizPage() {
             style={{
               padding: "6px",
               borderRadius: "22px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "var(--surface-raised)",
+              border: "1px solid var(--border)",
               animationDelay: "60ms",
             }}
           >
@@ -274,7 +274,7 @@ export default function QuizPage() {
                 height: "100%",
                 background: "var(--surface)",
                 borderTop: "3px solid var(--teal)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+                boxShadow: "inset 0 1px 0 rgba(28,45,64,0.04)",
                 display: "flex",
                 flexDirection: "column",
               }}
@@ -331,8 +331,8 @@ export default function QuizPage() {
             style={{
               padding: "6px",
               borderRadius: "22px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "var(--surface-raised)",
+              border: "1px solid var(--border)",
               animationDelay: "120ms",
             }}
           >
@@ -344,8 +344,8 @@ export default function QuizPage() {
                 overflow: "hidden",
                 height: "100%",
                 background: "var(--surface)",
-                borderTop: dueCount > 0 ? "3px solid var(--blue)" : "3px solid rgba(255,255,255,0.06)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+                borderTop: dueCount > 0 ? "3px solid var(--blue)" : "3px solid var(--border)",
+                boxShadow: "inset 0 1px 0 rgba(28,45,64,0.04)",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
@@ -457,8 +457,8 @@ export default function QuizPage() {
             marginBottom: "2.5rem",
             padding: "6px",
             borderRadius: "22px",
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.07)",
+            background: "var(--surface-raised)",
+            border: "1px solid var(--border)",
             animationDelay: "60ms",
           }}
         >
@@ -471,7 +471,7 @@ export default function QuizPage() {
               overflow: "hidden",
               background: "var(--surface)",
               borderTop: "3px solid var(--teal)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+              boxShadow: "inset 0 1px 0 rgba(28,45,64,0.04)",
             }}
           >
             <div
@@ -539,8 +539,8 @@ export default function QuizPage() {
             style={{
               padding: "6px",
               borderRadius: "22px",
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "var(--surface-raised)",
+              border: "1px solid var(--border)",
               marginBottom: "2rem",
             }}
           >
@@ -553,7 +553,7 @@ export default function QuizPage() {
                 overflow: "hidden",
                 background: "var(--surface)",
                 borderTop: "3px solid var(--correct)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+                boxShadow: "inset 0 1px 0 rgba(28,45,64,0.04)",
               }}
             >
               <div
@@ -761,7 +761,7 @@ export default function QuizPage() {
               className="flex-1 inline-flex items-center justify-center gap-3 font-semibold active:scale-[0.98]"
               style={{
                 background: "var(--teal)",
-                color: "#fff",
+                color: "#080D1A",
                 borderRadius: "9999px",
                 padding: "10px 10px 10px 22px",
                 fontSize: "0.875rem",
