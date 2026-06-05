@@ -445,7 +445,7 @@ function StudyFirstPanel({
           먼저 해설을 보고, 댓글로 외우는 법을 잡으세요
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.55, margin: 0 }}>
-          vet40에서 힘이 생겼던 흐름처럼, 문제 자체보다 해설과 수험생 노하우를 앞에 둡니다.
+          문제 자체보다 해설과 수험생 노하우를 앞에 둡니다.
         </p>
       </div>
 
