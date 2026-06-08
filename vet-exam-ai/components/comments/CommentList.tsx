@@ -14,6 +14,7 @@ type CommentStatus = "visible" | "hidden_by_votes" | "blinded_by_report";
 export type RootWithReplies = CommentItemData & {
   status: CommentStatus;
   replies: ReplyRow[];
+  replyCount?: number;
   isPlaceholder?: boolean;
 };
 

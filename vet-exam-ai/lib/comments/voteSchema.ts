@@ -9,6 +9,6 @@ export const VoteRequestSchema = z.object({
 });
 export type VoteRequest = z.infer<typeof VoteRequestSchema>;
 
-export const SORT_MODES = ["score", "recent"] as const;
+export const SORT_MODES = ["recommended", "score", "recent"] as const;
 export const SortModeSchema = z.enum(SORT_MODES);
 export type SortMode = z.infer<typeof SortModeSchema>;

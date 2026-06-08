@@ -1,4 +1,3 @@
-// vet-exam-ai/components/comments/CommentSortToggle.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -11,7 +10,8 @@ type Props = {
 };
 
 const LABEL: Record<SortMode, string> = {
-  score: "추천순",
+  recommended: "추천순",
+  score: "추천수순",
   recent: "최신순",
 };
 

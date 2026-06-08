@@ -38,6 +38,7 @@ type CommentRow = {
   edit_count: number;
   status: CommentStatus;
   vote_score: number;
+  reply_count: number;
 };
 
 const VISIBLE_STATUSES: CommentStatus[] = [
@@ -55,6 +56,37 @@ const TYPE_FILTERS: Array<{ value: TypeFilter; label: string }> = [
   { value: "discussion", label: "토론" },
 ];
 
+const ROOT_FETCH_LIMIT = 80;
+const REPLY_FETCH_LIMIT = 400;
+
+const TYPE_PRIORITY: Record<CommentType, number> = {
+  correction: 8,
+  memorization: 7,
+  explanation: 5,
+  question: 3,
+  discussion: 0,
+};
+
+function getRecommendedPriority(root: RootWithReplies, score: number): number {
+  if (root.isPlaceholder) return -1000;
+  const ageHours = Math.max(
+    0,
+    (Date.now() - new Date(root.created_at).getTime()) / (1000 * 60 * 60),
+  );
+  const recencyBoost = Math.max(0, 6 - ageHours / 24);
+  const statusPenalty =
+    root.status === "visible" ? 0 : root.status === "hidden_by_votes" ? -8 : -20;
+  const replyBoost = Math.min(root.replyCount ?? root.replies.length, 8) * 1.5;
+
+  return (
+    score * 10 +
+    replyBoost +
+    TYPE_PRIORITY[root.type] +
+    recencyBoost +
+    statusPenalty
+  );
+}
+
 export default function CommentThread({ questionId, highlightCommentId }: Props) {
   const [status, setStatus] = useState<Status>("loading");
   const [roots, setRoots] = useState<RootWithReplies[]>([]);
@@ -62,7 +94,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
   const [myVoteById, setMyVoteById] = useState<Map<string, VoteValue>>(new Map());
   const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [sortMode, setSortMode] = useState<SortMode>("score");
+  const [sortMode, setSortMode] = useState<SortMode>("recommended");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserNickname, setCurrentUserNickname] = useState<string | null>(null);
@@ -114,23 +146,26 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         setCurrentUserNickname(null);
       }
 
-      let query = supabase
+      const commentSelect =
+        "id, user_id, parent_id, type, body_text, body_html, image_urls, created_at, updated_at, edit_count, status, vote_score, reply_count";
+
+      let rootQuery = supabase
         .from("comments")
-        .select(
-          "id, user_id, parent_id, type, body_text, body_html, image_urls, created_at, updated_at, edit_count, status, vote_score"
-        )
+        .select(commentSelect)
         .eq("question_id", questionId)
         .in("status", VISIBLE_STATUSES)
-        .limit(50);
-      if (sortMode === "score") {
-        query = query
-          .order("vote_score", { ascending: false })
-          .order("created_at", { ascending: false });
+        .is("parent_id", null)
+        .limit(ROOT_FETCH_LIMIT);
+      if (sortMode === "recent") {
+        rootQuery = rootQuery.order("created_at", { ascending: false });
       } else {
-        query = query.order("created_at", { ascending: false });
+        rootQuery = rootQuery
+          .order("vote_score", { ascending: false })
+          .order("reply_count", { ascending: false })
+          .order("created_at", { ascending: false });
       }
 
-      const { data: commentRows, error } = await query;
+      const { data: rootCommentRows, error } = await rootQuery;
 
       if (cancelled) return;
       if (error) {
@@ -138,7 +173,26 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         setStatus("error");
         return;
       }
-      const rows = (commentRows ?? []) as CommentRow[];
+      const rootRows = (rootCommentRows ?? []) as CommentRow[];
+      const rootIds = rootRows.map((row) => row.id);
+      let replyRows: CommentRow[] = [];
+      if (rootIds.length > 0) {
+        const repliesRes = await supabase
+          .from("comments")
+          .select(commentSelect)
+          .eq("question_id", questionId)
+          .in("status", VISIBLE_STATUSES)
+          .in("parent_id", rootIds)
+          .order("created_at", { ascending: true })
+          .limit(REPLY_FETCH_LIMIT);
+        if (cancelled) return;
+        if (repliesRes.error) {
+          console.warn("[CommentThread] replies fetch failed", repliesRes.error);
+        } else {
+          replyRows = (repliesRes.data ?? []) as CommentRow[];
+        }
+      }
+      const rows = [...rootRows, ...replyRows];
 
       const newScores = new Map<string, number>();
       for (const r of rows) newScores.set(r.id, r.vote_score ?? 0);
@@ -192,9 +246,6 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         authorNickname: row.user_id ? nicknameById.get(row.user_id) ?? null : null,
       });
 
-      const rootRows = rows.filter((r) => r.parent_id === null);
-      const replyRows = rows.filter((r) => r.parent_id !== null);
-
       const repliesByParent = new Map<string, CommentRow[]>();
       for (const r of replyRows) {
         const pid = r.parent_id as string;
@@ -214,6 +265,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       const assembled: RootWithReplies[] = rootRows.map((row) => ({
         ...toItem(row),
         status: row.status,
+        replyCount: row.reply_count ?? 0,
         replies: (repliesByParent.get(row.id) ?? []).map<ReplyRow>((rr) => ({
           ...toItem(rr),
           status: rr.status,
@@ -234,6 +286,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             edit_count: 0,
             authorNickname: null,
             status: "visible",
+            replyCount: arr.length,
             replies: arr.map<ReplyRow>((rr) => ({
               ...toItem(rr),
               status: rr.status,
@@ -243,7 +296,14 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         }
       }
 
-      if (sortMode === "score") {
+      if (sortMode === "recommended") {
+        assembled.sort((a, b) => {
+          const pa = getRecommendedPriority(a, newScores.get(a.id) ?? 0);
+          const pb = getRecommendedPriority(b, newScores.get(b.id) ?? 0);
+          if (pb !== pa) return pb - pa;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+      } else if (sortMode === "score") {
         assembled.sort((a, b) => {
           const sa = newScores.get(a.id) ?? 0;
           const sb = newScores.get(b.id) ?? 0;
@@ -758,14 +818,14 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     },
     { total: 0, byType: new Map<CommentType, number>() },
   );
-  const visibleRoots =
-    typeFilter === "all"
-      ? roots
-      : roots.filter((root) => !root.isPlaceholder && root.type === typeFilter);
   const visiblePinned =
     pinnedDisplay && (typeFilter === "all" || pinnedDisplay.item.type === typeFilter)
       ? pinnedDisplay
       : null;
+  const visibleRoots = (typeFilter === "all"
+    ? roots
+    : roots.filter((root) => !root.isPlaceholder && root.type === typeFilter)
+  ).filter((root) => !visiblePinned || root.id !== visiblePinned.item.id);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
