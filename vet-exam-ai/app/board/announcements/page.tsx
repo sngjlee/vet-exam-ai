@@ -11,7 +11,8 @@ export default async function AnnouncementsListPage({
   searchParams,
 }: { searchParams: Promise<{ page?: string }> }) {
   const sp = await searchParams;
-  const page = Math.max(1, Number(sp.page ?? "1"));
+  const pageRaw = Number(sp.page ?? "1");
+  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
   const supabase = await createClient();
 
   const { data: userRes } = await supabase.auth.getUser();
@@ -20,25 +21,24 @@ export default async function AnnouncementsListPage({
     .from("profiles").select("role,is_active").eq("id", userRes.user.id).single();
   const isAdmin = profile?.role === "admin" && profile?.is_active === true;
 
-  const { data: posts, count } = await supabase
+  const { data: rows } = await supabase
     .from("board_posts")
-    .select("id,kind,title,is_pinned,is_anonymized,user_id,upvote_count,comment_count,suggestion_status,created_at",
-            { count: "exact" })
+    .select("id,kind,title,is_pinned,is_anonymized,user_id,upvote_count,comment_count,suggestion_status,created_at")
     .eq("kind", "announcement")
     .eq("visibility", "visible")
     .order("is_pinned", { ascending: false })
     .order("created_at", { ascending: false })
-    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const posts = (rows ?? []).slice(0, PAGE_SIZE);
+  const hasNextPage = (rows ?? []).length > PAGE_SIZE;
 
-  const userIds = Array.from(new Set((posts ?? []).map((p) => p.user_id).filter(Boolean) as string[]));
+  const userIds = Array.from(new Set(posts.map((p) => p.user_id).filter(Boolean) as string[]));
   const nicknames = new Map<string, string | null>();
   if (userIds.length > 0) {
     const { data: nicks } = await supabase
       .from("user_profiles_public").select("user_id,nickname").in("user_id", userIds);
     for (const n of nicks ?? []) nicknames.set(n.user_id, n.nickname);
   }
-
-  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   return (
     <div>
@@ -55,7 +55,7 @@ export default async function AnnouncementsListPage({
         ) : null}
       </div>
       <ul className="mt-4 space-y-2">
-        {(posts ?? []).map((p) => (
+        {posts.map((p) => (
           <li key={p.id}>
             <BoardPostListItem
               post={p}
@@ -63,15 +63,15 @@ export default async function AnnouncementsListPage({
             />
           </li>
         ))}
-        {(posts ?? []).length === 0 ? (
+        {posts.length === 0 ? (
           <li className="text-sm" style={{ color: "var(--text-muted)" }}>공지가 없습니다.</li>
         ) : null}
       </ul>
-      {totalPages > 1 ? (
+      {page > 1 || hasNextPage ? (
         <nav className="mt-4 flex justify-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
           {page > 1 ? <Link href={`?page=${page - 1}`}>이전</Link> : null}
-          <span>{page} / {totalPages}</span>
-          {page < totalPages ? <Link href={`?page=${page + 1}`}>다음</Link> : null}
+          <span>{page}</span>
+          {hasNextPage ? <Link href={`?page=${page + 1}`}>다음</Link> : null}
         </nav>
       ) : null}
     </div>

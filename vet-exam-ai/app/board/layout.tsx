@@ -17,7 +17,7 @@ export default async function BoardLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-6">
+    <div className="mx-auto w-full max-w-4xl px-4 py-6">
       <h1 className="text-2xl font-bold" style={{ color: "var(--text)" }}>공지·건의</h1>
       <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
         운영자 공지와 사용자 건의를 한 곳에서.

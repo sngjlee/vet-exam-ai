@@ -11,7 +11,8 @@ const PAGE_SIZE = 20;
 
 export default async function SuggestionsListPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
-  const page = Math.max(1, Number(sp.page ?? "1"));
+  const pageRaw = Number(sp.page ?? "1");
+  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
   const sort = sp.sort === "popular" ? "popular" : "latest";
   const status = ["received", "reviewing", "accepted", "rejected"].includes(sp.status ?? "")
     ? (sp.status as "received" | "reviewing" | "accepted" | "rejected")
@@ -21,8 +22,7 @@ export default async function SuggestionsListPage({ searchParams }: { searchPara
   let q = supabase
     .from("board_posts")
     .select(
-      "id,kind,title,suggestion_status,is_anonymized,user_id,upvote_count,comment_count,created_at,is_pinned",
-      { count: "exact" }
+      "id,kind,title,suggestion_status,is_anonymized,user_id,upvote_count,comment_count,created_at,is_pinned"
     )
     .eq("kind", "suggestion")
     .eq("visibility", "visible");
@@ -31,12 +31,14 @@ export default async function SuggestionsListPage({ searchParams }: { searchPara
     sort === "popular"
       ? q.order("upvote_count", { ascending: false }).order("created_at", { ascending: false })
       : q.order("created_at", { ascending: false });
-  q = q.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-  const { data: posts, count } = await q;
+  q = q.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const { data: rows } = await q;
+  const posts = (rows ?? []).slice(0, PAGE_SIZE);
+  const hasNextPage = (rows ?? []).length > PAGE_SIZE;
 
   // 작성자 닉네임 batch
   const userIds = Array.from(
-    new Set((posts ?? []).map((p) => p.user_id).filter(Boolean) as string[])
+    new Set(posts.map((p) => p.user_id).filter(Boolean) as string[])
   );
   const nicknames = new Map<string, string | null>();
   if (userIds.length > 0) {
@@ -47,13 +49,19 @@ export default async function SuggestionsListPage({ searchParams }: { searchPara
     for (const n of nicks ?? []) nicknames.set(n.user_id, n.nickname);
   }
 
-  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
-
   const navLinkStyle = (active: boolean) => ({
     color: active ? "var(--teal)" : "var(--text-muted)",
     fontWeight: active ? 700 : 400,
     textDecoration: "none",
   });
+  const pageHref = (nextPage: number) => {
+    const params = new URLSearchParams();
+    if (sort === "popular") params.set("sort", "popular");
+    if (status) params.set("status", status);
+    if (nextPage > 1) params.set("page", String(nextPage));
+    const query = params.toString();
+    return query ? `?${query}` : "?";
+  };
 
   return (
     <div>
@@ -92,7 +100,7 @@ export default async function SuggestionsListPage({ searchParams }: { searchPara
       </div>
 
       <ul className="mt-4 space-y-2">
-        {(posts ?? []).map((p) => (
+        {posts.map((p) => (
           <li key={p.id}>
             <BoardPostListItem
               post={p}
@@ -100,18 +108,16 @@ export default async function SuggestionsListPage({ searchParams }: { searchPara
             />
           </li>
         ))}
-        {(posts ?? []).length === 0 ? (
+        {posts.length === 0 ? (
           <li className="text-sm" style={{ color: "var(--text-muted)" }}>건의글이 없습니다.</li>
         ) : null}
       </ul>
 
-      {totalPages > 1 ? (
+      {page > 1 || hasNextPage ? (
         <nav className="mt-4 flex justify-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
-          {page > 1 ? <Link href={`?page=${page - 1}`}>이전</Link> : null}
-          <span>
-            {page} / {totalPages}
-          </span>
-          {page < totalPages ? <Link href={`?page=${page + 1}`}>다음</Link> : null}
+          {page > 1 ? <Link href={pageHref(page - 1)}>이전</Link> : null}
+          <span>{page}</span>
+          {hasNextPage ? <Link href={pageHref(page + 1)}>다음</Link> : null}
         </nav>
       ) : null}
     </div>
