@@ -184,7 +184,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         setStatus("error");
         return;
       }
-      const rootRows = (rootCommentRows ?? []) as CommentRow[];
+      let rootRows = (rootCommentRows ?? []) as CommentRow[];
       const rootIds = rootRows.map((row) => row.id);
       let replyRows: CommentRow[] = [];
       if (rootIds.length > 0) {
@@ -201,6 +201,46 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           console.warn("[CommentThread] replies fetch failed", repliesRes.error);
         } else {
           replyRows = (repliesRes.data ?? []) as CommentRow[];
+        }
+      }
+
+      if (
+        highlightCommentId &&
+        !rootRows.some((row) => row.id === highlightCommentId) &&
+        !replyRows.some((row) => row.id === highlightCommentId)
+      ) {
+        const highlightedRes = await supabase
+          .from("comments")
+          .select(commentSelect)
+          .eq("id", highlightCommentId)
+          .eq("question_id", questionId)
+          .in("status", VISIBLE_STATUSES)
+          .maybeSingle();
+        if (cancelled) return;
+        if (highlightedRes.error) {
+          console.warn("[CommentThread] highlighted comment fetch failed", highlightedRes.error);
+        } else if (highlightedRes.data) {
+          const highlighted = highlightedRes.data as CommentRow;
+          if (highlighted.parent_id) {
+            if (!rootRows.some((row) => row.id === highlighted.parent_id)) {
+              const parentRes = await supabase
+                .from("comments")
+                .select(commentSelect)
+                .eq("id", highlighted.parent_id)
+                .eq("question_id", questionId)
+                .in("status", VISIBLE_STATUSES)
+                .maybeSingle();
+              if (cancelled) return;
+              if (parentRes.error) {
+                console.warn("[CommentThread] highlighted parent fetch failed", parentRes.error);
+              } else if (parentRes.data) {
+                rootRows = [...rootRows, parentRes.data as CommentRow];
+              }
+            }
+            replyRows = [...replyRows, highlighted];
+          } else {
+            rootRows = [...rootRows, highlighted];
+          }
         }
       }
       const rows = [...rootRows, ...replyRows];
@@ -352,7 +392,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     return () => {
       cancelled = true;
     };
-  }, [questionId, sortMode, reloadKey]);
+  }, [questionId, sortMode, reloadKey, highlightCommentId]);
 
   useEffect(() => {
     let cancelled = false;

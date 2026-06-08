@@ -366,6 +366,104 @@ p, h1, h2, h3, h4, button, label, span, td, th {
       line-height: 1.8;
     }
 
+    .kvle-search-shell,
+    .kvle-comments-shell {
+      padding-left: 14px !important;
+      padding-right: 14px !important;
+      padding-top: 32px !important;
+    }
+
+    .kvle-search-filter-panel,
+    .kvle-comments-filter-panel {
+      padding: 14px !important;
+      border-radius: 12px !important;
+    }
+
+    .kvle-search-filter-controls {
+      gap: 12px !important;
+    }
+
+    .kvle-search-filter-field {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .kvle-search-category-select {
+      min-width: 0 !important;
+    }
+
+    .kvle-search-chip-row {
+      flex-wrap: wrap;
+    }
+
+    .kvle-search-result-row {
+      padding: 14px !important;
+      gap: 10px !important;
+    }
+
+    .kvle-search-pager,
+    .kvle-comments-pager {
+      gap: 8px !important;
+    }
+
+    .kvle-search-pager button,
+    .kvle-comments-pager a,
+    .kvle-comments-pager span[aria-disabled="true"] {
+      flex: 1;
+      min-width: 0;
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .kvle-comments-search-form {
+      padding: 10px !important;
+      gap: 8px !important;
+      flex-wrap: wrap;
+    }
+
+    .kvle-comments-search-form input {
+      flex: 1 1 calc(100% - 34px) !important;
+    }
+
+    .kvle-comments-search-form button {
+      flex: 1 1 120px;
+      justify-content: center;
+    }
+
+    .kvle-comments-filter-panel {
+      align-items: stretch !important;
+    }
+
+    .kvle-comments-filter-panel > div {
+      width: 100%;
+    }
+
+    .kvle-comment-preview-card {
+      padding: 14px !important;
+      border-radius: 10px !important;
+    }
+
+    .kvle-comment-preview-header {
+      align-items: flex-start !important;
+    }
+
+    .kvle-comment-preview-header [data-comment-preview-question-id] {
+      order: 10;
+      width: 100%;
+      margin-left: 0 !important;
+    }
+
+    .kvle-comment-preview-footer {
+      flex-wrap: wrap;
+    }
+
+    .kvle-comment-preview-stats {
+      width: 100%;
+      justify-content: flex-end;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+
     .kvle-comment-composer {
       padding: 14px !important;
       gap: 12px !important;

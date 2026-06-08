@@ -173,7 +173,7 @@ function SearchPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12 space-y-6">
+    <main className="kvle-search-shell mx-auto max-w-4xl px-6 py-12 space-y-6">
       <header>
         <span className="kvle-label">검색</span>
         <h1
@@ -209,6 +209,7 @@ function SearchPage() {
       {/* Filter bar (only when there is a query) */}
       {searchable && (
         <section
+          className="kvle-search-filter-panel"
           style={{
             background:    "var(--surface)",
             border:        "1px solid var(--border)",
@@ -243,15 +244,15 @@ function SearchPage() {
             )}
           </div>
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+          <div className="kvle-search-filter-controls" style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
             {/* Category */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div className="kvle-search-filter-field" style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <label className="kvle-label" htmlFor="search-category">과목</label>
               <select
                 id="search-category"
                 value={category}
                 onChange={(e) => pushUrl({ category: e.target.value, page: 0 })}
-                className="kvle-input"
+                className="kvle-search-category-select kvle-input"
                 style={{ minWidth: 160 }}
               >
                 <option value="">전체</option>
@@ -264,7 +265,7 @@ function SearchPage() {
             {/* Recent years */}
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <label className="kvle-label">최근 기출</label>
-              <div style={{ display: "flex", gap: 6 }}>
+              <div className="kvle-search-chip-row" style={{ display: "flex", gap: 6 }}>
                 <ChipToggle
                   active={recentYears === null}
                   onClick={() => pushUrl({ recentYears: null, page: 0 })}
@@ -314,6 +315,7 @@ function SearchPage() {
       {/* Pagination */}
       {searchable && total > SEARCH_PAGE_SIZE && (
         <nav
+          className="kvle-search-pager"
           aria-label="검색 결과 페이지 이동"
           style={{
             display:        "flex",
@@ -365,6 +367,7 @@ function ResultList({
 }) {
   return (
     <section
+      className="kvle-search-results"
       style={{
         background:    "var(--surface)",
         border:        "1px solid var(--border)",
@@ -384,6 +387,7 @@ function ResultList({
           <Link
             key={it.id}
             href={href}
+            className="kvle-search-result-row"
             onClick={() => saveQuestionsListContext(allPublicIds)}
             style={{
             display:       "flex",

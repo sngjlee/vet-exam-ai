@@ -132,7 +132,7 @@ export default function CommentsClient({ viewerIsAdmin = false }: { viewerIsAdmi
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10 space-y-6">
+    <main className="kvle-comments-shell mx-auto max-w-4xl px-6 py-10 space-y-6">
       <header>
         <span className="kvle-label">댓글 노하우</span>
         <h1
@@ -203,6 +203,7 @@ export default function CommentsClient({ viewerIsAdmin = false }: { viewerIsAdmi
       </section>
 
       <form
+        className="kvle-comments-search-form"
         onSubmit={handleSearchSubmit}
         style={{
           background: "var(--surface)",
@@ -250,6 +251,7 @@ export default function CommentsClient({ viewerIsAdmin = false }: { viewerIsAdmi
       </form>
 
       <section
+        className="kvle-comments-filter-panel"
         style={{
           background: "var(--surface)",
           border: "1px solid var(--border)",
@@ -329,7 +331,7 @@ export default function CommentsClient({ viewerIsAdmin = false }: { viewerIsAdmi
               {currentPage} / {totalPages}
             </span>
           </div>
-          <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <section className="kvle-comment-preview-list" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {comments.map((comment) => (
               <CommentCard
                 key={comment.id}
@@ -341,6 +343,7 @@ export default function CommentsClient({ viewerIsAdmin = false }: { viewerIsAdmi
           </section>
           {totalPages > 1 && (
             <nav
+              className="kvle-comments-pager"
               aria-label="댓글 페이지 이동"
               style={{
                 display: "flex",
@@ -475,6 +478,7 @@ function CommentCard({
 
   return (
     <article
+      className="kvle-comment-preview-card"
       style={{
         display: "block",
         background: "var(--surface)",
@@ -484,7 +488,7 @@ function CommentCard({
         color: "inherit",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+      <div className="kvle-comment-preview-header" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
         <span
           style={{
             background: meta.bg,
@@ -523,6 +527,7 @@ function CommentCard({
         </span>
         <span
           className="kvle-mono"
+          data-comment-preview-question-id
           style={{ marginLeft: "auto", color: "var(--text-faint)", fontSize: 11 }}
         >
           {comment.questionPublicId ?? comment.questionId}
@@ -560,6 +565,7 @@ function CommentCard({
       </p>
 
       <div
+        className="kvle-comment-preview-footer"
         style={{
           borderTop: "1px solid var(--border)",
           paddingTop: 10,
@@ -590,6 +596,7 @@ function CommentCard({
           </div>
         </div>
         <div
+          className="kvle-comment-preview-stats"
           style={{
             display: "flex",
             alignItems: "center",
