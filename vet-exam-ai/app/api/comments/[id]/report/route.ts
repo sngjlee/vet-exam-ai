@@ -53,7 +53,7 @@ export async function POST(
       { status: 403 }
     );
   }
-  if (comment.status === "removed_by_admin") {
+  if (comment.status !== "visible" && comment.status !== "hidden_by_votes") {
     return NextResponse.json(
       { error: "Comment is no longer available" },
       { status: 410 }

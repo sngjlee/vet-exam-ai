@@ -98,7 +98,7 @@ export default function ProfileCommentList({
         {comments.map((c) => (
           <Link
             key={c.id}
-            href={`/questions/${c.question_id}#comment-${c.id}`}
+            href={`/questions/${encodeURIComponent(c.question_id)}?comment=${encodeURIComponent(c.id)}`}
             style={{
               display: "block",
               padding: "12px 14px",

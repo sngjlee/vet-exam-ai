@@ -2,6 +2,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../../lib/supabase/server";
 
+const QUESTION_COMMENT_STATE_LOOKUP_LIMIT = 1000;
+
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const questionId = url.searchParams.get("question_id");
@@ -22,7 +24,7 @@ export async function GET(req: NextRequest) {
     .from("comments")
     .select("id")
     .eq("question_id", questionId)
-    .limit(200);
+    .limit(QUESTION_COMMENT_STATE_LOOKUP_LIMIT);
 
   if (idsErr) {
     return NextResponse.json({ error: idsErr.message }, { status: 500 });
