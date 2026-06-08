@@ -3,6 +3,169 @@ import { createClient } from "../../../lib/supabase/server";
 import { CreateCommentSchema } from "../../../lib/comments/schema";
 import { renderCommentMarkdown } from "../../../lib/comments/sanitize";
 import { findInvalidImageUrl } from "../../../lib/comments/imageUrlValidate";
+import {
+  COMMENT_TYPE_FILTERS,
+  COMMENTS_PAGE_SIZE,
+  emptyCommentsTypeCounts,
+  isCommentType,
+  normalizeCommentsQuery,
+  parseCommentsPage,
+  type CommentPreview,
+  type CommentsListResponse,
+  type CommentsSortMode,
+} from "../../../lib/comments/list";
+
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const sort: CommentsSortMode = url.searchParams.get("sort") === "popular" ? "popular" : "recent";
+  const typeRaw = url.searchParams.get("type");
+  const type = isCommentType(typeRaw) ? typeRaw : null;
+  const q = normalizeCommentsQuery(url.searchParams.get("q"));
+  const searchable = q.length >= 2;
+  const page = parseCommentsPage(url.searchParams.get("page"));
+  const from = (page - 1) * COMMENTS_PAGE_SIZE;
+  const to = from + COMMENTS_PAGE_SIZE - 1;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
+  let query = supabase
+    .from("comments")
+    .select("id, question_id, user_id, type, body_text, vote_score, reply_count, created_at", {
+      count: "exact",
+    })
+    .eq("status", "visible")
+    .is("parent_id", null);
+
+  if (type) {
+    query = query.eq("type", type);
+  }
+  if (searchable) {
+    query = query.ilike("body_text", `%${q}%`);
+  }
+  query =
+    sort === "popular"
+      ? query.order("vote_score", { ascending: false }).order("created_at", { ascending: false })
+      : query.order("created_at", { ascending: false });
+  query = query.range(from, to);
+
+  const makeCountQuery = (countType: typeof type) => {
+    let countQuery = supabase
+      .from("comments")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "visible")
+      .is("parent_id", null);
+    if (countType) {
+      countQuery = countQuery.eq("type", countType);
+    }
+    if (searchable) {
+      countQuery = countQuery.ilike("body_text", `%${q}%`);
+    }
+    return countQuery;
+  };
+
+  const [commentsRes, allCountRes, ...typeCountResults] = await Promise.all([
+    query,
+    makeCountQuery(null),
+    ...COMMENT_TYPE_FILTERS.map((item) => makeCountQuery(item.value)),
+  ]);
+
+  const { data: commentRows, error, count } = commentsRes;
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  if (allCountRes.error) {
+    return NextResponse.json({ error: allCountRes.error.message }, { status: 500 });
+  }
+  for (const result of typeCountResults) {
+    if (result.error) {
+      return NextResponse.json({ error: result.error.message }, { status: 500 });
+    }
+  }
+
+  const rows = commentRows ?? [];
+  const total = count ?? 0;
+  const allCount = allCountRes.count ?? 0;
+  const typeCounts = emptyCommentsTypeCounts();
+  COMMENT_TYPE_FILTERS.forEach((item, index) => {
+    typeCounts[item.value] = typeCountResults[index]?.count ?? 0;
+  });
+  const totalPages = Math.max(1, Math.ceil(total / COMMENTS_PAGE_SIZE));
+  const questionIds = Array.from(new Set(rows.map((row) => row.question_id)));
+  const userIds = Array.from(
+    new Set(rows.map((row) => row.user_id).filter((value): value is string => Boolean(value))),
+  );
+
+  const [questionsRes, profilesRes] = await Promise.all([
+    questionIds.length > 0
+      ? supabase
+          .from("questions")
+          .select("id, public_id, question, category, topic")
+          .in("id", questionIds)
+      : Promise.resolve({ data: [], error: null }),
+    userIds.length > 0
+      ? supabase
+          .from("user_profiles_public")
+          .select("user_id, nickname")
+          .in("user_id", userIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (questionsRes.error) {
+    return NextResponse.json({ error: questionsRes.error.message }, { status: 500 });
+  }
+  if (profilesRes.error) {
+    return NextResponse.json({ error: profilesRes.error.message }, { status: 500 });
+  }
+
+  const questionById = new Map((questionsRes.data ?? []).map((question) => [question.id, question]));
+  const nicknameByUserId = new Map(
+    (profilesRes.data ?? []).map((profile) => [profile.user_id, profile.nickname]),
+  );
+
+  const comments: CommentPreview[] = rows.map((row) => {
+    const question = questionById.get(row.question_id);
+    return {
+      id: row.id,
+      questionId: row.question_id,
+      userId: row.user_id,
+      type: row.type,
+      bodyText: row.body_text,
+      voteScore: row.vote_score ?? 0,
+      replyCount: row.reply_count ?? 0,
+      createdAt: row.created_at,
+      questionPublicId: question?.public_id ?? null,
+      questionPreview: question?.question ?? "문제 정보를 불러올 수 없습니다.",
+      category: question?.category ?? "기타",
+      topic: question?.topic ?? null,
+      authorNickname: row.user_id ? nicknameByUserId.get(row.user_id) ?? null : null,
+    };
+  });
+
+  const body: CommentsListResponse = {
+    comments,
+    total,
+    allCount,
+    typeCounts,
+    page,
+    pageSize: COMMENTS_PAGE_SIZE,
+    totalPages,
+    sort,
+    type,
+    q,
+  };
+
+  return NextResponse.json(body, {
+    headers: {
+      "Cache-Control": "private, max-age=15, stale-while-revalidate=60",
+    },
+  });
+}
 
 export async function POST(req: NextRequest) {
   let payload: unknown;
