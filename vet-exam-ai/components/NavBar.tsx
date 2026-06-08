@@ -71,7 +71,7 @@ export default function NavBar() {
         borderBottom: "1px solid var(--rule)",
       }}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3">
+      <div className="kvle-app-header-inner mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3">
         <Link href="/dashboard" className="brand-logo-wrap shrink-0" aria-label="KVLE 홈">
           <Image
             src="/logo.png"
@@ -83,7 +83,7 @@ export default function NavBar() {
           />
         </Link>
 
-        <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto text-sm font-medium">
+        <nav className="kvle-app-nav-scroll flex min-w-0 flex-1 items-center gap-1 overflow-x-auto text-sm font-medium">
           {!loading && user && (
             <>
               {MAIN_LINKS.map(({ href, label, icon: Icon, section }) => (
@@ -117,7 +117,7 @@ export default function NavBar() {
           )}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="kvle-app-nav-actions flex shrink-0 items-center gap-2">
           {!loading && user && isAdmin && (
             <Link
               href="/admin"

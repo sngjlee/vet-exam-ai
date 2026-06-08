@@ -535,6 +535,39 @@ p, h1, h2, h3, h4, button, label, span, td, th {
   text-decoration: none;
 }
 
+.kvle-app-nav-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  scroll-padding-inline: 0.5rem;
+}
+
+.kvle-app-nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .kvle-app-header-inner {
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  .kvle-app-nav-scroll {
+    margin-inline: -4px;
+    padding-inline: 4px;
+  }
+
+  .kvle-app-nav-actions {
+    gap: 6px !important;
+  }
+
+  .kvle-app-nav-actions a[title="내 프로필"] span,
+  .kvle-app-nav-actions a[title="프로필 설정"] span,
+  .kvle-app-nav-actions a[title="운영 콘솔"] span {
+    display: none;
+  }
+}
+
 /* Marquee */
 @keyframes marquee-scroll {
   from { transform: translateX(0); }
@@ -750,6 +783,46 @@ p, h1, h2, h3, h4, button, label, span, td, th {
 
   .landing-preview-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  .duo-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+    margin-top: 36px !important;
+    width: 100%;
+  }
+
+  .landing-feature-card {
+    width: 100%;
+    min-width: 0;
+    min-height: auto !important;
+    padding: 24px 18px !important;
+    border-radius: 14px !important;
+  }
+
+  .landing-feature-card h3 {
+    font-size: 22px !important;
+    line-height: 1.32 !important;
+  }
+
+  .landing-feature-card p {
+    max-width: 100% !important;
+  }
+
+  .landing-feature-viz {
+    padding: 14px !important;
+  }
+
+  .landing-feature-row {
+    gap: 8px !important;
+  }
+
+  .landing-feature-row-srs {
+    grid-template-columns: 36px minmax(0, 1fr) 52px !important;
+  }
+
+  .landing-feature-row-weak {
+    grid-template-columns: minmax(72px, 0.95fr) minmax(56px, 1fr) 42px !important;
   }
 
   .problem-grid,
