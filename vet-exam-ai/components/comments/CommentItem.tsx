@@ -1,7 +1,11 @@
 "use client";
 
-import { MessageCircle, Pin, PinOff } from "lucide-react";
+import { Flame, MessageCircle, Pin, PinOff } from "lucide-react";
 import type { CommentType } from "../../lib/comments/schema";
+import {
+  isPopularMemorization,
+  POPULAR_MEMORIZATION_THRESHOLD,
+} from "../../lib/comments/popularMemorization";
 import CommentVoteButton from "./CommentVoteButton";
 import CommentMenuOverflow from "./CommentMenuOverflow";
 import CommentAuthorInline from "./CommentAuthorInline";
@@ -126,6 +130,7 @@ export default function CommentItem({
 
   const voteDisabled = status === "blinded_by_report";
   const showEditMode = !!isEditing && !isPlaceholder && !!onCancelEdit && !!onSaved;
+  const showPopularMemorization = !isReply && isPopularMemorization(comment.type, score);
 
   return (
     <div
@@ -154,6 +159,27 @@ export default function CommentItem({
             }}
           >
             {meta.label}
+          </span>
+        )}
+        {showPopularMemorization && (
+          <span
+            title={`${POPULAR_MEMORIZATION_THRESHOLD}회 이상 추천받은 암기법`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              background: "#FFF7ED",
+              border: "1px solid #FED7AA",
+              color: "#C2410C",
+              borderRadius: 999,
+              padding: "2px 8px",
+              fontSize: 10,
+              fontWeight: 800,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <Flame size={12} aria-hidden="true" />
+            인기 암기법
           </span>
         )}
         <CommentAuthorInline

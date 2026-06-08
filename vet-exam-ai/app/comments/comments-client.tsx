@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BookOpen, ChevronRight, Lightbulb, MessageSquare, Search, TrendingUp } from "lucide-react";
+import { BookOpen, ChevronRight, Flame, Lightbulb, MessageSquare, Search, TrendingUp } from "lucide-react";
 import {
   COMMENT_TYPE_FILTERS,
   COMMENT_TYPE_META,
@@ -16,6 +16,10 @@ import {
   type CommentsListResponse,
   type CommentsSortMode,
 } from "../../lib/comments/list";
+import {
+  isPopularMemorization,
+  POPULAR_MEMORIZATION_THRESHOLD,
+} from "../../lib/comments/popularMemorization";
 
 type State = {
   data: CommentsListResponse | null;
@@ -457,6 +461,27 @@ function CommentCard({ comment }: { comment: CommentPreview }) {
         >
           {meta.label}
         </span>
+        {isPopularMemorization(comment.type, comment.voteScore) && (
+          <span
+            title={`${POPULAR_MEMORIZATION_THRESHOLD}회 이상 추천받은 암기법`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              background: "#FFF7ED",
+              border: "1px solid #FED7AA",
+              color: "#C2410C",
+              borderRadius: 999,
+              padding: "2px 8px",
+              fontSize: 10,
+              fontWeight: 800,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <Flame size={12} aria-hidden="true" />
+            인기 암기법
+          </span>
+        )}
         <span style={{ color: "var(--text-faint)", fontSize: 11 }}>
           {comment.authorNickname ? `@${comment.authorNickname}` : "익명"} · {formatRelative(comment.createdAt)}
         </span>
