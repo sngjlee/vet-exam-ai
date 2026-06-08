@@ -15,6 +15,7 @@ import type {
   CommentCorrectionReview,
   CommentCorrectionReviewResponse,
 } from "../../lib/comments/correctionReview";
+import { COMMENT_MODERATION_COPY } from "../../lib/comments/moderationCopy";
 import type { SortMode } from "../../lib/comments/voteSchema";
 import type { BadgeType } from "../../lib/profile/badgeMeta";
 
@@ -672,7 +673,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
 
   function handleReport(id: string) {
     if (!currentUserId) {
-      showToast("로그인하면 신고할 수 있습니다");
+      showToast(COMMENT_MODERATION_COPY.reportLoginRequiredToast);
       return;
     }
     setReportingId(id);
@@ -684,7 +685,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       next.add(id);
       return next;
     });
-    showToast("신고가 접수되었습니다.");
+    showToast(COMMENT_MODERATION_COPY.reportSuccessToast);
   }
 
   function handleAlreadyReported(id: string) {
@@ -693,7 +694,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       next.add(id);
       return next;
     });
-    showToast("이미 신고하신 댓글입니다.");
+    showToast(COMMENT_MODERATION_COPY.reportDuplicateToast);
   }
 
   function handleExpand(id: string) {

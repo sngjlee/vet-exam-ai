@@ -10,6 +10,7 @@ import {
   getCorrectionReviewMeta,
   type CommentCorrectionReview,
 } from "../../lib/comments/correctionReview";
+import { COMMENT_MODERATION_COPY } from "../../lib/comments/moderationCopy";
 import CommentVoteButton from "./CommentVoteButton";
 import CommentMenuOverflow from "./CommentMenuOverflow";
 import CommentAuthorInline from "./CommentAuthorInline";
@@ -123,7 +124,7 @@ export default function CommentItem({
           scrollMarginTop: 96,
         }}
       >
-        [작성자에 의해 삭제된 댓글]
+        {COMMENT_MODERATION_COPY.authorDeleted}
       </div>
     );
   }
@@ -241,6 +242,7 @@ export default function CommentItem({
         )}
         {status === "blinded_by_report" && isOwner && (
           <span
+            title={COMMENT_MODERATION_COPY.ownerReportHiddenTitle}
             style={{
               background: "var(--wrong-dim)",
               color: "var(--wrong)",
@@ -250,7 +252,7 @@ export default function CommentItem({
               fontWeight: 700,
             }}
           >
-            신고로 임시 비공개됨
+            {COMMENT_MODERATION_COPY.ownerReportHidden}
           </span>
         )}
         <div style={{ marginLeft: "auto", display: "inline-flex", gap: 4, alignItems: "center" }}>

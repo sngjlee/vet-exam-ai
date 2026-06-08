@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
+import { COMMENT_MODERATION_COPY } from "../../lib/comments/moderationCopy";
 
 type Props = {
   isOwner: boolean;
@@ -153,7 +154,7 @@ export default function CommentMenuOverflow({
                 cursor: "pointer",
               }}
             >
-              신고
+              {COMMENT_MODERATION_COPY.reportAction}
             </button>
           )}
           {showReportedBadge && (
@@ -170,7 +171,7 @@ export default function CommentMenuOverflow({
                 cursor: "not-allowed",
               }}
             >
-              신고됨 ✓
+              {COMMENT_MODERATION_COPY.reportSubmitted}
             </span>
           )}
         </div>

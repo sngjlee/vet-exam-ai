@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import {
   REPORT_REASONS,
   REPORT_REASON_LABEL,
   type ReportReason,
 } from "../../lib/comments/reportSchema";
+import { COMMENT_MODERATION_COPY } from "../../lib/comments/moderationCopy";
 
 type Props = {
   commentId: string;
@@ -28,23 +29,22 @@ export default function CommentReportModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) {
-      setReason(null);
-      setDescription("");
-      setError(null);
-      setSubmitting(false);
-    }
-  }, [open]);
+  const closeAndReset = useCallback(() => {
+    setReason(null);
+    setDescription("");
+    setError(null);
+    setSubmitting(false);
+    onClose();
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") closeAndReset();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, closeAndReset]);
 
   if (!open) return null;
 
@@ -67,25 +67,25 @@ export default function CommentReportModal({
       });
       if (res.status === 201) {
         onSubmitted(commentId);
-        onClose();
+        closeAndReset();
         return;
       }
       if (res.status === 409) {
         onAlreadyReported(commentId);
-        onClose();
+        closeAndReset();
         return;
       }
       if (res.status === 403) {
-        setError("본인 댓글은 신고할 수 없습니다.");
+        setError(COMMENT_MODERATION_COPY.reportOwnCommentError);
       } else if (res.status === 410) {
-        setError("이미 처리된 댓글입니다.");
+        setError(COMMENT_MODERATION_COPY.reportUnavailableError);
       } else if (res.status === 422) {
-        setError("입력값이 올바르지 않습니다.");
+        setError(COMMENT_MODERATION_COPY.reportInvalidError);
       } else {
-        setError("신고 처리에 실패했습니다. 다시 시도해주세요.");
+        setError(COMMENT_MODERATION_COPY.reportFailedError);
       }
     } catch {
-      setError("네트워크 오류로 신고에 실패했습니다.");
+      setError(COMMENT_MODERATION_COPY.reportNetworkError);
     } finally {
       setSubmitting(false);
     }
@@ -95,7 +95,7 @@ export default function CommentReportModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="댓글 신고"
+      aria-label={COMMENT_MODERATION_COPY.reportDialogTitle}
       style={{
         position: "fixed",
         inset: 0,
@@ -106,7 +106,7 @@ export default function CommentReportModal({
         zIndex: 100,
         padding: 16,
       }}
-      onClick={onClose}
+      onClick={closeAndReset}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -131,10 +131,12 @@ export default function CommentReportModal({
             borderBottom: "1px solid var(--border)",
           }}
         >
-          <strong style={{ fontSize: 14, color: "var(--text)" }}>댓글 신고</strong>
+          <strong style={{ fontSize: 14, color: "var(--text)" }}>
+            {COMMENT_MODERATION_COPY.reportDialogTitle}
+          </strong>
           <button
             type="button"
-            onClick={onClose}
+            onClick={closeAndReset}
             aria-label="닫기"
             style={{
               background: "transparent",
@@ -159,7 +161,7 @@ export default function CommentReportModal({
           }}
         >
           <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
-            신고 사유를 선택해주세요.
+            {COMMENT_MODERATION_COPY.reportIntro}
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -206,21 +208,20 @@ export default function CommentReportModal({
                 lineHeight: 1.6,
               }}
             >
-              이 신고는 정보통신망법 제44조의2에 따른 임시조치 요청입니다.
-              30일간 비공개 처리되며, 작성자에게 이의제기 기회가 부여됩니다.
+              {COMMENT_MODERATION_COPY.defamationNote}
             </div>
           )}
 
           <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
             <label style={{ fontSize: 12, color: "var(--text-muted)" }}>
-              부가 설명 (선택)
+              {COMMENT_MODERATION_COPY.reportDescriptionLabel}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               maxLength={1000}
-              placeholder="추가로 알려주실 내용이 있으면 입력해주세요."
+              placeholder={COMMENT_MODERATION_COPY.reportDescriptionPlaceholder}
               style={{
                 width: "100%",
                 resize: "vertical",
@@ -272,7 +273,7 @@ export default function CommentReportModal({
         >
           <button
             type="button"
-            onClick={onClose}
+            onClick={closeAndReset}
             style={{
               background: "transparent",
               border: "1px solid var(--border)",
@@ -301,7 +302,9 @@ export default function CommentReportModal({
               cursor: canSubmit ? "pointer" : "not-allowed",
             }}
           >
-            {submitting ? "제출 중..." : "신고하기"}
+            {submitting
+              ? COMMENT_MODERATION_COPY.reportSubmitting
+              : COMMENT_MODERATION_COPY.reportSubmit}
           </button>
         </div>
       </div>

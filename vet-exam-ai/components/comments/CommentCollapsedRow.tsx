@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { COMMENT_MODERATION_COPY } from "../../lib/comments/moderationCopy";
 
 type Props = {
   commentId: string;
@@ -19,8 +20,8 @@ export default function CommentCollapsedRow({
 }: Props) {
   const label =
     reason === "votes"
-      ? `누적 비추천으로 접힘${typeof score === "number" ? ` (${score})` : ""}`
-      : "신고로 임시 비공개된 댓글입니다";
+      ? COMMENT_MODERATION_COPY.collapsedByVotes(score)
+      : COMMENT_MODERATION_COPY.collapsedByReports;
 
   return (
     <div
@@ -44,7 +45,7 @@ export default function CommentCollapsedRow({
         <button
           type="button"
           onClick={() => onExpand(commentId)}
-          aria-label="댓글 펼치기"
+          aria-label={COMMENT_MODERATION_COPY.expandCollapsed}
           style={{
             background: "transparent",
             border: "none",
@@ -58,7 +59,7 @@ export default function CommentCollapsedRow({
             fontWeight: 600,
           }}
         >
-          펼치기 <ChevronDown size={12} />
+          {COMMENT_MODERATION_COPY.expandCollapsed} <ChevronDown size={12} />
         </button>
       )}
     </div>
