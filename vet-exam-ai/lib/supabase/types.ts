@@ -941,6 +941,28 @@ export interface Database {
           total_count: number;
         }[];
       };
+      search_comments: {
+        Args: {
+          q:               string;
+          category_filter?: string | null;
+          recent_years?:    number | null;
+          page_size?:       number;
+          page_offset?:     number;
+        };
+        Returns: {
+          id:                 string;
+          question_id:        string;
+          type:               Database["public"]["Enums"]["comment_type"];
+          body_text:          string;
+          vote_score:         number;
+          created_at:         string;
+          question_public_id: string;
+          question:           string;
+          category:           string;
+          year:               number | null;
+          total_count:        number;
+        }[];
+      };
       suggest_similar_queries: {
         Args: { q: string };
         Returns: {

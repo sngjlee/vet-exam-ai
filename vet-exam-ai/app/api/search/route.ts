@@ -112,85 +112,43 @@ export async function GET(req: NextRequest) {
     headline:  r.headline,
   }));
 
-  const commentResult = await supabase
-    .from("comments")
-    .select("id, question_id, type, body_text, vote_score, created_at", { count: "exact" })
-    .eq("status", "visible")
-    .is("parent_id", null)
-    .ilike("body_text", `%${q}%`)
-    .order("vote_score", { ascending: false })
-    .order("created_at", { ascending: false })
-    .range(0, Math.max(0, fetchLimit - 1));
-
-  if (commentResult.error) {
-    const fail: SearchResponse = {
-      items:       [],
-      total:       0,
-      page,
-      pageSize:    SEARCH_PAGE_SIZE,
-      suggestions: [],
-      redirect:    null,
-      error:       "internal",
-    };
-    return NextResponse.json(fail, { status: 500 });
-  }
-
-  const commentQuestionIds = Array.from(
-    new Set((commentResult.data ?? []).map((row) => row.question_id)),
-  );
-  const commentQuestionsResult =
-    commentQuestionIds.length > 0
-      ? await supabase
-          .from("questions")
-          .select("id, public_id, question, category, year")
-          .in("id", commentQuestionIds)
-          .eq("is_active", true)
-      : { data: [], error: null };
-
-  if (commentQuestionsResult.error) {
-    const fail: SearchResponse = {
-      items:       [],
-      total:       0,
-      page,
-      pageSize:    SEARCH_PAGE_SIZE,
-      suggestions: [],
-      redirect:    null,
-      error:       "internal",
-    };
-    return NextResponse.json(fail, { status: 500 });
-  }
-
-  const minRecentYear =
-    recent === null ? null : new Date().getFullYear() - recent + 1;
-  const questionById = new Map(
-    (commentQuestionsResult.data ?? []).map((question) => [question.id, question]),
-  );
-  const commentHits: SearchHit[] = (commentResult.data ?? []).flatMap((comment) => {
-    const question = questionById.get(comment.question_id);
-    if (!question) return [];
-    if (category && question.category !== category) return [];
-    if (minRecentYear !== null && (question.year === null || question.year < minRecentYear)) {
-      return [];
-    }
-    return [
-      {
-        id:          `comment:${comment.id}`,
-        publicId:    question.public_id,
-        question:    question.question,
-        category:    question.category,
-        matchedIn:   "comments",
-        headline:    makeCommentHeadline(comment.body_text, q),
-        commentId:   comment.id,
-        commentType: comment.type,
-      },
-    ];
+  const { data: commentRows, error: commentError } = await supabase.rpc("search_comments", {
+    q,
+    category_filter: category,
+    recent_years:    recent,
+    page_size:       fetchLimit,
+    page_offset:     0,
   });
+
+  if (commentError) {
+    const fail: SearchResponse = {
+      items:       [],
+      total:       0,
+      page,
+      pageSize:    SEARCH_PAGE_SIZE,
+      suggestions: [],
+      redirect:    null,
+      error:       "internal",
+    };
+    return NextResponse.json(fail, { status: 500 });
+  }
+
+  const comments = commentRows ?? [];
+  const commentHits: SearchHit[] = comments.map((comment) => ({
+    id:          `comment:${comment.id}`,
+    publicId:    comment.question_public_id,
+    question:    comment.question,
+    category:    comment.category,
+    matchedIn:   "comments",
+    headline:    makeCommentHeadline(comment.body_text, q),
+    commentId:   comment.id,
+    commentType: comment.type,
+  }));
 
   const combined = interleave(commentHits, questionHits);
   const items = combined.slice(offset, offset + SEARCH_PAGE_SIZE);
-  const filteredCommentTotal =
-    category || recent !== null ? commentHits.length : (commentResult.count ?? 0);
-  const combinedTotal = total + filteredCommentTotal;
+  const commentTotal = comments.length > 0 ? Number(comments[0].total_count) : 0;
+  const combinedTotal = total + commentTotal;
 
   // 0건이면 trigram 제안 fallback. 1건 이상이면 빈 배열.
   // Note: only triggers when the search genuinely has zero matches (total === 0
