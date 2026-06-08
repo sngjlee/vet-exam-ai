@@ -11,6 +11,10 @@ import CommentReportModal from "./CommentReportModal";
 import CommentEditHistoryModal from "./CommentEditHistoryModal";
 import type { EditedCommentRow } from "./CommentEditComposer";
 import type { CommentType } from "../../lib/comments/schema";
+import type {
+  CommentCorrectionReview,
+  CommentCorrectionReviewResponse,
+} from "../../lib/comments/correctionReview";
 import type { SortMode } from "../../lib/comments/voteSchema";
 import type { BadgeType } from "../../lib/profile/badgeMeta";
 
@@ -108,6 +112,12 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
   const [authorBadgesById, setAuthorBadgesById] = useState<Map<string, BadgeType[]>>(
     new Map()
   );
+  const [correctionReviewByCommentId, setCorrectionReviewByCommentId] = useState<
+    Map<string, CommentCorrectionReview>
+  >(new Map());
+  const [correctionReviewByUserId, setCorrectionReviewByUserId] = useState<
+    Map<string, CommentCorrectionReview>
+  >(new Map());
   const [pinnedFallback, setPinnedFallback] = useState<{
     item: CommentItemData;
     status: CommentStatus;
@@ -201,10 +211,13 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       const userIds = Array.from(
         new Set(rows.map((r) => r.user_id).filter((v): v is string => !!v))
       );
+      const hasCorrectionRoots = rows.some((r) => r.type === "correction" && r.parent_id === null);
       const nicknameById = new Map<string, string>();
       const badgesByUser = new Map<string, BadgeType[]>();
+      let nextCorrectionReviewByCommentId = new Map<string, CommentCorrectionReview>();
+      let nextCorrectionReviewByUserId = new Map<string, CommentCorrectionReview>();
       if (userIds.length > 0) {
-        const [profilesRes, badgesRes] = await Promise.all([
+        const [profilesRes, badgesRes, correctionReviewRes] = await Promise.all([
           supabase
             .from("user_profiles_public")
             .select("user_id, nickname")
@@ -214,6 +227,9 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             .select("user_id, badge_type")
             .in("user_id", userIds)
             .in("badge_type", ["operator", "reviewer", "popular_comment"]),
+          hasCorrectionRoots
+            ? fetch(`/api/comments/correction-status?question_id=${encodeURIComponent(questionId)}`)
+            : Promise.resolve(null),
         ]);
         if (cancelled) return;
         if (profilesRes.error) {
@@ -231,6 +247,14 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             arr.push(b.badge_type as BadgeType);
             badgesByUser.set(b.user_id, arr);
           }
+        }
+        if (correctionReviewRes?.ok) {
+          const reviewData = (await correctionReviewRes.json()) as CommentCorrectionReviewResponse;
+          if (cancelled) return;
+          nextCorrectionReviewByCommentId = new Map(Object.entries(reviewData.byCommentId));
+          nextCorrectionReviewByUserId = new Map(Object.entries(reviewData.byUserId));
+        } else if (correctionReviewRes && !correctionReviewRes.ok) {
+          console.warn("[CommentThread] correction review fetch failed", correctionReviewRes.status);
         }
       }
 
@@ -319,6 +343,8 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
 
       setRoots(assembled);
       setAuthorBadgesById(badgesByUser);
+      setCorrectionReviewByCommentId(nextCorrectionReviewByCommentId);
+      setCorrectionReviewByUserId(nextCorrectionReviewByUserId);
       setStatus("ready");
     }
     load();
@@ -827,6 +853,16 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
     : roots.filter((root) => !root.isPlaceholder && root.type === typeFilter)
   ).filter((root) => !visiblePinned || root.id !== visiblePinned.item.id);
 
+  function getCorrectionReviewForComment(
+    comment: Pick<CommentItemData, "id" | "user_id" | "type">,
+  ): CommentCorrectionReview | null {
+    if (comment.type !== "correction") return null;
+    return (
+      correctionReviewByCommentId.get(comment.id) ??
+      (comment.user_id ? correctionReviewByUserId.get(comment.user_id) ?? null : null)
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
       {status === "loading" && (
@@ -981,6 +1017,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
                     ? authorBadgesById.get(visiblePinned.item.user_id) ?? []
                     : []
                 }
+                correctionReview={getCorrectionReviewForComment(visiblePinned.item)}
                 isEditing={editingId === visiblePinned.item.id}
                 onDelete={handleDelete}
                 onReport={handleReport}
@@ -1019,6 +1056,8 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             pinnedCommentId={pinnedCommentId}
             onTogglePin={handleTogglePin}
             authorBadgesById={authorBadgesById}
+            correctionReviewByCommentId={correctionReviewByCommentId}
+            correctionReviewByUserId={correctionReviewByUserId}
             editingId={editingId}
             onStartEdit={handleStartEdit}
             onCancelEdit={handleCancelEdit}

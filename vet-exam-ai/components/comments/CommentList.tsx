@@ -5,6 +5,7 @@ import CommentReplyGroup, { type ReplyRow } from "./CommentReplyGroup";
 import CommentSortToggle from "./CommentSortToggle";
 import CommentCollapsedRow from "./CommentCollapsedRow";
 import type { EditedCommentRow } from "./CommentEditComposer";
+import type { CommentCorrectionReview } from "../../lib/comments/correctionReview";
 import type { SortMode } from "../../lib/comments/voteSchema";
 import type { BadgeType } from "../../lib/profile/badgeMeta";
 
@@ -40,6 +41,8 @@ type Props = {
   pinnedCommentId?: string | null;
   onTogglePin?: (id: string) => void;
   authorBadgesById: Map<string, BadgeType[]>;
+  correctionReviewByCommentId: Map<string, CommentCorrectionReview>;
+  correctionReviewByUserId: Map<string, CommentCorrectionReview>;
   editingId: string | null;
   onStartEdit: (id: string) => void;
   onCancelEdit: () => void;
@@ -70,6 +73,8 @@ export default function CommentList({
   pinnedCommentId,
   onTogglePin,
   authorBadgesById,
+  correctionReviewByCommentId,
+  correctionReviewByUserId,
   editingId,
   onStartEdit,
   onCancelEdit,
@@ -170,6 +175,11 @@ export default function CommentList({
                 authorBadges={
                   root.user_id ? authorBadgesById.get(root.user_id) ?? [] : []
                 }
+                correctionReview={getCorrectionReviewForComment(
+                  root,
+                  correctionReviewByCommentId,
+                  correctionReviewByUserId,
+                )}
                 isEditing={editingId === root.id}
                 onDelete={onDelete}
                 onReport={onReport}
@@ -213,6 +223,8 @@ export default function CommentList({
                   onUnauthedAttempt={onUnauthedAttempt}
                   onExpand={onExpand}
                   authorBadgesById={authorBadgesById}
+                  correctionReviewByCommentId={correctionReviewByCommentId}
+                  correctionReviewByUserId={correctionReviewByUserId}
                   editingId={editingId}
                   onStartEdit={onStartEdit}
                   onCancelEdit={onCancelEdit}
@@ -227,4 +239,13 @@ export default function CommentList({
       )}
     </div>
   );
+}
+
+function getCorrectionReviewForComment(
+  comment: Pick<CommentItemData, "id" | "user_id" | "type">,
+  byCommentId: Map<string, CommentCorrectionReview>,
+  byUserId: Map<string, CommentCorrectionReview>,
+): CommentCorrectionReview | null {
+  if (comment.type !== "correction") return null;
+  return byCommentId.get(comment.id) ?? (comment.user_id ? byUserId.get(comment.user_id) ?? null : null);
 }

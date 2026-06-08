@@ -12,5 +12,12 @@ export default async function CommentsPage() {
 
   if (!user) redirect("/auth/login");
 
-  return <CommentsClient />;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+  const viewerIsAdmin = profile?.role === "admin" && profile.is_active === true;
+
+  return <CommentsClient viewerIsAdmin={viewerIsAdmin} />;
 }

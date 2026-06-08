@@ -3,6 +3,7 @@ import { createClient } from "../../../../lib/supabase/server";
 import { EditCommentSchema } from "../../../../lib/comments/schema";
 import { renderCommentMarkdown } from "../../../../lib/comments/sanitize";
 import { findInvalidImageUrl } from "../../../../lib/comments/imageUrlValidate";
+import { logAdminAction } from "../../../../lib/admin/audit";
 
 export async function DELETE(
   _req: NextRequest,
@@ -23,7 +24,7 @@ export async function DELETE(
 
   const { data: existing, error: selectErr } = await supabase
     .from("comments")
-    .select("user_id")
+    .select("id, user_id, question_id, type, body_text, status")
     .eq("id", id)
     .maybeSingle();
 
@@ -33,17 +34,46 @@ export async function DELETE(
   if (!existing) {
     return NextResponse.json({ error: "Comment not found" }, { status: 404 });
   }
-  if (existing.user_id !== user.id) {
+  const { data: profile, error: profileErr } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileErr) {
+    return NextResponse.json({ error: profileErr.message }, { status: 500 });
+  }
+
+  const isOwner = existing.user_id === user.id;
+  const isAdmin = profile?.role === "admin" && profile.is_active === true;
+  if (!isOwner && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const nextStatus = !isOwner && isAdmin ? "removed_by_admin" : "hidden_by_author";
   const { error: updateErr } = await supabase
     .from("comments")
-    .update({ status: "hidden_by_author" })
+    .update({ status: nextStatus })
     .eq("id", id);
 
   if (updateErr) {
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  }
+
+  if (nextStatus === "removed_by_admin") {
+    await logAdminAction({
+      action: "comment_remove",
+      targetType: "comment",
+      targetId: id,
+      before: {
+        status: existing.status,
+        question_id: existing.question_id,
+        type: existing.type,
+        user_id: existing.user_id,
+      },
+      after: { status: nextStatus },
+      note: "Removed from comments list",
+    });
   }
 
   return new NextResponse(null, { status: 204 });

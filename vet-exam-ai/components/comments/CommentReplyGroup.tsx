@@ -4,6 +4,7 @@ import CommentItem, { type CommentItemData } from "./CommentItem";
 import CommentReplyComposer from "./CommentReplyComposer";
 import CommentCollapsedRow from "./CommentCollapsedRow";
 import type { EditedCommentRow } from "./CommentEditComposer";
+import type { CommentCorrectionReview } from "../../lib/comments/correctionReview";
 import type { BadgeType } from "../../lib/profile/badgeMeta";
 
 type VoteValue = 1 | -1;
@@ -29,6 +30,8 @@ type Props = {
   onUnauthedAttempt?: () => void;
   onExpand: (id: string) => void;
   authorBadgesById: Map<string, BadgeType[]>;
+  correctionReviewByCommentId: Map<string, CommentCorrectionReview>;
+  correctionReviewByUserId: Map<string, CommentCorrectionReview>;
   editingId: string | null;
   onStartEdit: (id: string) => void;
   onCancelEdit: () => void;
@@ -55,6 +58,8 @@ export default function CommentReplyGroup({
   onUnauthedAttempt,
   onExpand,
   authorBadgesById,
+  correctionReviewByCommentId,
+  correctionReviewByUserId,
   editingId,
   onStartEdit,
   onCancelEdit,
@@ -114,6 +119,11 @@ export default function CommentReplyGroup({
             authorBadges={
               r.user_id ? authorBadgesById.get(r.user_id) ?? [] : []
             }
+            correctionReview={getCorrectionReviewForComment(
+              r,
+              correctionReviewByCommentId,
+              correctionReviewByUserId,
+            )}
             isEditing={editingId === r.id}
             onDelete={onDelete}
             onReport={onReport}
@@ -138,4 +148,13 @@ export default function CommentReplyGroup({
       )}
     </div>
   );
+}
+
+function getCorrectionReviewForComment(
+  comment: Pick<CommentItemData, "id" | "user_id" | "type">,
+  byCommentId: Map<string, CommentCorrectionReview>,
+  byUserId: Map<string, CommentCorrectionReview>,
+): CommentCorrectionReview | null {
+  if (comment.type !== "correction") return null;
+  return byCommentId.get(comment.id) ?? (comment.user_id ? byUserId.get(comment.user_id) ?? null : null);
 }

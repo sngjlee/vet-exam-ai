@@ -1,11 +1,15 @@
 "use client";
 
-import { Flame, MessageCircle, Pin, PinOff } from "lucide-react";
+import { CheckCircle2, CircleDot, Flame, MessageCircle, Pin, PinOff, XCircle } from "lucide-react";
 import type { CommentType } from "../../lib/comments/schema";
 import {
   isPopularMemorization,
   POPULAR_MEMORIZATION_THRESHOLD,
 } from "../../lib/comments/popularMemorization";
+import {
+  getCorrectionReviewMeta,
+  type CommentCorrectionReview,
+} from "../../lib/comments/correctionReview";
 import CommentVoteButton from "./CommentVoteButton";
 import CommentMenuOverflow from "./CommentMenuOverflow";
 import CommentAuthorInline from "./CommentAuthorInline";
@@ -40,6 +44,7 @@ type Props = {
   canDelete: boolean;
   isPinned?: boolean;
   authorBadges: BadgeType[];
+  correctionReview?: CommentCorrectionReview | null;
   isEditing?: boolean;
   onDelete: (id: string) => void;
   onReport: (id: string) => void;
@@ -87,6 +92,7 @@ export default function CommentItem({
   canDelete,
   isPinned,
   authorBadges,
+  correctionReview,
   isEditing,
   onDelete,
   onReport,
@@ -131,6 +137,10 @@ export default function CommentItem({
   const voteDisabled = status === "blinded_by_report";
   const showEditMode = !!isEditing && !isPlaceholder && !!onCancelEdit && !!onSaved;
   const showPopularMemorization = !isReply && isPopularMemorization(comment.type, score);
+  const correctionReviewMeta =
+    !isReply && comment.type === "correction" && correctionReview
+      ? getCorrectionReviewMeta(correctionReview.status)
+      : null;
 
   return (
     <div
@@ -180,6 +190,27 @@ export default function CommentItem({
           >
             <Flame size={12} aria-hidden="true" />
             인기 암기법
+          </span>
+        )}
+        {correctionReviewMeta && (
+          <span
+            title={correctionReviewMeta.title}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              background: correctionReviewMeta.bg,
+              border: `1px solid ${correctionReviewMeta.border}`,
+              color: correctionReviewMeta.color,
+              borderRadius: 999,
+              padding: "2px 8px",
+              fontSize: 10,
+              fontWeight: 800,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <CorrectionReviewIcon status={correctionReview!.status} />
+            {correctionReviewMeta.label}
           </span>
         )}
         <CommentAuthorInline
@@ -327,4 +358,10 @@ export default function CommentItem({
       )}
     </div>
   );
+}
+
+function CorrectionReviewIcon({ status }: { status: CommentCorrectionReview["status"] }) {
+  if (status === "accepted") return <CheckCircle2 size={12} aria-hidden="true" />;
+  if (status === "rejected") return <XCircle size={12} aria-hidden="true" />;
+  return <CircleDot size={12} aria-hidden="true" />;
 }

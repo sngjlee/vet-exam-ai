@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BookOpen, ChevronRight, Flame, Lightbulb, MessageSquare, Search, TrendingUp } from "lucide-react";
+import { BookOpen, ChevronRight, Flame, Lightbulb, MessageSquare, Search, Trash2, TrendingUp } from "lucide-react";
 import {
   COMMENT_TYPE_FILTERS,
   COMMENT_TYPE_META,
@@ -31,7 +31,7 @@ const listCache = new Map<string, CommentsListResponse>();
 const STORAGE_PREFIX = "kvle:comments:list:";
 const STORAGE_TTL_MS = 2 * 60 * 1000;
 
-export default function CommentsClient() {
+export default function CommentsClient({ viewerIsAdmin = false }: { viewerIsAdmin?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +104,31 @@ export default function CommentsClient() {
     event.preventDefault();
     const nextQ = normalizeCommentsQuery(inputRef.current?.value);
     router.push(buildCommentsHref({ type: activeType, sort: activeSort, q: nextQ, page: 1 }));
+  }
+
+  async function handleAdminDelete(commentId: string) {
+    if (!viewerIsAdmin) return;
+    if (!window.confirm("이 댓글을 운영자 권한으로 삭제할까요?")) return;
+
+    const previous = state.data;
+    const next = removeCommentFromList(previous, commentId);
+    if (next) {
+      writeCached(cacheKey, next);
+      setState({ data: next, loading: false, error: null });
+    }
+
+    try {
+      const res = await fetch(`/api/comments/${encodeURIComponent(commentId)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch {
+      if (previous) {
+        writeCached(cacheKey, previous);
+        setState({ data: previous, loading: false, error: null });
+      }
+      window.alert("댓글 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    }
   }
 
   return (
@@ -306,7 +331,12 @@ export default function CommentsClient() {
           </div>
           <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {comments.map((comment) => (
-              <CommentCard key={comment.id} comment={comment} />
+              <CommentCard
+                key={comment.id}
+                comment={comment}
+                viewerIsAdmin={viewerIsAdmin}
+                onAdminDelete={handleAdminDelete}
+              />
             ))}
           </section>
           {totalPages > 1 && (
@@ -430,14 +460,21 @@ function FilterLink({
   );
 }
 
-function CommentCard({ comment }: { comment: CommentPreview }) {
+function CommentCard({
+  comment,
+  viewerIsAdmin,
+  onAdminDelete,
+}: {
+  comment: CommentPreview;
+  viewerIsAdmin: boolean;
+  onAdminDelete: (commentId: string) => void;
+}) {
   const meta = COMMENT_TYPE_META[comment.type];
   const questionKey = comment.questionPublicId ?? comment.questionId;
   const detailHref = `/questions/${encodeURIComponent(questionKey)}?comment=${encodeURIComponent(comment.id)}`;
 
   return (
-    <Link
-      href={detailHref}
+    <article
       style={{
         display: "block",
         background: "var(--surface)",
@@ -445,7 +482,6 @@ function CommentCard({ comment }: { comment: CommentPreview }) {
         borderRadius: 12,
         padding: 16,
         color: "inherit",
-        textDecoration: "none",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
@@ -491,8 +527,34 @@ function CommentCard({ comment }: { comment: CommentPreview }) {
         >
           {comment.questionPublicId ?? comment.questionId}
         </span>
+        {viewerIsAdmin && (
+          <button
+            type="button"
+            onClick={() => onAdminDelete(comment.id)}
+            aria-label="운영자 권한으로 댓글 삭제"
+            title="운영자 삭제"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 999,
+              border: "1px solid var(--border)",
+              background: "var(--bg)",
+              color: "var(--wrong)",
+              cursor: "pointer",
+              display: "inline-grid",
+              placeItems: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Trash2 size={13} aria-hidden="true" />
+          </button>
+        )}
       </div>
 
+      <Link
+        href={detailHref}
+        style={{ display: "block", color: "inherit", textDecoration: "none" }}
+      >
       <p style={{ color: "var(--text)", fontSize: 14, lineHeight: 1.55, margin: "0 0 12px" }}>
         {truncate(comment.bodyText, 180)}
       </p>
@@ -544,7 +606,8 @@ function CommentCard({ comment }: { comment: CommentPreview }) {
           <ChevronRight size={15} />
         </div>
       </div>
-    </Link>
+      </Link>
+    </article>
   );
 }
 
@@ -639,6 +702,30 @@ function truncate(value: string, max: number) {
   const cleaned = value.replace(/\s+/g, " ").trim();
   if (cleaned.length <= max) return cleaned;
   return `${cleaned.slice(0, max - 1)}...`;
+}
+
+function removeCommentFromList(
+  data: CommentsListResponse | null,
+  commentId: string,
+): CommentsListResponse | null {
+  if (!data) return null;
+  const target = data.comments.find((comment) => comment.id === commentId);
+  if (!target) return data;
+
+  const nextTotal = Math.max(0, data.total - 1);
+  const typeCounts = {
+    ...data.typeCounts,
+    [target.type]: Math.max(0, (data.typeCounts[target.type] ?? 0) - 1),
+  };
+
+  return {
+    ...data,
+    comments: data.comments.filter((comment) => comment.id !== commentId),
+    total: nextTotal,
+    allCount: Math.max(0, data.allCount - 1),
+    typeCounts,
+    totalPages: Math.max(1, Math.ceil(nextTotal / data.pageSize)),
+  };
 }
 
 function formatRelative(iso: string): string {
