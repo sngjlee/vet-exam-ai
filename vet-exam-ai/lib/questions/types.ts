@@ -24,3 +24,15 @@ export interface Question {
   questionImageFiles?:    string[];
   explanationImageFiles?: string[];
 }
+
+export type QuestionSummary = Pick<
+  Question,
+  | "id"
+  | "publicId"
+  | "question"
+  | "category"
+  | "topic"
+  | "difficulty"
+  | "year"
+  | "isActive"
+>;

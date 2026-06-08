@@ -2,6 +2,11 @@ import type { Question } from "./types";
 
 export type RecentYearsWindow = 5 | 7 | 10;
 
+type FilterableQuestion = Pick<
+  Question,
+  "id" | "category" | "topic" | "difficulty" | "year" | "isActive"
+>;
+
 export interface QuestionFilterOptions {
   categories?: string[];      // empty/undefined = no filter
   topics?: string[];
@@ -15,7 +20,7 @@ export interface QuestionFilterOptions {
  * Returns the largest `year` value across the pool.
  * 모든 question.year가 null이면 null. 'recentYears' 필터의 기준점.
  */
-export function getLatestYear(pool: Question[]): number | null {
+export function getLatestYear<T extends Pick<Question, "year">>(pool: T[]): number | null {
   let latest: number | null = null;
   for (const q of pool) {
     if (typeof q.year === "number") {
@@ -35,6 +40,13 @@ export function applyQuestionFilters(
   pool: Question[],
   opts: QuestionFilterOptions,
 ): Question[] {
+  return applyQuestionFiltersGeneric(pool, opts);
+}
+
+export function applyQuestionFiltersGeneric<T extends FilterableQuestion>(
+  pool: T[],
+  opts: QuestionFilterOptions,
+): T[] {
   const {
     categories,
     topics,

@@ -18,7 +18,7 @@ import { useFilteredQuestions } from "../../lib/hooks/useFilteredQuestions";
 import { useWrongNotes } from "../../lib/hooks/useWrongNotes";
 import {
   FIXED_CATEGORIES,
-  applyQuestionFilters,
+  applyQuestionFiltersGeneric,
   formatPublicId,
   saveQuestionsListContext,
   type RecentYearsWindow,
@@ -183,7 +183,7 @@ export default function QuestionsListPage() {
 
   const filtered = useMemo(() => {
     if (!shouldFetch) return [];
-    return applyQuestionFilters(questions, {
+    return applyQuestionFiltersGeneric(questions, {
       categories: selectedCategory === "All" ? undefined : [selectedCategory],
       topics: selectedTopic === "All" ? undefined : [selectedTopic],
       recentYears: recentYears === "all" ? undefined : recentYears,

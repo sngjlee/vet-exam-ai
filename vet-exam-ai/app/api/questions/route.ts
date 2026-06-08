@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../lib/supabase/server";
-import type { Question } from "../../../lib/questions";
+import type { Question, QuestionSummary } from "../../../lib/questions";
 import type { QuestionRow } from "../../../lib/supabase/types";
 
 type QuestionApiRow = Pick<
@@ -23,8 +23,22 @@ type QuestionApiRow = Pick<
   | "explanation_image_files"
 >;
 
+type QuestionSummaryApiRow = Pick<
+  QuestionRow,
+  | "id"
+  | "public_id"
+  | "question"
+  | "category"
+  | "topic"
+  | "difficulty"
+  | "year"
+  | "is_active"
+>;
+
 const QUESTION_SELECT =
   "id, public_id, question, choices, answer, explanation, category, subject, topic, difficulty, source, year, tags, is_active, question_image_files, explanation_image_files";
+const QUESTION_SUMMARY_SELECT =
+  "id, public_id, question, category, topic, difficulty, year, is_active";
 const PAGE_SIZE = 1000;
 const SESSION_POOL_LIMIT = 300;
 const MAX_SESSION_COUNT = 50;
@@ -50,12 +64,26 @@ function toQuestion(row: QuestionApiRow): Question {
   };
 }
 
+function toQuestionSummary(row: QuestionSummaryApiRow): QuestionSummary {
+  return {
+    id: row.id,
+    publicId: row.public_id ?? undefined,
+    question: row.question,
+    category: row.category,
+    topic: row.topic ?? undefined,
+    difficulty: row.difficulty ?? undefined,
+    year: row.year ?? undefined,
+    isActive: row.is_active,
+  };
+}
+
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const url = new URL(req.url);
 
   const lookupId = url.searchParams.get("id");
   const metaOnly = url.searchParams.get("meta") === "1";
+  const summaryOnly = url.searchParams.get("summary") === "1";
   const sessionMode = url.searchParams.get("session") === "1";
   const recentYearsRaw = url.searchParams.get("recent_years");
   const category = url.searchParams.get("category");
@@ -106,6 +134,17 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  if (summaryOnly) {
+    const summaries = await loadQuestionSummaries(yearCutoff.value, category);
+    if (summaries.error) {
+      return NextResponse.json(
+        { error: "Failed to load question summaries" },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json(summaries.data.map(toQuestionSummary));
+  }
+
   const all: QuestionApiRow[] = [];
   for (let from = 0; ; from += PAGE_SIZE) {
     let query = supabase
@@ -138,6 +177,40 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(all.map(toQuestion));
+
+  async function loadQuestionSummaries(
+    cutoff: number | null,
+    categoryFilter: string | null,
+  ): Promise<{ data: QuestionSummaryApiRow[]; error: unknown }> {
+    const allSummaries: QuestionSummaryApiRow[] = [];
+
+    for (let from = 0; ; from += PAGE_SIZE) {
+      let query = supabase
+        .from("questions")
+        .select(QUESTION_SUMMARY_SELECT)
+        .eq("is_active", true);
+
+      if (cutoff !== null) {
+        query = query.gte("year", cutoff);
+      }
+      if (categoryFilter) {
+        query = query.eq("category", categoryFilter);
+      }
+
+      const { data, error } = await query
+        .order("category", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (error) return { data: [], error };
+
+      const page = data ?? [];
+      allSummaries.push(...page);
+      if (page.length < PAGE_SIZE) break;
+    }
+
+    return { data: allSummaries, error: null };
+  }
 
   async function loadQuestionById(id: string): Promise<{
     data: QuestionApiRow | null;
