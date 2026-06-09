@@ -46,4 +46,5 @@ npm run build
 - Production checklist: `../docs/operations/production-readiness-checklist.md`
 - RLS regression matrix: `../docs/operations/rls-permission-regression.md`
 - Sentry event quality: `../docs/operations/sentry-event-quality.md`
+- Admin audit coverage: `../docs/operations/admin-audit-coverage.md`
 - Migration runbook: `../docs/operations/migration-runbook.md`
