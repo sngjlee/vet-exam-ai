@@ -50,4 +50,5 @@ npm run build
 - Data retention schedule: `../docs/operations/data-retention-schedule.md`
 - Search v1 operations: `../docs/operations/search-v1.md`
 - Comment image attachments: `../docs/operations/comment-image-attachments.md`
+- Question bank pipeline: `../docs/operations/question-bank-pipeline.md`
 - Migration runbook: `../docs/operations/migration-runbook.md`

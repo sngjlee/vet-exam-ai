@@ -17,6 +17,7 @@
 - Sentry 이벤트는 `docs/operations/sentry-event-quality.md`의 태그 기준에 맞는지 확인합니다.
 - GitHub Actions `CI`가 `main`과 최근 PR에서 통과하는지 확인합니다.
 - 새 SQL을 적용할 때는 `docs/operations/migration-runbook.md`의 active migration 경로와 검증 SQL 절차를 따릅니다.
+- 문제은행 batch import, 이미지 트리아지, topic cleanup은 `docs/operations/question-bank-pipeline.md`의 하루 운영 순서를 따릅니다.
 - RLS/권한 변경 SQL을 적용할 때는 `docs/operations/rls-permission-regression.md`의 매트릭스와 `vet-exam-ai/supabase/tests/rls-permission-regression.sql`을 함께 실행합니다.
 - 관리자 mutation 변경 뒤에는 `docs/operations/admin-audit-coverage.md`와 `vet-exam-ai/supabase/tests/admin-audit-coverage.sql` 기준으로 audit 누락이 없는지 확인합니다.
 - 보존/삭제 동작은 `docs/operations/data-retention-schedule.md`의 주기와 실제 cron 결과가 맞는지 확인합니다.

@@ -1,5 +1,7 @@
 # 기출문제 파이프라인 — 다음 세션 작업 가이드
 
+반복 운영 절차는 `docs/operations/question-bank-pipeline.md`를 기준으로 실행합니다. 이 문서는 원천 구조와 스크립트별 배경을 설명하는 참고 문서입니다.
+
 ## 목표
 HWP 기출문제 파일 → 파싱 → 재작성(저작권 우회) → Supabase `questions` 테이블 삽입
 
