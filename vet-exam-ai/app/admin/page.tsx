@@ -14,6 +14,7 @@ import {
   MessageSquareDot,
   Ban,
   Activity,
+  ChartNoAxesColumnIncreasing,
 } from "lucide-react";
 import { createClient } from "../../lib/supabase/server";
 
@@ -181,6 +182,12 @@ export default async function AdminDashboardPage() {
             label="문제 관리"
             desc="문제 은행 둘러보기, 회차/과목/카테고리 필터, KVLE-ID 검색."
             icon={FileText}
+          />
+          <HubCard
+            href="/admin/quality"
+            label="콘텐츠 품질"
+            desc="신고 많은 문항, 정답률 이상치, topic 취약 지점, 이미지 보류."
+            icon={ChartNoAxesColumnIncreasing}
           />
           <HubCard
             href="/admin/image-questions"

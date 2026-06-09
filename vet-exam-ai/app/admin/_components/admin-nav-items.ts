@@ -11,6 +11,7 @@ import {
   MessageSquareDot,
   Ban,
   Activity,
+  ChartNoAxesColumnIncreasing,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ export type AdminNavItem = {
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "대시보드",  href: "/admin",                 icon: LayoutDashboard },
   { label: "문제",      href: "/admin/questions",       icon: FileText },
+  { label: "품질",      href: "/admin/quality",         icon: ChartNoAxesColumnIncreasing },
   { label: "이미지 큐", href: "/admin/image-questions", icon: ImageIcon },
   { label: "회원",      href: "/admin/users",           icon: Users },
   { label: "가입 신청", href: "/admin/signup-applications", icon: ShieldCheck },
