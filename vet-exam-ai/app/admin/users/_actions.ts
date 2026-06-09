@@ -2,9 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { createClient } from "../../../lib/supabase/server";
 import { createAdminClient } from "../../../lib/supabase/admin";
 import type { Database } from "../../../lib/supabase/types";
+import { RESET_LINK_COOKIE } from "./_lib/reset-link-cookie";
 
 type UserRole  = Database["public"]["Enums"]["user_role"];
 type BadgeType = Database["public"]["Enums"]["badge_type"];
@@ -124,11 +126,22 @@ export async function issuePasswordResetLink(formData: FormData): Promise<void> 
     redirectWithError("링크 발급에 실패했습니다.");
   }
 
-  // 4) display via redirect query — short-lived, admin should copy immediately.
-  //    Not stored in DB. URL = credential.
+  // 4) Display through a short-lived httpOnly cookie instead of a query string.
+  //    The recovery URL is a credential and should not enter browser/server logs.
+  const cookieStore = await cookies();
+  cookieStore.set(RESET_LINK_COOKIE, link.properties.action_link, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/admin/users",
+    maxAge: 5 * 60,
+  });
+
   revalidatePath("/admin/users");
-  redirect(
-    `/admin/users?reset_link=${encodeURIComponent(link!.properties.action_link)}` +
-      `&reset_for=${encodeURIComponent(userId)}`,
-  );
+  redirect(`/admin/users?reset_for=${encodeURIComponent(userId)}`);
+}
+
+export async function clearPasswordResetLinkCookie(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(RESET_LINK_COOKIE);
 }

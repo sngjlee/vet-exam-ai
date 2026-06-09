@@ -47,7 +47,13 @@
 - `SUPABASE_SERVICE_ROLE_KEY` 교체 후 `/admin/ops`, 계정 삭제, 가입 승인, cron route를 표본 확인합니다.
 - 비밀값 교체 후 이전 키가 실제로 폐기되었는지 Supabase/Vercel 대시보드에서 확인합니다.
 
-## 6. 사고 후 기록
+## 6. 로그와 링크 위생
+
+- 비밀번호 재설정 링크, magic link, recovery token, `CRON_SECRET`, service role key는 URL query string, 감사 로그, Sentry tag/context에 원문으로 남기지 않습니다.
+- 사용자 이메일, 증빙 이미지 path, IP 대역은 필요한 운영 화면에서만 표시하고 console/Sentry에는 집계값 또는 일반 오류 코드로 남깁니다.
+- 사용자에게 전달해야 하는 1회성 링크는 짧은 수명으로 표시하고, 복사 후 다시 조회할 수 없도록 처리합니다.
+
+## 7. 사고 후 기록
 
 - 영향 범위, 시작·탐지·복구 시각, 사용자 영향, 재발 방지 조치를 기록합니다.
 - 사용자에게 안내가 필요한 경우 약관·개인정보처리방침의 톤에 맞춰 사실, 영향, 조치, 문의 경로를 짧게 안내합니다.

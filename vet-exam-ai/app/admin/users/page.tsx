@@ -1,10 +1,13 @@
+import { cookies } from "next/headers";
 import { requireAdmin } from "../../../lib/admin/guards";
 import { createClient } from "../../../lib/supabase/server";
 import type { Database } from "../../../lib/supabase/types";
 import { parseUsersSearchParams } from "./_lib/parse-users-search-params";
+import { RESET_LINK_COOKIE } from "./_lib/reset-link-cookie";
 import { UsersFilters } from "./_components/users-filters";
 import { UsersTable, type UserRow } from "./_components/users-table";
 import { UsersPager } from "./_components/users-pager";
+import { ResetLinkNotice } from "./_components/reset-link-notice";
 
 export const dynamic = "force-dynamic";
 
@@ -132,8 +135,10 @@ export default async function AdminUsersPage({
   const errorRaw = raw["error"];
   const errorMsg = Array.isArray(errorRaw) ? errorRaw[0] : errorRaw;
 
-  const linkRaw  = raw["reset_link"];
-  const resetLink = Array.isArray(linkRaw) ? linkRaw[0] : linkRaw;
+  const resetForRaw = raw["reset_for"];
+  const resetFor = Array.isArray(resetForRaw) ? resetForRaw[0] : resetForRaw;
+  const cookieStore = await cookies();
+  const resetLink = resetFor ? cookieStore.get(RESET_LINK_COOKIE)?.value : undefined;
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -156,27 +161,7 @@ export default async function AdminUsersPage({
         </div>
       )}
 
-      {resetLink && (
-        <div
-          className="mb-4 rounded p-3 text-sm"
-          style={{ background: "var(--surface-raised)", border: "1px solid var(--teal)", color: "var(--text)" }}
-          role="status"
-        >
-          <p className="mb-2 font-medium" style={{ color: "var(--teal)" }}>
-            재설정 링크가 발급되었습니다 (1회용, 약 1시간 유효)
-          </p>
-          <code
-            className="block break-all p-2 rounded text-xs kvle-mono"
-            style={{ background: "var(--surface)", border: "1px solid var(--rule)" }}
-          >
-            {resetLink}
-          </code>
-          <p className="mt-2 text-xs" style={{ color: "var(--text-muted)" }}>
-            이 링크를 사용자에게 전달하세요. 페이지를 떠나면 다시 볼 수 없습니다.
-            발급 사실은 감사 로그에 기록됩니다.
-          </p>
-        </div>
-      )}
+      {resetLink && <ResetLinkNotice resetLink={resetLink} />}
 
       <UsersFilters current={clamped} />
       <UsersTable
