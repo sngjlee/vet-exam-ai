@@ -65,6 +65,7 @@
 - 위 경로가 `"use client"` 파일에서 import되지 않는다.
 - service role 응답의 이메일, 파일 path, reset link 같은 민감 값은 로그/Sentry/audit에 원문 저장하지 않는다.
 - 새 service role 사용처가 생기면 이 문서와 `/admin/ops`의 목록을 같은 커밋에서 갱신한다.
+- 수동 댓글 시딩은 `scripts/seed-community-comments.cjs --dry-run`으로 확인한 뒤 `--apply`를 명시할 때만 실행한다.
 
 ## 6. metadataBase / robots / noindex
 

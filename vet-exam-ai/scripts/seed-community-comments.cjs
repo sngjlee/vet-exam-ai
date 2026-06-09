@@ -3,22 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { createClient } = require("@supabase/supabase-js");
 
-const envPath = path.join(__dirname, "..", ".env.local");
-for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
-  const match = line.match(/^([^=#]+)=(.*)$/);
-  if (match && !process.env[match[1]]) process.env[match[1]] = match[2];
-}
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error("Missing Supabase environment variables");
-}
-
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+let supabase;
 
 const seedAccounts = [
   {
@@ -303,6 +288,73 @@ const comments = [
   },
 ];
 
+function parseArgs() {
+  const args = new Set(process.argv.slice(2));
+  if (args.has("--help") || args.has("-h")) {
+    console.log([
+      "Usage:",
+      "  node scripts/seed-community-comments.cjs --dry-run",
+      "  node scripts/seed-community-comments.cjs --apply",
+      "",
+      "Default is --dry-run. --apply creates seed accounts and inserts missing comments.",
+    ].join("\n"));
+    process.exit(0);
+  }
+  if (args.has("--dry-run") && args.has("--apply")) {
+    throw new Error("Use either --dry-run or --apply, not both.");
+  }
+  return { apply: args.has("--apply") };
+}
+
+function initSupabase() {
+  const envPath = path.join(__dirname, "..", ".env.local");
+  if (fs.existsSync(envPath)) {
+    for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
+      const match = line.match(/^([^=#]+)=(.*)$/);
+      if (match && !process.env[match[1]]) process.env[match[1]] = match[2];
+    }
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Missing Supabase environment variables");
+  }
+
+  supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+function summarizeSeedPlan() {
+  const byType = comments.reduce((acc, comment) => {
+    acc[comment.type] = (acc[comment.type] ?? 0) + 1;
+    return acc;
+  }, {});
+  const byAuthor = comments.reduce((acc, comment) => {
+    acc[comment.author] = (acc[comment.author] ?? 0) + 1;
+    return acc;
+  }, {});
+  const questionCount = new Set(comments.map((comment) => comment.question_id)).size;
+
+  return {
+    mode: "dry-run",
+    comments: comments.length,
+    questions: questionCount,
+    accounts: seedAccounts.map((account) => account.nickname),
+    byType,
+    byAuthor,
+    sample: comments.slice(0, 5).map((comment) => ({
+      question_id: comment.question_id,
+      author: comment.author,
+      type: comment.type,
+      body_text: comment.body_text,
+    })),
+    applyCommand: "node scripts/seed-community-comments.cjs --apply",
+  };
+}
+
 function escapeHtml(value) {
   return value
     .replace(/&/g, "&amp;")
@@ -380,6 +432,13 @@ async function ensureSeedAccounts() {
 }
 
 async function main() {
+  const { apply } = parseArgs();
+  if (!apply) {
+    console.log(JSON.stringify(summarizeSeedPlan(), null, 2));
+    return;
+  }
+
+  initSupabase();
   const authorIds = await ensureSeedAccounts();
   const questionIds = [...new Set(comments.map((comment) => comment.question_id))];
 

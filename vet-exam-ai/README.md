@@ -51,4 +51,5 @@ npm run build
 - Search v1 operations: `../docs/operations/search-v1.md`
 - Comment image attachments: `../docs/operations/comment-image-attachments.md`
 - Question bank pipeline: `../docs/operations/question-bank-pipeline.md`
+- Community comment seeding: `../docs/operations/community-comment-seeding.md`
 - Migration runbook: `../docs/operations/migration-runbook.md`
