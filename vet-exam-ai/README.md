@@ -21,10 +21,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 CRON_SECRET=
 NEXT_PUBLIC_SITE_URL=
+NEXT_PUBLIC_INDEXING_ENABLED=
 NEXT_PUBLIC_SENTRY_DSN=
 ```
 
-`NEXT_PUBLIC_SENTRY_DSN` is recommended for operations, but the app can build without it. `SENTRY_AUTH_TOKEN` is optional and only needed when uploading source maps.
+Set `NEXT_PUBLIC_INDEXING_ENABLED=true` only for the public production launch. Keep it `false` for Preview, staging, and closed beta deployments. `NEXT_PUBLIC_SENTRY_DSN` is recommended for operations, but the app can build without it. `SENTRY_AUTH_TOKEN` is optional and only needed when uploading source maps.
 
 ## Verification
 
@@ -42,4 +43,5 @@ npm run build
 - Admin health checks: `/admin/ops`
 - Sentry smoke test: `/admin/sentry-test`
 - Runbook: `../docs/operations/operations-runbook.md`
+- Production checklist: `../docs/operations/production-readiness-checklist.md`
 - Migration runbook: `../docs/operations/migration-runbook.md`

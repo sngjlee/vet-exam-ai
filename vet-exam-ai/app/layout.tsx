@@ -4,6 +4,7 @@ import "./globals.css";
 import ConditionalNavBar from "../components/ConditionalNavBar";
 import { AuthProvider } from "../lib/context/AuthContext";
 import { DueCountProvider } from "../lib/context/DueCountContext";
+import { getIndexingEnabled, getSiteUrl } from "../lib/seo";
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -12,16 +13,17 @@ const ibmPlexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-const siteUrl = new URL(
-  process.env.NEXT_PUBLIC_SITE_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://vet-exam-ai.vercel.app"),
-);
+const siteUrl = getSiteUrl();
+const indexingEnabled = getIndexingEnabled();
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
   title: "KVLE — 수의사 국가시험 학습 플랫폼",
   description: "수의사 국가시험 대비 스마트 학습 플랫폼. 약점 데이터 분석으로 합격을 설계합니다.",
   icons: { icon: "/favicon.ico" },
+  robots: indexingEnabled
+    ? { index: true, follow: true }
+    : { index: false, follow: false },
   openGraph: {
     title: "KVLE — 수의사 국가시험 학습 플랫폼",
     description: "수의사 국가시험 대비 스마트 학습 플랫폼. 약점 데이터 분석으로 합격을 설계합니다.",
