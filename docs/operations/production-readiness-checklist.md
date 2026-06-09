@@ -86,3 +86,4 @@ npm run build
 ```
 
 모든 명령이 통과한 뒤 `/admin/ops`, `/admin/sentry-test`, 공개 정책 문서 `/terms`, `/privacy`, `/community-guidelines`를 표본 확인합니다.
+정식 공개 또는 큰 운영 배포에서는 이어서 `docs/operations/launch-smoke-test.md`의 역할별 스모크 테스트를 실행합니다.

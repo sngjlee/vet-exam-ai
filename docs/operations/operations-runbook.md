@@ -29,6 +29,7 @@
 
 정식 공개, 큰 운영 배포, 환경변수 변경 배포 전에는 `docs/operations/production-readiness-checklist.md`를 기준으로 확인합니다.
 특히 Vercel/Supabase env scope, Sentry DSN, cron secret, service role 사용 경로, `metadataBase`, robots/noindex 상태를 같은 배포 단위에서 확인합니다.
+배포 후 실제 사용자 흐름 확인은 `docs/operations/launch-smoke-test.md`의 역할별 smoke matrix를 따릅니다.
 
 ## 4. 월간 복구 리허설
 
