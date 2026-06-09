@@ -11,7 +11,8 @@ Examples:
     python backfill_topics.py --generate-missing --dry-run --limit 20
     python backfill_topics.py --generate-missing --dry-run --category 내과학 --limit 50 --preview-output output/topic-preview.json
     python backfill_topics.py --generate-missing --dry-run --category 외과학 --force --model claude-sonnet-4-6 --limit 20
-    python backfill_topics.py --generate-missing --apply --category 외과학 --force --model claude-sonnet-4-6 --limit 50
+    python backfill_topics.py --generate-missing --apply --category 외과학 --force --model claude-sonnet-4-6 --limit 50 --offset 0
+    python backfill_topics.py --generate-missing --apply --category 외과학 --force --model claude-sonnet-4-6 --limit 50 --offset 50
     python backfill_topics.py --generate-missing --apply --limit 50
     python backfill_topics.py --generate-missing --apply --confirm-all
 """
@@ -57,6 +58,9 @@ TOPIC_SYSTEM_PROMPT = """너는 한국 수의사 국가시험 문제를 topic으
 - 과목명, 회차, 연도, 세션, 문제번호를 반복하지 않는다.
 - 쉼표로 여러 topic을 나열하지 말고 가장 대표적인 하나만 고른다.
 - 질병명, 병원체명, 장기/계통, 약물군, 검사법, 처치명처럼 필터로 묶기 좋은 표현을 우선한다.
+- 치료, 진단, 금기, 특성, 원인, 예후, 생리적 측정값 같은 세부 관점은 같은 질병/약물군/검사법으로 묶을 수 있으면 상위 topic으로 접는다.
+- 예: 각막궤양 치료/각막궤양 스테로이드 금기 -> 각막궤양
+- 예: 흡입마취제 특성/흡입마취 생리적 측정값/흡입마취 중 PaO2 -> 흡입마취
 - 답을 바꾸거나 문제를 재작성하지 않는다. topic만 반환한다.
 
 예: 자궁축농증, 백신, 학생 감수성, 요검사, 반추위 대사
@@ -99,6 +103,8 @@ def fetch_missing_topic_rows(
     ids: list[str],
     limit: int | None,
     force: bool,
+    offset_start: int,
+    active_only: bool,
 ) -> list[dict[str, Any]]:
     """Fetch rows that need topic backfill."""
     select_cols = ",".join(
@@ -141,9 +147,11 @@ def fetch_missing_topic_rows(
         base_params["or"] = "(topic.is.null,topic.eq.)"
     if category:
         base_params["category"] = f"eq.{category}"
+    if active_only:
+        base_params["is_active"] = "eq.true"
 
     rows: list[dict[str, Any]] = []
-    offset = 0
+    offset = offset_start
     while True:
         page_size = min(1000, limit - len(rows)) if limit is not None else 1000
         if page_size <= 0:
@@ -247,7 +255,10 @@ def main() -> None:
     parser.add_argument("--category", help="특정 category만 처리")
     parser.add_argument("--id", action="append", default=[], help="특정 question id만 처리. 여러 번 지정 가능")
     parser.add_argument("--limit", type=int, help="처리 row 수 제한")
+    parser.add_argument("--offset", type=int, default=0, help="조회 시작 offset (--id 미사용 시)")
     parser.add_argument("--force", action="store_true", help="기존 topic이 있어도 새 topic 제안")
+    parser.add_argument("--active-only", action="store_true", help="active 문제만 처리")
+    parser.add_argument("--allow-failures", action="store_true", help="일부 row 실패가 있어도 exit code 0으로 종료")
     parser.add_argument("--dry-run", action="store_true", help="DB write 없이 제안만 출력")
     parser.add_argument("--apply", action="store_true", help="Supabase에 topic PATCH 실행")
     parser.add_argument("--confirm-all", action="store_true", help="--apply에서 --limit 없이 전체 처리 허용")
@@ -260,6 +271,8 @@ def main() -> None:
         parser.error("--apply와 --dry-run은 함께 사용할 수 없습니다.")
     if args.apply and args.limit is None and not args.id and not args.confirm_all:
         parser.error("전체 적용은 --confirm-all이 필요합니다. 먼저 --dry-run 또는 --limit으로 확인하세요.")
+    if args.offset < 0:
+        parser.error("--offset은 0 이상이어야 합니다.")
 
     dry_run = not args.apply
 
@@ -289,6 +302,8 @@ def main() -> None:
             ids=args.id,
             limit=args.limit,
             force=args.force,
+            offset_start=0 if args.id else args.offset,
+            active_only=args.active_only,
         )
         print(f"[backfill] 대상 row {len(rows)}개 ({'dry-run' if dry_run else 'apply'})")
 
@@ -338,7 +353,7 @@ def main() -> None:
         f"[done] proposed={len(proposals)} success={success} "
         f"skipped={skipped} failed={failed} elapsed={elapsed:.1f}s"
     )
-    if failed:
+    if failed and not args.allow_failures:
         sys.exit(1)
 
 

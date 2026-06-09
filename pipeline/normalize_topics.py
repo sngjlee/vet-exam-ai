@@ -42,25 +42,35 @@ class AliasRule:
     source: str
     target: str
     category: str | None = None
+    confidence: str | None = None
 
 
 def parse_alias_rule(raw: dict[str, Any]) -> AliasRule | None:
     source = raw.get("source")
     target = raw.get("target")
     category = raw.get("category")
+    confidence = raw.get("confidence")
     if not isinstance(source, str) or not isinstance(target, str):
         raise ValueError("rich aliases require string source and target")
     if category is not None and not isinstance(category, str):
         raise ValueError("rich alias category must be a string when present")
+    if confidence is not None and not isinstance(confidence, str):
+        raise ValueError("rich alias confidence must be a string when present")
 
     source_topic = normalize_topic(source)
     target_topic = normalize_topic(target)
     category_name = normalize_topic(category) if isinstance(category, str) else None
+    confidence_name = normalize_topic(confidence).lower() if isinstance(confidence, str) else None
     if not source_topic or not target_topic:
         raise ValueError("alias source and target must not be empty")
     if source_topic == target_topic:
         return None
-    return AliasRule(source=source_topic, target=target_topic, category=category_name or None)
+    return AliasRule(
+        source=source_topic,
+        target=target_topic,
+        category=category_name or None,
+        confidence=confidence_name or None,
+    )
 
 
 def load_aliases(path: Path) -> list[AliasRule]:
@@ -190,6 +200,7 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--alias-file", type=Path, default=DEFAULT_ALIAS_FILE)
+    parser.add_argument("--confidence", action="append", choices=["high", "medium", "low"], help="rich alias confidence filter. Can be repeated.")
     parser.add_argument("--category", help="특정 category만 처리")
     parser.add_argument("--dry-run", action="store_true", help="DB write 없이 변경안만 출력")
     parser.add_argument("--apply", action="store_true", help="Supabase에 topic PATCH 실행")
@@ -205,6 +216,13 @@ def main() -> None:
         sys.exit("SUPABASE_URL / SUPABASE_SERVICE_KEY 설정되지 않음 (pipeline/.env)")
 
     aliases = load_aliases(args.alias_file)
+    if args.confidence:
+        allowed_confidence = set(args.confidence)
+        aliases = [
+            rule
+            for rule in aliases
+            if rule.confidence is None or rule.confidence in allowed_confidence
+        ]
     if not aliases:
         sys.exit("[normalize] alias가 없습니다")
     print(f"[normalize] alias {len(aliases)}개 로드 ({'dry-run' if dry_run else 'apply'})")

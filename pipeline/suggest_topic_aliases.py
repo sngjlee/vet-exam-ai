@@ -83,6 +83,14 @@ SYSTEM_PROMPT = """너는 수의사 국가시험 문제은행의 topic alias를 
 
 출력은 JSON schema를 따르고, 애매하면 제안하지 않는다.
 """
+SYSTEM_PROMPT += """
+
+Additional merge guidance:
+- Merge topic variants that differ only by viewpoint suffixes such as 치료, 진단, 금기, 특성, 원인, 예후, 병태생리, 생리적 측정값, 모니터링, 합병증, 관리, 처치 when the same core disease, drug class, test, or procedure remains.
+- Prefer the shorter existing topic as target when it is clinically clear.
+- Examples: 각막궤양 치료 -> 각막궤양; 각막궤양 스테로이드 금기 -> 각막궤양; 흡입마취제 특성 -> 흡입마취; 흡입마취 생리적 측정값 -> 흡입마취.
+- Do not merge genuinely different diseases, species, organs, procedures, or legal provisions just because the words look similar.
+"""
 
 
 def normalize_topic(value: str) -> str:
