@@ -99,6 +99,22 @@ export default async function SuggestionsListPage({ searchParams }: { searchPara
         </Link>
       </div>
 
+      <div
+        className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm"
+        style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)" }}
+      >
+        <span style={{ color: "var(--text-muted)" }}>
+          채택된 건의는 운영 반영 흐름을 확인할 수 있습니다.
+        </span>
+        <Link
+          href={`?status=accepted${sort === "popular" ? "&sort=popular" : ""}`}
+          className="rounded-md px-2 py-1 text-xs font-semibold"
+          style={{ color: "var(--teal)", background: "var(--teal-dim)", textDecoration: "none" }}
+        >
+          채택 글 보기
+        </Link>
+      </div>
+
       <ul className="mt-4 space-y-2">
         {posts.map((p) => (
           <li key={p.id}>
