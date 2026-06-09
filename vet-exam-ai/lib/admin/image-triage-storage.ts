@@ -1,4 +1,5 @@
 import { createClient } from "../supabase/server";
+import { logError } from "../utils/logging";
 
 const BUCKET = "question-images-private";
 const TTL_SECONDS = 60 * 60; // 1 hour
@@ -21,7 +22,7 @@ export async function getSignedImageUrls(
     .createSignedUrls(filenames, TTL_SECONDS);
 
   if (error || !data) {
-    console.error("[triage-storage] createSignedUrls failed", error);
+    logError("[triage-storage] createSignedUrls failed", error);
     return filenames.map((f) => ({ filename: f, url: null }));
   }
 

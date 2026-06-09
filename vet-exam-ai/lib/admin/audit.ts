@@ -1,5 +1,6 @@
 import { createClient } from "../supabase/server";
 import type { Database } from "../supabase/types";
+import { logError } from "../utils/logging";
 
 type AuditAction = Database["public"]["Enums"]["audit_action"];
 
@@ -21,7 +22,7 @@ export async function logAdminAction(args: {
     p_note:        args.note ?? null,
   });
   if (error) {
-    console.error("[audit] log_admin_action failed", error);
+    logError("[audit] log_admin_action failed", error);
     return null;
   }
   return (data as string) ?? null;

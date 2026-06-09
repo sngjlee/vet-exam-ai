@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../lib/supabase/server";
+import { logWarn } from "../../../lib/utils/logging";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
@@ -32,7 +33,8 @@ export async function GET(req: NextRequest) {
     .limit(limit);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logWarn("[GET /api/notifications] list failed", error);
+    return NextResponse.json({ error: "notifications_fetch_failed" }, { status: 500 });
   }
 
   const safeRows = rows ?? [];
@@ -61,7 +63,7 @@ export async function GET(req: NextRequest) {
 
     if (commentErr) {
       // Don't fail the whole list — degrade related_comment to null.
-      console.warn("[GET /api/notifications] comments stitch failed", commentErr);
+      logWarn("[GET /api/notifications] comments stitch failed", commentErr);
     } else {
       for (const c of comments ?? []) {
         relatedById.set(c.id, {

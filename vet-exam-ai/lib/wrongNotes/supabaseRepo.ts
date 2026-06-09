@@ -3,6 +3,7 @@ import type { WrongAnswerNote } from "../types";
 import type { Database, WrongNoteRow } from "../supabase/types";
 import type { WrongNotesRepository } from "./repository";
 import { computeNextReviewAt } from "../review/schedule";
+import { logError } from "../utils/logging";
 
 type WrongNoteInsert = Database["public"]["Tables"]["wrong_notes"]["Insert"];
 
@@ -35,7 +36,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
       .order("saved_at", { ascending: false });
 
     if (error) {
-      console.error("wrong_notes getAll failed:", error);
+      logError("wrong_notes getAll failed:", error);
       return [];
     }
     return (data as WrongNoteRow[]).map(rowToNote);
@@ -63,7 +64,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
     const { error } = await this.supabase
       .from("wrong_notes")
       .upsert(row, { onConflict: "user_id,question_id" });
-    if (error) console.error("wrong_notes upsert failed:", error);
+    if (error) logError("wrong_notes upsert failed:", error);
   }
 
   async delete(questionId: string): Promise<void> {
@@ -72,7 +73,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
       .delete()
       .eq("user_id", this.userId)
       .eq("question_id", questionId);
-    if (error) console.error("wrong_notes delete failed:", error);
+    if (error) logError("wrong_notes delete failed:", error);
   }
 
   async clearAll(): Promise<void> {
@@ -80,7 +81,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
       .from("wrong_notes")
       .delete()
       .eq("user_id", this.userId);
-    if (error) console.error("wrong_notes clearAll failed:", error);
+    if (error) logError("wrong_notes clearAll failed:", error);
   }
 
   async getDue(): Promise<WrongAnswerNote[]> {
@@ -92,7 +93,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
       .order("next_review_at", { ascending: true });
 
     if (error) {
-      console.error("wrong_notes getDue failed:", error);
+      logError("wrong_notes getDue failed:", error);
       return [];
     }
     return (data as WrongNoteRow[]).map(rowToNote);
@@ -119,6 +120,6 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
       .eq("user_id", this.userId)
       .eq("question_id", questionId);
 
-    if (error) console.error("wrong_notes updateReview failed:", error);
+    if (error) logError("wrong_notes updateReview failed:", error);
   }
 }

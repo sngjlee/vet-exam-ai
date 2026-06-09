@@ -8,6 +8,7 @@ import { createClient } from "../../../../../lib/supabase/server";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
 import { readWebpDimensions } from "../../../../../lib/webp-dimensions";
 import { toStorageKey } from "../../../../../lib/admin/storage-key";
+import { logError } from "../../../../../lib/utils/logging";
 
 const MAX_BYTES = 1_048_576; // 1MB
 const MAX_DIM = 2200;
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
       upsert: false,
     });
   if (uploadErr) {
-    console.error("[image-replace] upload failed", uploadErr);
+    logError("[image-replace] upload failed", uploadErr);
     return NextResponse.json({ error: "storage_upload_failed" }, { status: 500 });
   }
 
@@ -120,7 +121,7 @@ export async function DELETE(req: NextRequest) {
   const admin = createAdminClient();
   const { error } = await admin.storage.from(BUCKET).remove([key]);
   if (error) {
-    console.error("[image-replace] delete failed", error);
+    logError("[image-replace] delete failed", error);
     return NextResponse.json({ error: "storage_delete_failed" }, { status: 500 });
   }
   return NextResponse.json({ ok: true });

@@ -6,6 +6,7 @@ import { requireAdmin } from "../../../../../lib/admin/guards";
 import { createClient } from "../../../../../lib/supabase/server";
 import { logAdminAction, diffJson } from "../../../../../lib/admin/audit";
 import type { Database } from "../../../../../lib/supabase/types";
+import { logError } from "../../../../../lib/utils/logging";
 
 type QuestionUpdate = Database["public"]["Tables"]["questions"]["Update"];
 type Difficulty = Database["public"]["Tables"]["questions"]["Row"]["difficulty"];
@@ -95,7 +96,7 @@ export async function updateQuestion(formData: FormData): Promise<void> {
 
   const { error } = await supabase.from("questions").update(update).eq("id", id);
   if (error) {
-    console.error("[admin] update question failed", error);
+    logError("[admin] update question failed", error);
     redirect(
       `/admin/questions/${encodeURIComponent(id)}/edit?error=db_error`,
     );

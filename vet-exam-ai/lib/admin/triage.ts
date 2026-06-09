@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "../supabase/server";
 import type { ImageTriageStatus } from "./triage-labels";
+import { logError } from "../utils/logging";
 
 export type TriageActionResult =
   | { ok: true; count?: number }
@@ -20,7 +21,7 @@ export async function triageQuestionDecide(
     p_note:        note,
   });
   if (error) {
-    console.error("[triage] decide failed", error);
+    logError("[triage] decide failed", error);
     return { ok: false, error: error.message };
   }
   revalidatePath("/admin/image-questions");
@@ -40,7 +41,7 @@ export async function triageQuestionsBulkActivate(
     p_note: note,
   });
   if (error) {
-    console.error("[triage] bulk activate failed", error);
+    logError("[triage] bulk activate failed", error);
     return { ok: false, error: error.message };
   }
   revalidatePath("/admin/image-questions");
@@ -56,7 +57,7 @@ export async function triageQuestionRevert(
     p_question_id: questionId,
   });
   if (error) {
-    console.error("[triage] revert failed", error);
+    logError("[triage] revert failed", error);
     return { ok: false, error: error.message };
   }
   revalidatePath("/admin/image-questions");
@@ -78,7 +79,7 @@ export async function triageQuestionReplaceAndActivate(args: {
     p_note:               args.note,
   });
   if (error) {
-    console.error("[triage] replace-and-activate failed", error);
+    logError("[triage] replace-and-activate failed", error);
     return { ok: false, error: error.message };
   }
   revalidatePath("/admin/image-questions");

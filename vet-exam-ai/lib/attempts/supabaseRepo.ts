@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../supabase/types";
 import type { AttemptPayload } from "./types";
+import { logError } from "../utils/logging";
 
 type AttemptInsert = Database["public"]["Tables"]["attempts"]["Insert"];
 
@@ -21,6 +22,6 @@ export class SupabaseAttemptsRepository {
       is_correct: payload.isCorrect,
     };
     const { error } = await this.supabase.from("attempts").insert(row);
-    if (error) console.error("attempt insert failed:", error.message, error.code, error.details);
+    if (error) logError("attempt insert failed:", error);
   }
 }

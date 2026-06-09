@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "../../../lib/admin/guards";
 import { createClient } from "../../../lib/supabase/server";
+import { logError } from "../../../lib/utils/logging";
 
 export async function resolveReport(formData: FormData) {
   await requireAdmin();
@@ -24,7 +25,7 @@ export async function resolveReport(formData: FormData) {
     p_note:       note,
   });
   if (error) {
-    console.error("[resolveReport]", error);
+    logError("[resolveReport]", error);
     redirect("/admin/reports?error=db_error");
   }
 
