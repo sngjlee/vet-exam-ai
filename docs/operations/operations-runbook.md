@@ -19,6 +19,7 @@
 - 새 SQL을 적용할 때는 `docs/operations/migration-runbook.md`의 active migration 경로와 검증 SQL 절차를 따릅니다.
 - RLS/권한 변경 SQL을 적용할 때는 `docs/operations/rls-permission-regression.md`의 매트릭스와 `vet-exam-ai/supabase/tests/rls-permission-regression.sql`을 함께 실행합니다.
 - 관리자 mutation 변경 뒤에는 `docs/operations/admin-audit-coverage.md`와 `vet-exam-ai/supabase/tests/admin-audit-coverage.sql` 기준으로 audit 누락이 없는지 확인합니다.
+- 보존/삭제 동작은 `docs/operations/data-retention-schedule.md`의 주기와 실제 cron 결과가 맞는지 확인합니다.
 - `/admin/audit`에서 최근 운영 조치가 의도한 작업과 일치하는지 표본 확인합니다.
 - 신고, 가입 신청, 정정 제안 큐가 오래 방치되지 않았는지 확인합니다.
 

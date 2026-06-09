@@ -9,6 +9,7 @@ import { runCronJob } from "../../../../lib/cron/run";
 
 const BUCKET = "comment-images";
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const CRON_LOG_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 const BATCH = 100;
 
 export async function GET(req: NextRequest) {
@@ -80,10 +81,27 @@ export async function GET(req: NextRequest) {
       };
     }
 
+    // 5) Retain cron run history for 90 days. The current run is recorded
+    // after this handler returns, so it cannot delete its own log row.
+    const cronLogCutoffIso = new Date(Date.now() - CRON_LOG_RETENTION_MS).toISOString();
+    const { count: cronLogsDeleted, error: cronLogErr } = await admin
+      .from("cron_run_logs")
+      .delete({ count: "exact" })
+      .lt("finished_at", cronLogCutoffIso);
+    if (cronLogErr) {
+      return {
+        ok: true,
+        scanned,
+        deleted,
+        cron_log_cleanup_error: cronLogErr.message,
+      };
+    }
+
     return {
       ok: true,
       scanned,
       deleted,
+      cron_logs_deleted: cronLogsDeleted ?? 0,
     };
   });
 }

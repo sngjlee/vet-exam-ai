@@ -38,6 +38,8 @@
 - `/api/cron/comment-image-sweep`와 `/api/cron/signup-proof-purge`가 `CRON_SECRET` 없이 401을 반환한다.
 - Vercel Cron 실행 로그에서 두 작업이 200으로 완료된다.
 - `/admin/ops`의 최근 cron 실행 표에 성공/실패와 집계값이 표시된다.
+- `comment-image-sweep`가 댓글 이미지 임시 파일/업로드 로그와 90일 초과 `cron_run_logs`를 정리한다.
+- `signup-proof-purge`가 반려 후 30일 초과 가입 증빙 원본과 DB path를 정리한다.
 - 실패 재시도 전 작업이 idempotent한지 확인한다.
 
 ## 5. Service role 사용 경로

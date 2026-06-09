@@ -47,4 +47,5 @@ npm run build
 - RLS regression matrix: `../docs/operations/rls-permission-regression.md`
 - Sentry event quality: `../docs/operations/sentry-event-quality.md`
 - Admin audit coverage: `../docs/operations/admin-audit-coverage.md`
+- Data retention schedule: `../docs/operations/data-retention-schedule.md`
 - Migration runbook: `../docs/operations/migration-runbook.md`
