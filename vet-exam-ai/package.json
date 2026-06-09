@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "ci": "npm run lint && npm run typecheck && npm run build"
+    "check:migrations": "node scripts/check-migrations.cjs",
+    "ci": "npm run check:migrations && npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.53.1",

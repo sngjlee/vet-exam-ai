@@ -29,15 +29,17 @@ NEXT_PUBLIC_SENTRY_DSN=
 ## Verification
 
 ```bash
+npm run check:migrations
 npm run lint
 npm run typecheck
 npm run build
 ```
 
-`npm run ci` runs all three checks in the same order as GitHub Actions.
+`npm run ci` runs all checks in the same order as GitHub Actions.
 
 ## Operations
 
 - Admin health checks: `/admin/ops`
 - Sentry smoke test: `/admin/sentry-test`
 - Runbook: `../docs/operations-runbook.md`
+- Migration runbook: `../docs/migration-runbook.md`
