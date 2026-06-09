@@ -21,6 +21,8 @@ type Props = {
   onAnswer: (payload: AnswerPayload) => void;
   onQuit?: () => void;
   commentCount?: number;
+  feedbackMode?: "instant" | "deferred";
+  sessionLabel?: string;
 };
 
 // ── Subject chip ────────────────────────────────────────────────────────────
@@ -64,6 +66,8 @@ export default function QuestionCard({
   onAnswer,
   onQuit,
   commentCount,
+  feedbackMode = "instant",
+  sessionLabel = "세션",
 }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -83,6 +87,11 @@ export default function QuestionCard({
 
   function handleSubmit() {
     if (!selected) return;
+    if (feedbackMode === "deferred") {
+      onAnswer({ questionId: question.id, selectedAnswer: selected, isCorrect });
+      onNext();
+      return;
+    }
     setSubmitted(true);
     onAnswer({ questionId: question.id, selectedAnswer: selected, isCorrect });
   }
@@ -151,7 +160,7 @@ export default function QuestionCard({
             visibility: onQuit ? "visible" : "hidden",
           }}
         >
-          ← 세션 종료
+          ← {sessionLabel} 종료
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -316,7 +325,12 @@ export default function QuestionCard({
                   transition: "opacity 150ms",
                 }}
               >
-                정답 확인 <ArrowRight size={16} />
+                {feedbackMode === "deferred"
+                  ? questionNumber === total
+                    ? "답안 제출"
+                    : "답안 저장"
+                  : "정답 확인"}{" "}
+                <ArrowRight size={16} />
               </button>
             </div>
           ) : (

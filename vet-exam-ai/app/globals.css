@@ -1242,3 +1242,13 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr) !important;
   }
 }
+
+@media (max-width: 640px) {
+  .mini-mock-entry {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mini-mock-entry > button {
+    width: 100%;
+  }
+}
