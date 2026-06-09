@@ -44,4 +44,5 @@ npm run build
 - Sentry smoke test: `/admin/sentry-test`
 - Runbook: `../docs/operations/operations-runbook.md`
 - Production checklist: `../docs/operations/production-readiness-checklist.md`
+- RLS regression matrix: `../docs/operations/rls-permission-regression.md`
 - Migration runbook: `../docs/operations/migration-runbook.md`
