@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Activity, AlertTriangle, CheckCircle2, Clock3, ShieldAlert } from "lucide-react";
+import { createClient } from "../../../lib/supabase/server";
+import type { Database } from "../../../lib/supabase/types";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,11 @@ type OpsCheck = {
   level: CheckLevel;
   detail: string;
 };
+
+type CronRunLog = Pick<
+  Database["public"]["Tables"]["cron_run_logs"]["Row"],
+  "job_name" | "status" | "duration_ms" | "detail" | "error" | "started_at" | "finished_at"
+>;
 
 const CRON_JOBS = [
   {
@@ -131,8 +138,128 @@ function CheckRow({ check }: { check: OpsCheck }) {
   );
 }
 
-export default function AdminOpsPage() {
+async function loadCronRuns(): Promise<{ rows: CronRunLog[]; error: string | null }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("cron_run_logs")
+    .select("job_name, status, duration_ms, detail, error, started_at, finished_at")
+    .order("finished_at", { ascending: false })
+    .limit(10);
+
+  return {
+    rows: (data ?? []) as CronRunLog[],
+    error: error?.message ?? null,
+  };
+}
+
+function formatDateTime(value: string): string {
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function summarizeDetail(detail: CronRunLog["detail"]): string {
+  if (!detail) return "요약 없음";
+
+  const parts: string[] = [];
+  for (const key of ["scanned", "deleted", "inserted", "remaining", "limit"]) {
+    const value = detail[key];
+    if (typeof value === "number" || typeof value === "string") {
+      parts.push(`${key}=${value}`);
+    }
+  }
+
+  const commentSeeding = detail.commentSeeding;
+  if (
+    commentSeeding &&
+    typeof commentSeeding === "object" &&
+    "ok" in commentSeeding &&
+    commentSeeding.ok === false
+  ) {
+    parts.push("commentSeeding=failed");
+  }
+
+  return parts.length > 0 ? parts.join(" · ") : "집계 값 없음";
+}
+
+function CronRunRows({ rows, error }: { rows: CronRunLog[]; error: string | null }) {
+  if (error) {
+    return (
+      <div
+        className="rounded-lg p-4 text-sm"
+        style={{ background: "var(--wrong-dim)", border: "1px solid rgba(192,74,58,0.25)", color: "var(--wrong)" }}
+      >
+        cron_run_logs를 읽지 못했습니다. 운영 DB에 최신 마이그레이션이 적용되었는지 확인하세요.
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div
+        className="rounded-lg p-4 text-sm"
+        style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)", color: "var(--text-muted)" }}
+      >
+        아직 기록된 cron 실행 이력이 없습니다.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-lg" style={{ border: "1px solid var(--rule)" }}>
+      <table className="w-full text-left text-xs">
+        <thead style={{ background: "var(--surface-raised)", color: "var(--text-muted)" }}>
+          <tr>
+            <th className="px-3 py-2 font-semibold">작업</th>
+            <th className="px-3 py-2 font-semibold">상태</th>
+            <th className="px-3 py-2 font-semibold">종료</th>
+            <th className="px-3 py-2 font-semibold">시간</th>
+            <th className="px-3 py-2 font-semibold">요약</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const failed = row.status === "failure";
+            return (
+              <tr key={`${row.job_name}-${row.finished_at}`} style={{ borderTop: "1px solid var(--rule)" }}>
+                <td className="px-3 py-2 kvle-mono" style={{ color: "var(--text)" }}>
+                  {row.job_name}
+                </td>
+                <td className="px-3 py-2">
+                  <span
+                    className="rounded-md px-2 py-1 font-semibold"
+                    style={{
+                      background: failed ? "var(--wrong-dim)" : "var(--correct-dim)",
+                      color: failed ? "var(--wrong)" : "var(--correct)",
+                    }}
+                  >
+                    {failed ? "실패" : "성공"}
+                  </span>
+                </td>
+                <td className="px-3 py-2 kvle-mono" style={{ color: "var(--text-muted)" }}>
+                  {formatDateTime(row.finished_at)}
+                </td>
+                <td className="px-3 py-2 kvle-mono" style={{ color: "var(--text-muted)" }}>
+                  {row.duration_ms}ms
+                </td>
+                <td className="px-3 py-2" style={{ color: failed ? "var(--wrong)" : "var(--text-muted)" }}>
+                  {failed ? row.error ?? "오류 메시지 없음" : summarizeDetail(row.detail)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export default async function AdminOpsPage() {
   const checks = loadChecks();
+  const cronRuns = await loadCronRuns();
   const failCount = checks.filter((check) => check.level === "fail").length;
   const warnCount = checks.filter((check) => check.level === "warn").length;
 
@@ -204,6 +331,13 @@ export default function AdminOpsPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
+          최근 Cron 실행
+        </h2>
+        <CronRunRows rows={cronRuns.rows} error={cronRuns.error} />
       </section>
 
       <section

@@ -522,6 +522,33 @@ export interface Database {
         Relationships: [];
       };
 
+      cron_run_logs: {
+        Row: {
+          id: string;
+          job_name: string;
+          status: "success" | "failure";
+          duration_ms: number;
+          detail: Record<string, unknown> | null;
+          error: string | null;
+          started_at: string;
+          finished_at: string;
+        };
+        Insert: {
+          id?: string;
+          job_name: string;
+          status: "success" | "failure";
+          duration_ms: number;
+          detail?: Record<string, unknown> | null;
+          error?: string | null;
+          started_at: string;
+          finished_at?: string;
+        };
+        Update: {
+          // cron log rows are insert-only
+        };
+        Relationships: [];
+      };
+
       question_image_triage: {
         Row: {
           question_id: string;

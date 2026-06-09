@@ -7,86 +7,81 @@
 // `delete from storage.objects ...`를 차단하므로 Storage API를 사용한다.
 // 같은 패턴: app/api/cron/comment-image-sweep/route.ts
 
-import { NextResponse, type NextRequest } from "next/server";
-import { createAdminClient } from "../../../../lib/supabase/admin";
+import type { NextRequest } from "next/server";
 import { runDailyCommentSeeding } from "../../../../lib/cron/comment-seeding";
+import { runCronJob } from "../../../../lib/cron/run";
 
 const BUCKET = "signup-proofs";
 const BATCH = 100;
 
 export async function GET(req: NextRequest) {
-  const auth = req.headers.get("authorization");
-  const expected = `Bearer ${process.env.CRON_SECRET}`;
-  if (!process.env.CRON_SECRET || auth !== expected) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  return runCronJob(req, "signup-proof-purge", async (admin) => {
+    let commentSeeding:
+      | Awaited<ReturnType<typeof runDailyCommentSeeding>>
+      | { ok: false; error: string }
+      | null = null;
 
-  const admin = createAdminClient();
-  let commentSeeding:
-    | Awaited<ReturnType<typeof runDailyCommentSeeding>>
-    | { ok: false; error: string }
-    | null = null;
+    const cutoffIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: rows, error: selErr } = await admin
+      .from("signup_applications")
+      .select("user_id, proof_storage_path")
+      .eq("status", "rejected")
+      .lt("last_rejection_at", cutoffIso)
+      .not("proof_storage_path", "is", null);
+    if (selErr) throw new Error(`fetch_expired_failed: ${selErr.message}`);
 
-  const cutoffIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const { data: rows, error: selErr } = await admin
-    .from("signup_applications")
-    .select("user_id, proof_storage_path")
-    .eq("status", "rejected")
-    .lt("last_rejection_at", cutoffIso)
-    .not("proof_storage_path", "is", null);
-  if (selErr) {
-    return NextResponse.json(
-      { error: "fetch_expired_failed", detail: selErr.message },
-      { status: 500 },
-    );
-  }
+    const paths = (rows ?? [])
+      .map((r) => r.proof_storage_path)
+      .filter((p): p is string => typeof p === "string" && p.length > 0);
 
-  const paths = (rows ?? [])
-    .map((r) => r.proof_storage_path)
-    .filter((p): p is string => typeof p === "string" && p.length > 0);
+    const scanned = paths.length;
+    let deleted = 0;
+    const purgedPaths: string[] = [];
 
-  const scanned = paths.length;
-  let deleted = 0;
-  const purgedPaths: string[] = [];
-
-  for (let i = 0; i < paths.length; i += BATCH) {
-    const slice = paths.slice(i, i + BATCH);
-    const { data, error: rmErr } = await admin.storage.from(BUCKET).remove(slice);
-    if (rmErr) continue;
-    const removedNames = new Set(
-      (data ?? []).map((o) => o.name).filter((n): n is string => typeof n === "string"),
-    );
-    for (const p of slice) {
-      if (removedNames.has(p)) {
-        deleted += 1;
-        purgedPaths.push(p);
+    for (let i = 0; i < paths.length; i += BATCH) {
+      const slice = paths.slice(i, i + BATCH);
+      const { data, error: rmErr } = await admin.storage.from(BUCKET).remove(slice);
+      if (rmErr) continue;
+      const removedNames = new Set(
+        (data ?? []).map((o) => o.name).filter((n): n is string => typeof n === "string"),
+      );
+      for (const p of slice) {
+        if (removedNames.has(p)) {
+          deleted += 1;
+          purgedPaths.push(p);
+        }
       }
     }
-  }
 
-  if (purgedPaths.length > 0) {
-    const { error: rpcErr } = await admin.rpc("purge_signup_proof_paths", {
-      p_paths: purgedPaths,
-    });
-    if (rpcErr) {
-      return NextResponse.json({
-        ok: true,
-        scanned,
-        deleted,
-        path_clear_error: rpcErr.message,
-        commentSeeding,
+    if (purgedPaths.length > 0) {
+      const { error: rpcErr } = await admin.rpc("purge_signup_proof_paths", {
+        p_paths: purgedPaths,
       });
+      if (rpcErr) {
+        return {
+          ok: true,
+          scanned,
+          deleted,
+          path_clear_error: rpcErr.message,
+          commentSeeding,
+        };
+      }
     }
-  }
 
-  try {
-    commentSeeding = await runDailyCommentSeeding(admin);
-  } catch (error) {
-    commentSeeding = {
-      ok: false,
-      error: error instanceof Error ? error.message : "Unknown comment seeding error",
+    try {
+      commentSeeding = await runDailyCommentSeeding(admin);
+    } catch (error) {
+      commentSeeding = {
+        ok: false,
+        error: error instanceof Error ? error.message : "Unknown comment seeding error",
+      };
+    }
+
+    return {
+      ok: true,
+      scanned,
+      deleted,
+      commentSeeding,
     };
-  }
-
-  return NextResponse.json({ ok: true, scanned, deleted, commentSeeding });
+  });
 }
