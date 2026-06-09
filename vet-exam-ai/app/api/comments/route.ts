@@ -3,6 +3,7 @@ import { createClient } from "../../../lib/supabase/server";
 import { CreateCommentSchema } from "../../../lib/comments/schema";
 import { renderCommentMarkdown } from "../../../lib/comments/sanitize";
 import { findInvalidImageUrl } from "../../../lib/comments/imageUrlValidate";
+import { captureOperationalError, classifySupabaseFailure } from "../../../lib/utils/logging";
 import {
   COMMENT_TYPE_FILTERS,
   COMMENTS_PAGE_SIZE,
@@ -269,6 +270,16 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
+    const failureKind = classifySupabaseFailure(error);
+    captureOperationalError(error, {
+      area: failureKind === "rls_denied" ? "rls" : "supabase",
+      operation: "create_comment",
+      failureKind,
+      level: failureKind === "rls_denied" ? "error" : "warning",
+      tags: { comment_type: effectiveType },
+      context: { has_parent: Boolean(effectiveParentId), image_count: image_urls.length },
+    });
+
     // Postgres CHECK violations → 422; depth trigger raise → 409; else 500
     if (error.code === "23514") {
       return NextResponse.json({ error: error.message }, { status: 422 });

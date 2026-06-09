@@ -8,7 +8,7 @@ import { createClient } from "../../../../../lib/supabase/server";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
 import { readWebpDimensions } from "../../../../../lib/webp-dimensions";
 import { toStorageKey } from "../../../../../lib/admin/storage-key";
-import { logError } from "../../../../../lib/utils/logging";
+import { captureOperationalError, logError } from "../../../../../lib/utils/logging";
 
 const MAX_BYTES = 1_048_576; // 1MB
 const MAX_DIM = 2200;
@@ -104,6 +104,12 @@ export async function POST(req: NextRequest) {
     });
   if (uploadErr) {
     logError("[image-replace] upload failed", uploadErr);
+    captureOperationalError(uploadErr, {
+      area: "storage",
+      operation: "question_image_replacement_upload",
+      failureKind: "storage_upload_failed",
+      tags: { storage_bucket: BUCKET },
+    });
     return NextResponse.json({ error: "storage_upload_failed" }, { status: 500 });
   }
 
@@ -122,6 +128,13 @@ export async function DELETE(req: NextRequest) {
   const { error } = await admin.storage.from(BUCKET).remove([key]);
   if (error) {
     logError("[image-replace] delete failed", error);
+    captureOperationalError(error, {
+      area: "storage",
+      operation: "question_image_replacement_delete",
+      failureKind: "storage_delete_failed",
+      level: "warning",
+      tags: { storage_bucket: BUCKET },
+    });
     return NextResponse.json({ error: "storage_delete_failed" }, { status: 500 });
   }
   return NextResponse.json({ ok: true });

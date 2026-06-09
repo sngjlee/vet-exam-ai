@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "../../../lib/supabase/server";
 import type { Database } from "../../../lib/supabase/types";
+import { captureOperationalError, classifySupabaseFailure } from "../../../lib/utils/logging";
 
 type ProofKind     = Database["public"]["Enums"]["signup_proof_kind"];
 type ApplicantType = Database["public"]["Enums"]["applicant_type"];
@@ -58,6 +59,13 @@ export async function submitSignupApplicationAction(input: SubmitInput): Promise
     p_proof_text:          input.proofText,
   });
   if (error) {
+    const failureKind = classifySupabaseFailure(error);
+    captureOperationalError(error, {
+      area: failureKind === "rls_denied" ? "rls" : "supabase",
+      operation: "submit_signup_application",
+      failureKind,
+      level: failureKind === "rls_denied" ? "error" : "warning",
+    });
     return { ok: false, error: "rpc_failed", message: error.message };
   }
 

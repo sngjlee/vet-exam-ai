@@ -1,8 +1,8 @@
-import * as Sentry from "@sentry/nextjs";
 import { NextResponse, type NextRequest } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "../supabase/admin";
 import type { Database } from "../supabase/types";
+import { captureOperationalError } from "../utils/logging";
 
 type AdminClient = SupabaseClient<Database>;
 
@@ -39,6 +39,13 @@ async function recordCronRun(
 
   if (error) {
     console.warn("[cron] run log insert failed:", error.message);
+    captureOperationalError(error, {
+      area: "cron",
+      operation: "record_cron_run",
+      failureKind: "cron_run_log_insert_failed",
+      level: "warning",
+      tags: { cron_job: entry.jobName },
+    });
   }
 }
 
@@ -67,8 +74,11 @@ export async function runCronJob(
     return NextResponse.json(result);
   } catch (error) {
     const message = serializeError(error);
-    Sentry.captureException(error, {
-      tags: { area: "cron", cron_job: jobName },
+    captureOperationalError(error, {
+      area: "cron",
+      operation: "run_cron_job",
+      failureKind: "cron_handler_failed",
+      tags: { cron_job: jobName },
     });
 
     await recordCronRun(admin, {

@@ -9,6 +9,7 @@ import { createClient } from "../../../../lib/supabase/server";
 import { createAdminClient } from "../../../../lib/supabase/admin";
 import { readWebpDimensions } from "../../../../lib/webp-dimensions";
 import { urlToStoragePath } from "../../../../lib/comments/imageUrlValidate";
+import { captureOperationalError, classifySupabaseFailure } from "../../../../lib/utils/logging";
 
 const MAX_BYTES = 1_048_576; // 1MB
 const MAX_DIM = 2200; // 2000px + 10% margin
@@ -73,6 +74,12 @@ export async function POST(req: NextRequest) {
     .eq("user_id", user.id)
     .gte("created_at", since);
   if (countErr) {
+    captureOperationalError(countErr, {
+      area: "supabase",
+      operation: "comment_image_upload_rate_lookup",
+      failureKind: classifySupabaseFailure(countErr),
+      tags: { storage_bucket: BUCKET },
+    });
     return NextResponse.json({ error: "rate_lookup_failed" }, { status: 500 });
   }
   if ((recentCount ?? 0) >= RATE_LIMIT) {
@@ -90,13 +97,28 @@ export async function POST(req: NextRequest) {
       upsert: false,
     });
   if (uploadErr) {
+    captureOperationalError(uploadErr, {
+      area: "storage",
+      operation: "comment_image_upload",
+      failureKind: "storage_upload_failed",
+      tags: { storage_bucket: BUCKET },
+    });
     return NextResponse.json({ error: "upload_failed", detail: uploadErr.message }, { status: 500 });
   }
 
-  await admin.from("comment_image_upload_log").insert({
+  const { error: logErr } = await admin.from("comment_image_upload_log").insert({
     user_id: user.id,
     storage_path: path,
   });
+  if (logErr) {
+    captureOperationalError(logErr, {
+      area: "supabase",
+      operation: "comment_image_upload_log",
+      failureKind: classifySupabaseFailure(logErr),
+      level: "warning",
+      tags: { storage_bucket: BUCKET },
+    });
+  }
 
   const { data: publicData } = admin.storage.from(BUCKET).getPublicUrl(path);
   return NextResponse.json({ url: publicData.publicUrl, path }, { status: 201 });
@@ -126,6 +148,13 @@ export async function DELETE(req: NextRequest) {
   const admin = createAdminClient();
   const { error: removeErr } = await admin.storage.from(BUCKET).remove([path]);
   if (removeErr) {
+    captureOperationalError(removeErr, {
+      area: "storage",
+      operation: "comment_image_delete",
+      failureKind: "storage_delete_failed",
+      level: "warning",
+      tags: { storage_bucket: BUCKET },
+    });
     return NextResponse.json({ ok: false, detail: removeErr.message }, { status: 200 });
   }
   return NextResponse.json({ ok: true }, { status: 200 });

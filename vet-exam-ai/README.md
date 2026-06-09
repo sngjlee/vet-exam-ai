@@ -45,4 +45,5 @@ npm run build
 - Runbook: `../docs/operations/operations-runbook.md`
 - Production checklist: `../docs/operations/production-readiness-checklist.md`
 - RLS regression matrix: `../docs/operations/rls-permission-regression.md`
+- Sentry event quality: `../docs/operations/sentry-event-quality.md`
 - Migration runbook: `../docs/operations/migration-runbook.md`

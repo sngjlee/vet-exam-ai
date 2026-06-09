@@ -17,6 +17,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { captureOperationalError } from "../../../lib/utils/logging";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -50,7 +51,13 @@ export async function GET(request: NextRequest) {
       if (!error) {
         return NextResponse.redirect(`${origin}${next}`);
       }
-      console.error("[auth/callback] exchangeCodeForSession failed:", error.message);
+      captureOperationalError(error, {
+        area: "auth",
+        operation: "auth_callback",
+        failureKind: "exchange_code_failed",
+        level: "warning",
+        tags: { auth_flow: "pkce_code" },
+      });
     } else if (tokenHash && type) {
       const { error } = await supabase.auth.verifyOtp({
         type,
@@ -59,7 +66,13 @@ export async function GET(request: NextRequest) {
       if (!error) {
         return NextResponse.redirect(`${origin}${next}`);
       }
-      console.error("[auth/callback] verifyOtp failed:", error.message);
+      captureOperationalError(error, {
+        area: "auth",
+        operation: "auth_callback",
+        failureKind: "verify_otp_failed",
+        level: "warning",
+        tags: { auth_flow: "token_hash", otp_type: type },
+      });
     }
   }
 
