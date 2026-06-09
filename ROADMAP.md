@@ -179,7 +179,7 @@ KVLE는 두 개의 레이어로 운영된다.
 
 - **임시조치 절차**: 명예훼손 신고 접수 → 24시간 내 블라인드 → 30일 후 결정 → 이의제기 창구
 - **저작권 침해 대응**: 권리자 확인 신고 → 신속 삭제 → 작성자 반박권
-- 약관에 의무 조항 명시, 처리 절차를 `docs/moderation-playbook.md`에 기재
+- 약관에 의무 조항 명시, 처리 절차를 `docs/operations/moderation-playbook.md`에 기재
 
 ### G. 관리자 페이지 MVP
 
@@ -471,10 +471,10 @@ KVLE는 두 개의 레이어로 운영된다.
 | 문서 | 경로 | 상태 |
 |---|---|---|
 | 콘텐츠 정책 | `docs/content-policy.md` | 필요 |
-| 이용약관 | `docs/terms-of-service.md` | 초안 작성됨, 법무 검토 필요 |
-| 개인정보 / 가입 정책 | `docs/privacy-signup-policy.md` | 초안 작성됨, 법무 검토 필요 |
-| 커뮤니티 가이드라인 | `docs/community-guideline.md` | 초안 작성됨, 운영 검토 필요 |
-| 모더레이션 플레이북 | `docs/moderation-playbook.md` | 신규 |
+| 이용약관 | `docs/public/terms-of-service.md` | 앱 공개 경로 `/terms`, 법무 검토 필요 |
+| 개인정보 처리방침 | `docs/public/privacy-policy.md` | 앱 공개 경로 `/privacy`, 법무 검토 필요 |
+| 커뮤니티 가이드라인 | `docs/public/community-guidelines.md` | 앱 공개 경로 `/community-guidelines`, 운영 검토 필요 |
+| 모더레이션 플레이북 | `docs/operations/moderation-playbook.md` | 내부 운영 문서 |
 | DB 스키마 | `docs/schema.sql` | 확장 필요 |
 | 시딩 계획 | `docs/seeding-plan.md` | 신규 |
 
@@ -694,7 +694,7 @@ KVLE는 두 개의 레이어로 운영된다.
 ### 다음 세션 첫 액션 (강력 권장)
 
 **T0 정책 문서 확인/보강**:
-- 로컬에 `docs/terms-of-service.md`, `docs/privacy-signup-policy.md`, `docs/community-guideline.md` 초안 존재
+- 로컬에 `docs/public/terms-of-service.md`, `docs/public/privacy-policy.md`, `docs/public/community-guidelines.md` 초안 존재
 - 다음 작업은 신규 작성이 아니라 UGC, 이미지 첨부, 검색 스니펫, 결제/환불 예정 조항을 점검하고 법무 검토로 넘기는 것
 
 **T0 이미지 첨부 댓글 활성화**:

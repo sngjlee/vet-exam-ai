@@ -41,5 +41,5 @@ npm run build
 
 - Admin health checks: `/admin/ops`
 - Sentry smoke test: `/admin/sentry-test`
-- Runbook: `../docs/operations-runbook.md`
-- Migration runbook: `../docs/migration-runbook.md`
+- Runbook: `../docs/operations/operations-runbook.md`
+- Migration runbook: `../docs/operations/migration-runbook.md`

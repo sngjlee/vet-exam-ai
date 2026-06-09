@@ -665,7 +665,10 @@ export default function LandingPage() {
               <Image src="/logo.png" alt="KVLE 수의미래연구소" width={90} height={30} style={{ objectFit: "contain" }} />
             </a>
             <div>© 2026 수의미래연구소. 수록된 문제 및 해설의 저작권은 수의미래연구소에 있습니다.</div>
-            <div style={{ display: "flex", gap: "20px" }}>
+            <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <Link href="/terms" className="foot-link">이용약관</Link>
+              <Link href="/privacy" className="foot-link">개인정보 처리방침</Link>
+              <Link href="/community-guidelines" className="foot-link">커뮤니티 가이드라인</Link>
               <Link href="/auth/login" className="foot-link">로그인</Link>
               <Link href="/auth/login?mode=signup" className="foot-link">회원가입</Link>
             </div>

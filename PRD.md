@@ -551,10 +551,10 @@ v0.1에서 해결된 이슈:
 ## 12. 참고: 별도 운영 문서
 
 - `docs/content-policy.md`: 기출 원문, 이미지, 공개 라이선스, AI 재작성 기준
-- `docs/terms-of-service.md`: 이용약관 초안 (UGC, 임시조치, 결제 전 보강 및 법무 검토 필요)
-- `docs/privacy-signup-policy.md`: 회원가입, 자격 인증, 미성년자, 탈퇴/파기 초안
-- `docs/community-guideline.md`: 댓글 가이드라인, 금지 행위, 신고/이의제기 절차 초안
-- `docs/moderation-playbook.md`: 신고 유형별 대응 매뉴얼
+- `docs/public/terms-of-service.md`: 이용약관 초안 (앱 공개 경로 `/terms`, UGC, 임시조치, 결제 전 보강 및 법무 검토 필요)
+- `docs/public/privacy-policy.md`: 개인정보 처리방침 및 가입 정책 초안 (앱 공개 경로 `/privacy`)
+- `docs/public/community-guidelines.md`: 댓글 가이드라인, 금지 행위, 신고/이의제기 절차 초안 (앱 공개 경로 `/community-guidelines`)
+- `docs/operations/moderation-playbook.md`: 신고 유형별 내부 대응 매뉴얼
 - `docs/schema.sql`: DB 스키마 전체
 - `docs/seeding-plan.md`: 런칭 전 시딩 콘텐츠 계획 및 체크리스트
 
