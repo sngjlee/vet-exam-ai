@@ -669,6 +669,7 @@ export default function LandingPage() {
               <Link href="/terms" className="foot-link">이용약관</Link>
               <Link href="/privacy" className="foot-link">개인정보 처리방침</Link>
               <Link href="/community-guidelines" className="foot-link">커뮤니티 가이드라인</Link>
+              <Link href="/guide" className="foot-link">처음 이용 가이드</Link>
               <Link href="/auth/login" className="foot-link">로그인</Link>
               <Link href="/auth/login?mode=signup" className="foot-link">회원가입</Link>
             </div>

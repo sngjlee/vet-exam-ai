@@ -1233,3 +1233,12 @@ p, h1, h2, h3, h4, button, label, span, td, th {
     grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.55fr) !important;
   }
 }
+
+.guide-hero-grid {
+  grid-template-columns: 1fr !important;
+}
+@media (min-width: 860px) {
+  .guide-hero-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr) !important;
+  }
+}

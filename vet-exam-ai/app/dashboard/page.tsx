@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, CirclePlay, MessageSquare, RotateCcw } from "lucide-react";
+import { BookOpen, CirclePlay, HelpCircle, MessageSquare, RotateCcw } from "lucide-react";
 import { useAuth } from "../../lib/hooks/useAuth";
 import { useStats, type CategoryStat } from "../../lib/hooks/useStats";
 import { useReview } from "../../lib/hooks/useReview";
@@ -429,9 +429,31 @@ function StudyFirstPanel({
       }}
     >
       <div style={{ marginBottom: 16 }}>
-        <span className="kvle-label" style={{ fontSize: 12 }}>
-          오늘의 학습 입구
-        </span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <span className="kvle-label" style={{ fontSize: 12 }}>
+            오늘의 학습 입구
+          </span>
+          <Link
+            href="/guide"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              minHeight: 34,
+              padding: "6px 10px",
+              borderRadius: 999,
+              border: "1px solid var(--border)",
+              color: "var(--text-muted)",
+              background: "var(--surface-raised)",
+              textDecoration: "none",
+              fontSize: 12,
+              fontWeight: 800,
+            }}
+          >
+            <HelpCircle size={14} />
+            처음 이용 가이드
+          </Link>
+        </div>
         <h1
           style={{
             color: "var(--text)",
