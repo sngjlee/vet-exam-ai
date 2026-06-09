@@ -49,4 +49,5 @@ npm run build
 - Admin audit coverage: `../docs/operations/admin-audit-coverage.md`
 - Data retention schedule: `../docs/operations/data-retention-schedule.md`
 - Search v1 operations: `../docs/operations/search-v1.md`
+- Comment image attachments: `../docs/operations/comment-image-attachments.md`
 - Migration runbook: `../docs/operations/migration-runbook.md`

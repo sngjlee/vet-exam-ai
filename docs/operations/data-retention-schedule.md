@@ -27,6 +27,7 @@
 ## 배포 전 확인
 
 1. `/api/cron/comment-image-sweep`가 미참조 댓글 이미지, 업로드 로그, 90일 초과 cron 로그를 정리하는지 staging에서 확인합니다.
-2. `/api/cron/signup-proof-purge`가 반려 후 30일 초과 증빙만 삭제하고 `proof_storage_path`를 null로 비우는지 확인합니다.
-3. 탈퇴 테스트 계정에서 가입 증빙 파일이 남아 있지 않고, 커뮤니티 콘텐츠 작성자 표시가 탈퇴 사용자로 처리되는지 확인합니다.
-4. `/admin/audit`와 Sentry에 이메일, reset link, 증빙 path 원문이 남지 않는지 표본 확인합니다.
+2. 댓글 이미지 첨부는 `docs/operations/comment-image-attachments.md`의 배포 전 확인 항목을 함께 수행합니다.
+3. `/api/cron/signup-proof-purge`가 반려 후 30일 초과 증빙만 삭제하고 `proof_storage_path`를 null로 비우는지 확인합니다.
+4. 탈퇴 테스트 계정에서 가입 증빙 파일이 남아 있지 않고, 커뮤니티 콘텐츠 작성자 표시가 탈퇴 사용자로 처리되는지 확인합니다.
+5. `/admin/audit`와 Sentry에 이메일, reset link, 증빙 path 원문이 남지 않는지 표본 확인합니다.

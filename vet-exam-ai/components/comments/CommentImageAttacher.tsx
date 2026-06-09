@@ -25,6 +25,19 @@ type Props = {
 
 const ACCEPT = "image/jpeg,image/png,image/webp";
 
+const UPLOAD_ERROR_MESSAGES: Record<string, string> = {
+  invalid_payload: "이미지 업로드 요청을 처리할 수 없습니다. 다시 선택해주세요.",
+  missing_file: "업로드할 이미지를 찾을 수 없습니다.",
+  invalid_mime: "이미지 변환에 실패했습니다. JPEG, PNG, WebP 이미지를 다시 선택해주세요.",
+  too_large: "이미지가 너무 큽니다. 더 작은 이미지를 선택해주세요.",
+  invalid_magic: "이미지 파일을 확인할 수 없습니다. 다른 이미지를 선택해주세요.",
+  decode_failed: "이미지를 읽을 수 없습니다. 다른 이미지를 선택해주세요.",
+  dimensions_exceeded: "이미지 해상도가 너무 큽니다. 더 작은 이미지를 선택해주세요.",
+  rate_limited: "이미지 업로드가 잠시 제한되었습니다. 1시간 뒤 다시 시도해주세요.",
+  rate_lookup_failed: "업로드 제한 상태를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.",
+  upload_failed: "이미지를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.",
+};
+
 export default function CommentImageAttacher({
   value,
   onChange,
@@ -280,12 +293,14 @@ function uploadOne(blob: Blob, onProgress: (pct: number) => void): Promise<strin
         } catch {
           // ignore
         }
-        if (xhr.status === 429) reject(new Error("잠시 후 다시 시도해주세요."));
-        else if (xhr.status === 401) reject(new Error("로그인이 필요합니다."));
-        else reject(new Error(`업로드 실패 (${xhr.status}${detail ? `: ${detail}` : ""})`));
+        if (xhr.status === 401) reject(new Error("로그인이 필요합니다."));
+        else if (xhr.status === 429) reject(new Error(UPLOAD_ERROR_MESSAGES.rate_limited));
+        else if (detail && UPLOAD_ERROR_MESSAGES[detail]) {
+          reject(new Error(UPLOAD_ERROR_MESSAGES[detail]));
+        } else reject(new Error("업로드에 실패했습니다. 잠시 후 다시 시도해주세요."));
       }
     };
-    xhr.onerror = () => reject(new Error("네트워크 오류"));
+    xhr.onerror = () => reject(new Error("네트워크 오류로 업로드에 실패했습니다."));
     const fd = new FormData();
     fd.append("file", blob, "image.webp");
     xhr.send(fd);

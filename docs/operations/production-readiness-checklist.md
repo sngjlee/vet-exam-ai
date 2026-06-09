@@ -21,6 +21,7 @@
 - 운영 DB와 Preview/Staging DB가 분리되어 있는지 확인한다.
 - 최신 migration이 적용되어 있고 `npm run check:migrations`가 통과한다.
 - Storage bucket `comment-images`, `signup-proofs`의 공개/비공개 정책이 의도와 일치한다.
+- 댓글 이미지 첨부 제한과 정리 동작은 `docs/operations/comment-image-attachments.md` 기준으로 staging에서 표본 확인한다.
 - `cron_run_logs` 테이블에 최근 cron 실행 결과가 쌓이는지 확인한다.
 - RLS 정책을 임시로 끄거나 service role key를 브라우저에서 쓰는 코드가 없는지 확인한다.
 - Supabase 자동 백업이 활성화되어 있고 최신 백업 시각이 정상 범위인지 확인한다.
