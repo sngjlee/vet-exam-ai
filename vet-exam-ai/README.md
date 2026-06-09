@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KVLE App
 
-## Getting Started
+Next.js App Router application for the KVLE veterinary exam learning platform.
 
-First, run the development server:
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Required Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Use real values in `.env.local`, Vercel Preview, and Vercel Production.
 
-## Learn More
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+CRON_SECRET=
+NEXT_PUBLIC_SITE_URL=
+NEXT_PUBLIC_SENTRY_DSN=
+```
 
-To learn more about Next.js, take a look at the following resources:
+`NEXT_PUBLIC_SENTRY_DSN` is recommended for operations, but the app can build without it. `SENTRY_AUTH_TOKEN` is optional and only needed when uploading source maps.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Verification
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
 
-## Deploy on Vercel
+`npm run ci` runs all three checks in the same order as GitHub Actions.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Operations
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Admin health checks: `/admin/ops`
+- Sentry smoke test: `/admin/sentry-test`
+- Runbook: `../docs/operations-runbook.md`

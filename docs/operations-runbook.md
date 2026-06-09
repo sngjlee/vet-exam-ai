@@ -14,6 +14,7 @@
 
 - Supabase 대시보드에서 자동 백업이 활성화되어 있고 최신 백업 시각이 예상 범위 안인지 확인합니다.
 - Vercel 환경변수 `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SENTRY_DSN`의 Production/Preview 적용 범위를 확인합니다.
+- GitHub Actions `CI`가 `main`과 최근 PR에서 통과하는지 확인합니다.
 - `/admin/audit`에서 최근 운영 조치가 의도한 작업과 일치하는지 표본 확인합니다.
 - 신고, 가입 신청, 정정 제안 큐가 오래 방치되지 않았는지 확인합니다.
 
