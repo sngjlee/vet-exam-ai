@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "../../lib/supabase/server";
 import AccountInfo from "./_components/AccountInfo";
+import AccountDeletionForm from "./_components/AccountDeletionForm";
 import PasswordChangeForm from "./_components/PasswordChangeForm";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export default async function SettingsPage() {
       </h1>
       <AccountInfo />
       <PasswordChangeForm />
+      <AccountDeletionForm email={user.email ?? ""} />
     </main>
   );
 }

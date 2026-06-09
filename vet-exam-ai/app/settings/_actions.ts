@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "../../lib/supabase/server";
+import { createAdminClient } from "../../lib/supabase/admin";
 import { validateNewPassword } from "../../lib/profile/passwordPolicy";
 
 export type ChangePasswordResult =
@@ -8,6 +9,17 @@ export type ChangePasswordResult =
   | {
       ok: false;
       error: "auth_required" | "wrong_current_password" | "invalid_input" | "update_failed";
+    };
+
+export type DeleteAccountResult =
+  | { ok: true }
+  | {
+      ok: false;
+      error:
+        | "auth_required"
+        | "email_mismatch"
+        | "wrong_current_password"
+        | "delete_failed";
     };
 
 export async function changePassword(
@@ -46,5 +58,57 @@ export async function changePassword(
     return { ok: false, error: "update_failed" };
   }
 
+  return { ok: true };
+}
+
+export async function deleteAccount(
+  currentPassword: string,
+  confirmEmail: string,
+): Promise<DeleteAccountResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || !user.email) {
+    return { ok: false, error: "auth_required" };
+  }
+
+  if (confirmEmail.trim().toLowerCase() !== user.email.toLowerCase()) {
+    return { ok: false, error: "email_mismatch" };
+  }
+
+  const { error: reauthErr } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+  if (reauthErr) {
+    return { ok: false, error: "wrong_current_password" };
+  }
+
+  const admin = createAdminClient();
+  const { data: application } = await admin
+    .from("signup_applications")
+    .select("proof_storage_path")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const proofPath = application?.proof_storage_path;
+  if (typeof proofPath === "string" && proofPath.length > 0) {
+    const { error: storageErr } = await admin.storage
+      .from("signup-proofs")
+      .remove([proofPath]);
+    if (storageErr) {
+      console.warn("[deleteAccount] signup proof cleanup failed:", storageErr.message);
+    }
+  }
+
+  const { error: deleteErr } = await admin.auth.admin.deleteUser(user.id);
+  if (deleteErr) {
+    console.error("[deleteAccount] deleteUser failed:", deleteErr.message);
+    return { ok: false, error: "delete_failed" };
+  }
+
+  await supabase.auth.signOut();
   return { ok: true };
 }
