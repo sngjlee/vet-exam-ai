@@ -1,4 +1,5 @@
 import { setActive } from "../_actions";
+import { AdminConfirmSubmitButton } from "../../_components/admin-confirm-submit-button";
 
 export function UserActiveForm({
   userId,
@@ -38,8 +39,12 @@ export function UserActiveForm({
         className="text-sm rounded p-2"
         style={{ background: "var(--surface)", border: "1px solid var(--rule)" }}
       />
-      <button
-        type="submit"
+      <AdminConfirmSubmitButton
+        confirmMessage={
+          targetActive
+            ? "이 회원의 정지를 해제할까요? 즉시 쓰기 권한을 다시 사용할 수 있습니다."
+            : "이 회원을 정지할까요? 로그인 상태와 커뮤니티 이용에 즉시 영향이 생깁니다."
+        }
         className="self-start text-sm px-3 py-1.5 rounded"
         style={{
           background: targetActive ? "var(--teal)" : "var(--danger, #c0392b)",
@@ -49,7 +54,7 @@ export function UserActiveForm({
         }}
       >
         {buttonLabel}
-      </button>
+      </AdminConfirmSubmitButton>
     </form>
   );
 }

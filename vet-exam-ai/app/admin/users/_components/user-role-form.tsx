@@ -1,4 +1,5 @@
 import { setRole } from "../_actions";
+import { AdminConfirmSubmitButton } from "../../_components/admin-confirm-submit-button";
 import {
   ALL_USER_ROLES,
   USER_ROLE_KO,
@@ -50,13 +51,13 @@ export function UserRoleForm({
         className="text-sm rounded p-2"
         style={{ background: "var(--surface)", border: "1px solid var(--rule)" }}
       />
-      <button
-        type="submit"
+      <AdminConfirmSubmitButton
+        confirmMessage="이 회원의 역할을 변경할까요? 운영 권한 또는 접근 범위가 즉시 바뀝니다."
         className="self-start text-sm px-3 py-1.5 rounded"
         style={{ background: "var(--teal)", color: "white", border: 0, cursor: "pointer" }}
       >
         역할 변경
-      </button>
+      </AdminConfirmSubmitButton>
     </form>
   );
 }

@@ -1,5 +1,6 @@
 import { revokeIpBan } from "../_actions";
 import { formatKstDateTime } from "../../../../lib/utils/datetime";
+import { AdminConfirmSubmitButton } from "../../_components/admin-confirm-submit-button";
 
 export type IpBanRow = {
   id:         string;
@@ -68,13 +69,13 @@ export function IpBanTable({
                     className="text-sm rounded p-2"
                     style={{ background: "var(--surface)", border: "1px solid var(--rule)", color: "var(--text)" }}
                   />
-                  <button
-                    type="submit"
+                  <AdminConfirmSubmitButton
+                    confirmMessage={`IP 차단 ${r.cidr}을 해제할까요? 해당 대역의 가입/로그인 제한이 풀립니다.`}
                     className="self-start text-sm px-3 py-1.5 rounded"
                     style={{ background: "var(--surface)", color: "var(--text)", border: "1px solid var(--rule)", cursor: "pointer" }}
                   >
                     차단 해제
-                  </button>
+                  </AdminConfirmSubmitButton>
                 </form>
               </div>
             </details>

@@ -1,4 +1,5 @@
 import { issuePasswordResetLink } from "../_actions";
+import { AdminConfirmSubmitButton } from "../../_components/admin-confirm-submit-button";
 
 export function UserPasswordResetForm({
   userId,
@@ -30,8 +31,8 @@ export function UserPasswordResetForm({
         className="text-sm rounded p-2"
         style={{ background: "var(--surface)", border: "1px solid var(--rule)" }}
       />
-      <button
-        type="submit"
+      <AdminConfirmSubmitButton
+        confirmMessage="이 회원의 1회용 비밀번호 재설정 링크를 발급할까요? 링크는 자격 증명처럼 취급해야 합니다."
         className="self-start text-sm px-3 py-1.5 rounded"
         style={{
           background: "var(--teal)",
@@ -41,7 +42,7 @@ export function UserPasswordResetForm({
         }}
       >
         재설정 링크 생성
-      </button>
+      </AdminConfirmSubmitButton>
     </form>
   );
 }

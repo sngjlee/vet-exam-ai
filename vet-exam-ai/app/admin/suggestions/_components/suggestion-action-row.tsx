@@ -40,6 +40,16 @@ export function SuggestionActionRow({ postId, currentStatus, currentVisibility }
       setError("사유를 입력해주세요.");
       return;
     }
+    if (
+      (status === "accepted" || status === "rejected") &&
+      !window.confirm(
+        status === "accepted"
+          ? "이 건의를 채택 처리할까요? 작성자에게 결과가 안내됩니다."
+          : "이 건의를 반려 처리할까요? 작성자에게 반려 사유가 안내됩니다.",
+      )
+    ) {
+      return;
+    }
     setError(null);
     const fd = new FormData();
     fd.set("post_id", postId);
@@ -56,6 +66,15 @@ export function SuggestionActionRow({ postId, currentStatus, currentVisibility }
   };
 
   const submitVisibility = (visibility: "removed_by_admin" | "visible") => {
+    if (
+      !window.confirm(
+        visibility === "removed_by_admin"
+          ? "이 건의를 운영자 삭제 처리할까요? 사용자 화면에서 숨겨집니다."
+          : "이 건의를 복구할까요? 사용자 화면에 다시 표시될 수 있습니다.",
+      )
+    ) {
+      return;
+    }
     setError(null);
     const fd = new FormData();
     fd.set("post_id", postId);

@@ -10,6 +10,9 @@ export function ApproveForm({ userId, onDone }: { userId: string; onDone: () => 
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!window.confirm("이 가입 신청을 승인할까요? 사용자가 즉시 커뮤니티 쓰기 권한을 사용할 수 있습니다.")) {
+      return;
+    }
     startTransition(async () => {
       const r = await approveSignupAction(userId, note.trim() || null);
       if (!r.ok) setError(r.error);

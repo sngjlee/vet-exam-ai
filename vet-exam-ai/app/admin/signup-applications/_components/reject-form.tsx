@@ -14,6 +14,9 @@ export function RejectForm({ userId, onDone }: { userId: string; onDone: () => v
       setError("거부 사유는 3자 이상 입력해 주세요.");
       return;
     }
+    if (!window.confirm("이 가입 신청을 거부할까요? 거부 사유가 사용자에게 안내됩니다.")) {
+      return;
+    }
     startTransition(async () => {
       const r = await rejectSignupAction(userId, reason);
       if (!r.ok) setError(r.error);

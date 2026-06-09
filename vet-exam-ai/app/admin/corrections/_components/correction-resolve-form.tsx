@@ -1,4 +1,5 @@
 import { resolveCorrection } from "../_actions";
+import { AdminConfirmSubmitButton } from "../../_components/admin-confirm-submit-button";
 
 export function CorrectionResolveForm({
   correctionId,
@@ -29,13 +30,13 @@ export function CorrectionResolveForm({
         className="text-sm rounded p-2"
         style={{ background: "var(--surface)", border: "1px solid var(--rule)" }}
       />
-      <button
-        type="submit"
+      <AdminConfirmSubmitButton
+        confirmMessage="이 정정 제안 처리 결과를 저장할까요? 제안자 알림과 감사 로그에 반영됩니다."
         className="self-start text-sm px-3 py-1.5 rounded"
         style={{ background: "var(--teal)", color: "white", border: 0, cursor: "pointer" }}
       >
         처리 저장
-      </button>
+      </AdminConfirmSubmitButton>
     </form>
   );
 }

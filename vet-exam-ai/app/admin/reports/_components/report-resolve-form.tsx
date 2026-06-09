@@ -1,4 +1,5 @@
 import { resolveReport } from "../_actions";
+import { AdminConfirmSubmitButton } from "../../_components/admin-confirm-submit-button";
 
 export function ReportResolveForm({
   commentId,
@@ -34,13 +35,13 @@ export function ReportResolveForm({
         className="text-sm rounded p-2"
         style={{ background: "var(--surface)", border: "1px solid var(--rule)" }}
       />
-      <button
-        type="submit"
+      <AdminConfirmSubmitButton
+        confirmMessage="이 신고 처리 결과를 저장할까요? 댓글 공개 상태와 신고자 알림에 반영됩니다."
         className="self-start text-sm px-3 py-1.5 rounded"
         style={{ background: "var(--teal)", color: "white", border: 0, cursor: "pointer" }}
       >
         처리 저장
-      </button>
+      </AdminConfirmSubmitButton>
     </form>
   );
 }

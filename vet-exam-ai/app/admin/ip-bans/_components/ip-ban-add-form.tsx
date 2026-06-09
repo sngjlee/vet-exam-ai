@@ -1,4 +1,5 @@
 import { addIpBan } from "../_actions";
+import { AdminConfirmSubmitButton } from "../../_components/admin-confirm-submit-button";
 
 export function IpBanAddForm() {
   return (
@@ -36,13 +37,13 @@ export function IpBanAddForm() {
             style={{ background: "var(--surface)", border: "1px solid var(--rule)", color: "var(--text)" }}
           />
         </label>
-        <button
-          type="submit"
+        <AdminConfirmSubmitButton
+          confirmMessage="이 IP 또는 대역을 차단할까요? 범위를 잘못 입력하면 정상 사용자가 로그인하지 못할 수 있습니다."
           className="self-start text-sm px-3 py-1.5 rounded"
           style={{ background: "var(--wrong)", color: "white", border: 0, cursor: "pointer" }}
         >
           차단 추가
-        </button>
+        </AdminConfirmSubmitButton>
       </div>
       <p className="mt-3 text-xs" style={{ color: "var(--text-faint)" }}>
         주의: 본인이 현재 접속 중인 IP를 차단하면 즉시 로그인 경로에서 격리됩니다.
