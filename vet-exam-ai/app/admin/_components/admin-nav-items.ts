@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   MessageSquareDot,
   Ban,
+  Activity,
   type LucideIcon,
 } from "lucide-react";
 
@@ -32,6 +33,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "정정",      href: "/admin/corrections",     icon: GitPullRequest },
   { label: "감사",      href: "/admin/audit",           icon: History },
   { label: "건의 관리", href: "/admin/suggestions",     icon: MessageSquareDot },
+  { label: "운영 점검", href: "/admin/ops",             icon: Activity },
 ];
 
 export function isAdminNavActive(activeHref: string, itemHref: string): boolean {

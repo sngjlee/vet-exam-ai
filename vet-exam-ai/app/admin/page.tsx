@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   MessageSquareDot,
   Ban,
+  Activity,
 } from "lucide-react";
 import { createClient } from "../../lib/supabase/server";
 
@@ -238,6 +239,12 @@ export default async function AdminDashboardPage() {
             icon={MessageSquareDot}
           />
           <HubCard href="/admin/audit" label="감사 로그" desc="모든 운영 작업 기록." icon={History} />
+          <HubCard
+            href="/admin/ops"
+            label="운영 점검"
+            desc="필수 환경변수, Sentry, cron 보호 설정을 배포 후 확인."
+            icon={Activity}
+          />
         </div>
       </section>
     </div>
