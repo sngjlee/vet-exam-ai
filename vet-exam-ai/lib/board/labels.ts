@@ -12,7 +12,7 @@ export const KIND_LABEL: Record<Kind, string> = {
 
 export const SUGGESTION_STATUS_LABEL: Record<Status, string> = {
   received: "접수",
-  reviewing: "검토중",
+  reviewing: "검토 중",
   accepted: "채택",
   rejected: "반려",
 };
@@ -20,8 +20,8 @@ export const SUGGESTION_STATUS_LABEL: Record<Status, string> = {
 export const SUGGESTION_TERMINAL: ReadonlySet<Status> = new Set<Status>(["accepted", "rejected"]);
 
 export const VISIBILITY_LABEL: Record<Visibility, string> = {
-  visible: "표시중",
-  hidden_by_author: "작성자 숨김",
-  blinded_by_report: "신고 임시조치",
+  visible: "표시 중",
+  hidden_by_author: "작성자 삭제",
+  blinded_by_report: "임시 비공개",
   removed_by_admin: "운영자 삭제",
 };

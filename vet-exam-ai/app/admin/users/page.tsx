@@ -14,7 +14,6 @@ type BadgeType = Database["public"]["Enums"]["badge_type"];
 
 async function loadPage(
   sp: ReturnType<typeof parseUsersSearchParams>,
-  currentAdminId: string,
 ): Promise<{
   rows:           UserRow[];
   totalPages:     number;
@@ -127,10 +126,7 @@ export default async function AdminUsersPage({
   const raw = await searchParams;
   const sp = parseUsersSearchParams(raw);
 
-  const { rows, totalPages, nicknameMap, emailMap, badgeMap } = await loadPage(
-    sp,
-    user.id,
-  );
+  const { rows, totalPages, nicknameMap, emailMap, badgeMap } = await loadPage(sp);
   const clamped = { ...sp, page: Math.min(sp.page, totalPages) };
 
   const errorRaw = raw["error"];

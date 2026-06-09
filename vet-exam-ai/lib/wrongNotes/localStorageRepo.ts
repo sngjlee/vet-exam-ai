@@ -47,8 +47,12 @@ export class LocalStorageWrongNotesRepository implements WrongNotesRepository {
 
   // No-op for guests — review metadata is not persisted in localStorage.
   async updateReview(
-    _questionId: string,
-    _isCorrect: boolean,
-    _currentReviewCount: number,
-  ): Promise<void> {}
+    questionId: string,
+    isCorrect: boolean,
+    currentReviewCount: number,
+  ): Promise<void> {
+    void questionId;
+    void isCorrect;
+    void currentReviewCount;
+  }
 }

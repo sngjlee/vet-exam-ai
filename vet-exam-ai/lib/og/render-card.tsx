@@ -54,6 +54,7 @@ export function renderOgCard(props: OgCardProps): React.ReactElement {
       {/* 상단 워드마크 */}
       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
         {logoDataUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             alt="KVLE"
             src={logoDataUrl}

@@ -110,7 +110,7 @@ export function ReportsTable({
                   color: "var(--text-muted)",
                 }}
               >
-                {comment.status === "blinded_by_report" ? "자동 블라인드" : "표시 중"}
+                {comment.status === "blinded_by_report" ? "자동 임시 비공개" : "표시 중"}
               </span>
             </summary>
 
@@ -145,7 +145,7 @@ export function ReportsTable({
                       <span>{formatRelative(r.created_at)}</span>
                       {r.description && (
                         <span className="block w-full mt-0.5" style={{ color: "var(--text)" }}>
-                          "{r.description}"
+                          &quot;{r.description}&quot;
                         </span>
                       )}
                     </li>

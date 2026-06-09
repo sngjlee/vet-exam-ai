@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     .map((r) => r.proof_storage_path)
     .filter((p): p is string => typeof p === "string" && p.length > 0);
 
-  let scanned = paths.length;
+  const scanned = paths.length;
   let deleted = 0;
   const purgedPaths: string[] = [];
 

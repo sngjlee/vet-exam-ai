@@ -97,7 +97,7 @@ export function formatNotification(
     const postKind = stringField(payload, "post_kind");
     const seg = postKind === "announcement" ? "announcements" : "suggestions";
     return {
-      text: "회원님의 게시글이 블라인드 처리되었어요",
+      text: "회원님의 게시글이 임시 비공개 처리되었어요",
       href: postId ? `/board/${seg}/${postId}` : NO_HREF,
     };
   }
@@ -137,7 +137,7 @@ export function formatNotification(
       return { text, href };
     }
     case "comment_blinded":
-      return { text: "회원님의 댓글이 블라인드 처리되었어요", href: NO_HREF };
+      return { text: "회원님의 댓글이 임시 비공개 처리되었어요", href: NO_HREF };
     case "mention": {
       const nickname = stringField(payload, "actor_nickname") ?? "누군가";
       return { text: `${nickname}님이 회원님을 멘션했어요`, href: NO_HREF };
@@ -170,7 +170,7 @@ function textOnlyFallback(
           : "신고하신 댓글의 검토가 완료되었어요";
     }
     case "comment_blinded":
-      return "회원님의 댓글이 블라인드 처리되었어요";
+      return "회원님의 댓글이 임시 비공개 처리되었어요";
     case "mention":
       return `${stringField(payload, "actor_nickname") ?? "누군가"}님이 회원님을 멘션했어요`;
   }

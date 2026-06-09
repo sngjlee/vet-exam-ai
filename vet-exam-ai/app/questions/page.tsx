@@ -135,7 +135,6 @@ export default function QuestionsListPage() {
 
   useEffect(() => {
     const stored = loadStoredFilter();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilter(stored ? sanitizeStoredFilter(stored) : DEFAULT_FILTER);
     setHydrated(true);
   }, []);

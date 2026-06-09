@@ -7,11 +7,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizePostHtml, htmlToText } from "@/lib/board/sanitize";
 
-const KindSchema = z.enum(["suggestion", "announcement"]);
 const KindUrlSegmentSchema = z.enum(["suggestions", "announcements"]);
-function kindFromSegment(seg: z.infer<typeof KindUrlSegmentSchema>) {
-  return seg === "suggestions" ? "suggestion" : "announcement";
-}
 
 const CreateCommentSchema = z.object({
   post_id: z.string().uuid(),

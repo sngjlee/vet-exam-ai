@@ -80,7 +80,7 @@ export default async function AdminSuggestionsPage({
             }}
           >
             {s === "received" ? "접수"
-              : s === "reviewing" ? "검토중"
+              : s === "reviewing" ? "검토 중"
               : s === "accepted" ? "채택" : "반려"}
           </Link>
         ))}

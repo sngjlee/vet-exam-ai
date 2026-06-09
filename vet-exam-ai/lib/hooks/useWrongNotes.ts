@@ -28,7 +28,7 @@ export function useWrongNotes() {
       setNotes(all);
       setLoading(false);
     })();
-  }, [repo, authLoading]); // repo already changes when user changes
+  }, [repo, authLoading, user]);
 
   const addNote = useCallback(
     async (note: WrongAnswerNote) => {

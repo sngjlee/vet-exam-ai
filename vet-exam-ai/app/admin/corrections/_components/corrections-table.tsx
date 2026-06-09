@@ -155,7 +155,9 @@ export function CorrectionsTable({
                     {CORRECTION_STATUS_KO[row.status as keyof typeof CORRECTION_STATUS_KO] ?? row.status}
                   </div>
                   {row.resolution_note && (
-                    <div className="mt-1" style={{ color: "var(--text)" }}>"{row.resolution_note}"</div>
+                    <div className="mt-1" style={{ color: "var(--text)" }}>
+                      &quot;{row.resolution_note}&quot;
+                    </div>
                   )}
                   {isAccepted && (
                     <div className="mt-2">

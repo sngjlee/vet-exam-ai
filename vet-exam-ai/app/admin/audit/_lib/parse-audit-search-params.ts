@@ -113,7 +113,7 @@ export function buildAuditSearchString(
 
 export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   comment_remove:                       "댓글 삭제",
-  comment_unblind:                      "댓글 블라인드 해제",
+  comment_unblind:                      "댓글 임시 비공개 해제",
   user_suspend:                         "회원 정지",
   user_unsuspend:                       "회원 정지 해제",
   badge_grant:                          "뱃지 부여",

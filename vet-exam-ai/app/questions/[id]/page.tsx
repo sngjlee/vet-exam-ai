@@ -41,10 +41,8 @@ export default function QuestionDetailPage() {
 
   // Read sessionStorage list context (set by /questions card click).
   // sessionStorage is browser-only, so we sync it on mount and whenever the
-  // active question id changes. Disabling the lint rule is intentional: this
-  // is the canonical pattern for syncing client-only state with a route key.
+  // active question id changes.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setListContext(readQuestionsListContext());
   }, [questionId]);
 

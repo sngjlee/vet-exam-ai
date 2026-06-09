@@ -117,7 +117,7 @@ export function SuggestionActionRow({ postId, currentStatus, currentVisibility }
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2 text-sm">
         {simpleButton("received", "접수로")}
-        {simpleButton("reviewing", "검토중으로")}
+        {simpleButton("reviewing", "검토 중으로")}
         {toggleButton("accept", "채택", currentStatus === "accepted")}
         {toggleButton("reject", "반려", currentStatus === "rejected")}
         {currentVisibility === "visible" ? (

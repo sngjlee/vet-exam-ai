@@ -8,7 +8,7 @@ export function ReportResolveForm({
   currentCommentStatus: string;
 }) {
   const dismissHint =
-    currentCommentStatus === "blinded_by_report" ? " (자동 블라인드 해제)" : "";
+    currentCommentStatus === "blinded_by_report" ? " (임시 비공개 해제)" : "";
 
   return (
     <form action={resolveReport} className="mt-3 flex flex-col gap-2">
@@ -19,7 +19,7 @@ export function ReportResolveForm({
         </legend>
         <label className="text-sm flex items-center gap-1.5">
           <input type="radio" name="resolution" value="upheld" required />
-          신고 인정 (댓글 제거)
+          신고 인정 (운영자 삭제)
         </label>
         <label className="text-sm flex items-center gap-1.5">
           <input type="radio" name="resolution" value="dismissed" required />
