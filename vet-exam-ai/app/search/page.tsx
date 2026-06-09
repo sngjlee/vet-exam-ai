@@ -30,6 +30,9 @@ const MATCHED_LABEL: Record<MatchedIn, string> = {
   question:        "본문",
   explanation:     "해설",
   choices:         "선지",
+  subject:         "과목",
+  topic:           "주제",
+  tags:            "태그",
   community_notes: "암기팁",
   comments:        "댓글",
 };
@@ -196,7 +199,7 @@ function SearchPage() {
           )}
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>
-          문제 본문, 해설, 선지, 댓글 암기법에서 키워드로 찾습니다. KVLE-숫자로 바로 이동도 가능합니다.
+          문제 본문, 해설, 선지, 과목, 주제, 태그에서 키워드로 찾습니다. KVLE-숫자로 바로 이동도 가능합니다.
         </p>
       </header>
 
@@ -487,7 +490,7 @@ function EmptyLanding({
     <section className="kvle-card text-center" style={{ padding: "3rem 1.5rem" }}>
       <SearchIcon size={36} className="mx-auto mb-3" style={{ color: "var(--text-faint)" }} />
       <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 0 8px", lineHeight: 1.6 }}>
-        키워드를 입력해 문제 / 해설 / 선지 / 댓글 암기법을 찾아보세요.
+        키워드를 입력해 문제 / 해설 / 선지 / 과목 / 주제 / 태그를 찾아보세요.
       </p>
       <p style={{ color: "var(--text-faint)", fontSize: 12, margin: "0 0 16px" }}>
         2자 이상 입력하면 검색됩니다. KVLE-숫자로 바로 이동도 가능합니다.

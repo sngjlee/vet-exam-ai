@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
   const rawCategory = decodeQueryParam(url.searchParams.get("category"));
   const rawRecent   = url.searchParams.get("recent_years");
   const rawPage     = url.searchParams.get("page");
+  const includeComments = url.searchParams.get("include_comments") === "1";
 
   const { q, searchable } = normalizeQuery(rawQ);
 
@@ -57,7 +58,8 @@ export async function GET(req: NextRequest) {
   const pageNum = rawPage ? Number.parseInt(rawPage, 10) : 0;
   const page = Number.isFinite(pageNum) && pageNum >= 0 ? pageNum : 0;
   const offset = page * SEARCH_PAGE_SIZE;
-  const fetchLimit = offset + SEARCH_PAGE_SIZE;
+  const fetchLimit = includeComments ? offset + SEARCH_PAGE_SIZE : SEARCH_PAGE_SIZE;
+  const fetchOffset = includeComments ? 0 : offset;
 
   const supabase = await createClient();
 
@@ -66,7 +68,7 @@ export async function GET(req: NextRequest) {
     category_filter: category,
     recent_years:    recent,
     page_size:       fetchLimit,
-    page_offset:     0,
+    page_offset:     fetchOffset,
   });
 
   if (error) {
@@ -112,42 +114,46 @@ export async function GET(req: NextRequest) {
     headline:  r.headline,
   }));
 
-  const { data: commentRows, error: commentError } = await supabase.rpc("search_comments", {
-    q,
-    category_filter: category,
-    recent_years:    recent,
-    page_size:       fetchLimit,
-    page_offset:     0,
-  });
+  let commentHits: SearchHit[] = [];
+  let commentTotal = 0;
+  if (includeComments) {
+    const { data: commentRows, error: commentError } = await supabase.rpc("search_comments", {
+      q,
+      category_filter: category,
+      recent_years:    recent,
+      page_size:       fetchLimit,
+      page_offset:     0,
+    });
 
-  if (commentError) {
-    const fail: SearchResponse = {
-      items:       [],
-      total:       0,
-      page,
-      pageSize:    SEARCH_PAGE_SIZE,
-      suggestions: [],
-      redirect:    null,
-      error:       "internal",
-    };
-    return NextResponse.json(fail, { status: 500 });
+    if (commentError) {
+      const fail: SearchResponse = {
+        items:       [],
+        total:       0,
+        page,
+        pageSize:    SEARCH_PAGE_SIZE,
+        suggestions: [],
+        redirect:    null,
+        error:       "internal",
+      };
+      return NextResponse.json(fail, { status: 500 });
+    }
+
+    const comments = commentRows ?? [];
+    commentHits = comments.map((comment) => ({
+      id:          `comment:${comment.id}`,
+      publicId:    comment.question_public_id,
+      question:    comment.question,
+      category:    comment.category,
+      matchedIn:   "comments",
+      headline:    makeCommentHeadline(comment.body_text, q),
+      commentId:   comment.id,
+      commentType: comment.type,
+    }));
+    commentTotal = comments.length > 0 ? Number(comments[0].total_count) : 0;
   }
 
-  const comments = commentRows ?? [];
-  const commentHits: SearchHit[] = comments.map((comment) => ({
-    id:          `comment:${comment.id}`,
-    publicId:    comment.question_public_id,
-    question:    comment.question,
-    category:    comment.category,
-    matchedIn:   "comments",
-    headline:    makeCommentHeadline(comment.body_text, q),
-    commentId:   comment.id,
-    commentType: comment.type,
-  }));
-
-  const combined = interleave(commentHits, questionHits);
-  const items = combined.slice(offset, offset + SEARCH_PAGE_SIZE);
-  const commentTotal = comments.length > 0 ? Number(comments[0].total_count) : 0;
+  const combined = includeComments ? interleave(questionHits, commentHits) : questionHits;
+  const items = includeComments ? combined.slice(offset, offset + SEARCH_PAGE_SIZE) : combined;
   const combinedTotal = total + commentTotal;
 
   // 0건이면 trigram 제안 fallback. 1건 이상이면 빈 배열.

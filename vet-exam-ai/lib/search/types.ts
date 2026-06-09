@@ -4,6 +4,9 @@ export type MatchedIn =
   | "question"
   | "explanation"
   | "choices"
+  | "subject"
+  | "topic"
+  | "tags"
   | "community_notes"
   | "comments";
 

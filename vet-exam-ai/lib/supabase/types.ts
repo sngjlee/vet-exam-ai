@@ -962,7 +962,7 @@ export interface Database {
           category:    string;
           year:        number | null;
           is_active:   boolean;
-          matched_in:  "question" | "explanation" | "choices" | "community_notes";
+          matched_in:  "question" | "explanation" | "choices" | "subject" | "topic" | "tags" | "community_notes";
           headline:    string;
           rank:        number;
           total_count: number;
