@@ -19,6 +19,7 @@ export interface UseSearchInput {
   category:    string | null;
   recentYears: number | null;
   page:        number;
+  includeComments?: boolean;
 }
 
 export function useSearch(input: UseSearchInput | null): State {
@@ -38,6 +39,7 @@ export function useSearch(input: UseSearchInput | null): State {
     if (input.category) params.set("category", input.category);
     if (input.recentYears) params.set("recent_years", String(input.recentYears));
     if (input.page > 0) params.set("page", String(input.page));
+    if (input.includeComments) params.set("include_comments", "1");
 
     fetch(`/api/search?${params.toString()}`)
       .then((res) => {
@@ -69,5 +71,6 @@ function buildKey(input: UseSearchInput): string {
     input.category ?? "",
     input.recentYears ?? "",
     input.page,
+    input.includeComments ? "comments" : "questions",
   ].join("|");
 }

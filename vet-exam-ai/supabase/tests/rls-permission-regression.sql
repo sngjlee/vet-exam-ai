@@ -234,6 +234,12 @@ select pg_temp.assert_ok(
   pg_temp.policy_exists('storage', 'objects', 'comment-images public read', 'SELECT')
 );
 select pg_temp.assert_ok(
+  'search_comments filters visible top-level comments',
+  position('c.status = ''visible''' in pg_get_functiondef('public.search_comments(text, text, integer, integer, integer)'::regprocedure)) > 0
+  and position('c.parent_id is null' in pg_get_functiondef('public.search_comments(text, text, integer, integer, integer)'::regprocedure)) > 0
+  and position('security invoker' in lower(pg_get_functiondef('public.search_comments(text, text, integer, integer, integer)'::regprocedure))) > 0
+);
+select pg_temp.assert_ok(
   'comment_image_upload_log own select only',
   pg_temp.policy_exists('public', 'comment_image_upload_log', 'comment_image_upload_log own select', 'SELECT')
   and not exists (

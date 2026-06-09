@@ -69,6 +69,7 @@ function SearchPage() {
   const urlCategory = decodeQueryParam(params.get("category"));
   const urlRecentRaw = params.get("recent_years");
   const urlPageRaw   = params.get("page");
+  const includeComments = params.get("include_comments") === "1";
 
   const recentYears = useMemo<RecentYearsWindow | null>(() => {
     if (!urlRecentRaw) return null;
@@ -100,7 +101,7 @@ function SearchPage() {
 
   // Fetch only when searchable AND not a KVLE shortcut.
   const fetchInput = searchable && !parseKvleId(q)
-    ? { q, category: category || null, recentYears, page }
+    ? { q, category: category || null, recentYears, page, includeComments }
     : null;
   const { data, loading, error } = useSearch(fetchInput);
 
@@ -131,10 +132,11 @@ function SearchPage() {
       if (q) sp.set("q", q);
       if (category) sp.set("category", category);
       if (recentYears) sp.set("recent_years", String(recentYears));
+      if (includeComments) sp.set("include_comments", "1");
       if (lastPage > 0) sp.set("page", String(lastPage));
       router.replace(`/search?${sp.toString()}`);
     }
-  }, [data, page, q, category, recentYears, router]);
+  }, [data, page, q, category, recentYears, includeComments, router]);
 
   // Auth gate (UX only — RLS is the real boundary).
   useEffect(() => {
@@ -142,7 +144,13 @@ function SearchPage() {
     if (!user) router.replace("/auth/login");
   }, [user, authLoading, router]);
 
-  function pushUrl(next: { q?: string; category?: string; recentYears?: number | null; page?: number }) {
+  function pushUrl(next: {
+    q?: string;
+    category?: string;
+    recentYears?: number | null;
+    page?: number;
+    includeComments?: boolean;
+  }) {
     const sp = new URLSearchParams();
     const nq = next.q ?? q;
     if (nq) sp.set("q", nq);
@@ -150,6 +158,8 @@ function SearchPage() {
     if (nc) sp.set("category", nc);
     const nr = next.recentYears !== undefined ? next.recentYears : recentYears;
     if (nr) sp.set("recent_years", String(nr));
+    const nic = next.includeComments !== undefined ? next.includeComments : includeComments;
+    if (nic) sp.set("include_comments", "1");
     const np = next.page ?? 0;
     if (np > 0) sp.set("page", String(np));
     router.push(`/search?${sp.toString()}`);
@@ -226,10 +236,10 @@ function SearchPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)" }}>
             <Filter size={14} />
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em" }}>결과 좁히기</span>
-            {(category || recentYears) && (
+            {(category || recentYears || includeComments) && (
               <button
                 type="button"
-                onClick={() => pushUrl({ category: "", recentYears: null, page: 0 })}
+                onClick={() => pushUrl({ category: "", recentYears: null, includeComments: false, page: 0 })}
                 style={{
                   marginLeft:         "auto",
                   background:         "transparent",
@@ -284,6 +294,26 @@ function SearchPage() {
                 ))}
               </div>
             </div>
+            <label
+              style={{
+                display:    "flex",
+                alignItems: "center",
+                gap:        8,
+                minHeight:  36,
+                color:      "var(--text-muted)",
+                fontSize:   12,
+                fontWeight: 600,
+                cursor:     "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={includeComments}
+                onChange={(e) => pushUrl({ includeComments: e.target.checked, page: 0 })}
+                style={{ width: 16, height: 16, accentColor: "var(--teal)" }}
+              />
+              visible 댓글 포함
+            </label>
           </div>
         </section>
       )}
