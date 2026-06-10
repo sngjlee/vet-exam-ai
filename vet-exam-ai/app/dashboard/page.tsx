@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, CirclePlay, HelpCircle, MessageSquare, RotateCcw } from "lucide-react";
+import { BookOpen, CheckCircle2, CirclePlay, HelpCircle, MessageSquare, RotateCcw, X } from "lucide-react";
 import { useAuth } from "../../lib/hooks/useAuth";
 import { useStats, type CategoryStat } from "../../lib/hooks/useStats";
 import { useReview } from "../../lib/hooks/useReview";
@@ -17,6 +17,7 @@ import type { WrongAnswerNote } from "../../lib/types";
 
 const SUBJECT_COLORS = ["#1ea7bb", "#4A7FA8", "#C8895A", "#2D9F6B", "#9B6FD4"];
 const WEEK_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
+const ONBOARDING_BANNER_KEY = "kvle.dashboard.onboarding.dismissed.v1";
 
 const FALLBACK_CATEGORIES: CategoryStat[] = [
   { category: "약리학",  attempts: 52, correct: 32, accuracy: 62 },
@@ -372,6 +373,99 @@ function AnnouncementBannerWrapper() {
   );
 }
 
+function FirstLoginGuideBanner({ userId }: { userId: string }) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const storageKey = `${ONBOARDING_BANNER_KEY}:${userId}`;
+    setIsVisible(window.localStorage.getItem(storageKey) !== "true");
+  }, [userId]);
+
+  const markSeen = () => {
+    window.localStorage.setItem(`${ONBOARDING_BANNER_KEY}:${userId}`, "true");
+    setIsVisible(false);
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <section
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--teal-border)",
+        borderLeft: "3px solid var(--teal)",
+        borderRadius: 12,
+        padding: "16px 16px 16px 18px",
+        marginBottom: 16,
+        display: "grid",
+        gridTemplateColumns: "minmax(0, 1fr) auto",
+        gap: 14,
+        alignItems: "start",
+      }}
+    >
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <span
+            style={{
+              width: 28,
+              height: 28,
+              display: "grid",
+              placeItems: "center",
+              borderRadius: 8,
+              color: "var(--teal)",
+              background: "var(--teal-dim)",
+            }}
+          >
+            <HelpCircle size={16} />
+          </span>
+          <strong style={{ color: "var(--text)", fontSize: 15 }}>
+            처음 오셨다면 3분만 길을 잡고 시작하세요
+          </strong>
+        </div>
+        <p style={{ color: "var(--text-muted)", fontSize: 13, lineHeight: 1.55, margin: 0 }}>
+          해설보기, 오답노트, 댓글 노하우 순서로 보면 메뉴를 전부 익히지 않아도 바로 학습을 시작할 수 있습니다.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+          <Link
+            href="/guide"
+            onClick={markSeen}
+            className="kvle-btn-primary"
+            style={{ minHeight: 34, padding: "7px 12px", fontSize: 12, textDecoration: "none" }}
+          >
+            가이드 보기
+          </Link>
+          <button
+            type="button"
+            onClick={markSeen}
+            className="kvle-btn-ghost"
+            style={{ minHeight: 34, padding: "7px 12px", fontSize: 12 }}
+          >
+            오늘은 바로 시작
+          </button>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={markSeen}
+        aria-label="처음 이용 안내 닫기"
+        style={{
+          width: 34,
+          height: 34,
+          display: "grid",
+          placeItems: "center",
+          borderRadius: 8,
+          border: "1px solid var(--border)",
+          background: "var(--surface-raised)",
+          color: "var(--text-muted)",
+          cursor: "pointer",
+        }}
+      >
+        <X size={16} />
+      </button>
+    </section>
+  );
+}
+
 function StudyFirstPanel({
   dueCount,
   weakestName,
@@ -524,6 +618,132 @@ function StudyFirstPanel({
   );
 }
 
+function TodayStarterChecklist({
+  dueCount,
+  todayAttemptCount,
+  weakestName,
+  hasWrongNotes,
+}: {
+  dueCount: number;
+  todayAttemptCount: number;
+  weakestName: string;
+  hasWrongNotes: boolean;
+}) {
+  const dailyTarget = 5;
+  const tasks = [
+    {
+      href: dueCount > 0 ? "/review" : "/wrong-notes",
+      icon: RotateCcw,
+      title: dueCount > 0 ? `복습 ${dueCount}문제 처리` : "복습 대기 확인",
+      detail: dueCount > 0 ? "오늘 밀리기 전에 먼저 처리" : hasWrongNotes ? "다음 복습 예약을 기다리는 중" : "오답이 쌓이면 자동으로 올라옵니다",
+      status: dueCount > 0 ? `${dueCount}개 남음` : "완료",
+      done: dueCount === 0,
+      tone: dueCount > 0 ? "var(--amber)" : "var(--correct)",
+    },
+    {
+      href: "/quiz",
+      icon: CirclePlay,
+      title: "오늘 5문제 풀기",
+      detail: "짧게 풀고 오답만 복습 흐름에 넣기",
+      status: `${Math.min(todayAttemptCount, dailyTarget)}/${dailyTarget}`,
+      done: todayAttemptCount >= dailyTarget,
+      tone: todayAttemptCount >= dailyTarget ? "var(--correct)" : "var(--teal)",
+    },
+    {
+      href: "/practice/weakest",
+      icon: BookOpen,
+      title: `${weakestName} 약점 점검`,
+      detail: "통계가 쌓일수록 추천 과목이 정교해집니다",
+      status: "추천",
+      done: false,
+      tone: "var(--blue)",
+    },
+    {
+      href: "/comments",
+      icon: MessageSquare,
+      title: "댓글 노하우 1개 읽기",
+      detail: "암기법과 정정 제안을 먼저 훑어보기",
+      status: "추천",
+      done: false,
+      tone: "var(--teal)",
+    },
+  ];
+
+  return (
+    <section
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        padding: 18,
+        marginBottom: 22,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+        <div>
+          <span className="kvle-label" style={{ fontSize: 12 }}>
+            오늘 처음 할 일
+          </span>
+          <h2 style={{ color: "var(--text)", fontSize: 18, fontWeight: 800, margin: "6px 0 0" }}>
+            복습, 풀이, 약점 확인만 작게 끝내기
+          </h2>
+        </div>
+        <span style={{ color: "var(--text-faint)", fontSize: 12, fontWeight: 800 }}>
+          자동 확인 {tasks.filter((task) => task.done).length}/2
+        </span>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10 }}>
+        {tasks.map(({ href, icon: Icon, title, detail, status, done, tone }) => (
+          <Link
+            key={title}
+            href={href}
+            style={{
+              minHeight: 116,
+              display: "grid",
+              gridTemplateRows: "auto 1fr auto",
+              gap: 10,
+              padding: 14,
+              borderRadius: 10,
+              border: `1px solid ${done ? "rgba(45,159,107,0.3)" : "var(--border)"}`,
+              background: done ? "rgba(45,159,107,0.08)" : "var(--surface-raised)",
+              color: "var(--text)",
+              textDecoration: "none",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+              <span
+                style={{
+                  width: 30,
+                  height: 30,
+                  display: "grid",
+                  placeItems: "center",
+                  borderRadius: 8,
+                  color: tone,
+                  background: done ? "rgba(45,159,107,0.13)" : "var(--surface)",
+                }}
+              >
+                {done ? <CheckCircle2 size={17} /> : <Icon size={16} />}
+              </span>
+              <span style={{ color: tone, fontSize: 11, fontWeight: 800 }}>
+                {status}
+              </span>
+            </div>
+            <div>
+              <strong style={{ display: "block", fontSize: 14, lineHeight: 1.35, marginBottom: 5 }}>
+                {title}
+              </strong>
+              <span style={{ display: "block", color: "var(--text-muted)", fontSize: 12, lineHeight: 1.45 }}>
+                {detail}
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const { stats, loading: statsLoading } = useStats(user?.id ?? null, authLoading);
@@ -536,18 +756,22 @@ export default function DashboardPage() {
     [stats]
   );
 
-  const { delta, streak, byCategory, recentAttempts } = useMemo(() => {
+  const { delta, streak, byCategory, recentAttempts, todayAttemptCount } = useMemo(() => {
     if (!stats) {
       return {
         delta: 0,
         streak: 0,
         byCategory: FALLBACK_CATEGORIES,
         recentAttempts: [] as AttemptRow[],
+        todayAttemptCount: 0,
       };
     }
     const attempts = stats.recentAttempts;
     const todayStr = today.toDateString();
     const yestStr = new Date(today.getTime() - 86400000).toDateString();
+    const todayAttempts = attempts.filter(
+      (a) => new Date(a.answered_at).toDateString() === todayStr
+    );
     const todayCount = attempts.filter(
       (a) => new Date(a.answered_at).toDateString() === todayStr && a.is_correct
     ).length;
@@ -570,6 +794,7 @@ export default function DashboardPage() {
       streak: streakCount,
       byCategory: stats.byCategory.length > 0 ? stats.byCategory : FALLBACK_CATEGORIES,
       recentAttempts: attempts,
+      todayAttemptCount: todayAttempts.length,
     };
   }, [stats, today]);
 
@@ -609,7 +834,14 @@ export default function DashboardPage() {
     <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px 64px" }}>
       <DDayPlanWidget />
       <AnnouncementBannerWrapper />
+      <FirstLoginGuideBanner userId={user.id} />
       <StudyFirstPanel dueCount={dueCount} weakestName={weakestName} />
+      <TodayStarterChecklist
+        dueCount={dueCount}
+        todayAttemptCount={todayAttemptCount}
+        weakestName={weakestName}
+        hasWrongNotes={allNotes.length > 0}
+      />
       {/* ── Header ── */}
       <div style={{ marginBottom: 24 }}>
         <span className="kvle-label" style={{ marginBottom: 10, fontSize: 13 }}>오늘의 학습</span>
