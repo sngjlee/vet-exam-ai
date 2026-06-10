@@ -88,6 +88,7 @@ select pg_temp.assert_ok('comment_image_upload_log RLS enabled', pg_temp.rls_ena
 select pg_temp.assert_ok('cron_run_logs RLS enabled', pg_temp.rls_enabled('public', 'cron_run_logs'));
 select pg_temp.assert_ok('ip_bans RLS enabled', pg_temp.rls_enabled('public', 'ip_bans'));
 select pg_temp.assert_ok('profiles RLS enabled', pg_temp.rls_enabled('public', 'profiles'));
+select pg_temp.assert_ok('mock_exam_sessions RLS enabled', pg_temp.rls_enabled('public', 'mock_exam_sessions'));
 
 -- Comments: public can read visible rows; only approved owner inserts; owner/admin update; nobody hard-deletes.
 select pg_temp.assert_ok(
@@ -295,6 +296,29 @@ select pg_temp.assert_ok(
     where schemaname = 'public'
       and tablename = 'ip_bans'
       and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL')
+  )
+);
+
+-- Mini mock exam sessions: users can append/read only their own summaries.
+select pg_temp.assert_ok(
+  'mock_exam_sessions owner read policy exists',
+  pg_temp.policy_exists('public', 'mock_exam_sessions', 'mock_exam_sessions: owner read', 'SELECT')
+  and pg_temp.policy_mentions('public', 'mock_exam_sessions', 'mock_exam_sessions: owner read', 'auth.uid()')
+  and pg_temp.policy_mentions('public', 'mock_exam_sessions', 'mock_exam_sessions: owner read', 'user_id')
+);
+select pg_temp.assert_ok(
+  'mock_exam_sessions owner insert policy exists',
+  pg_temp.policy_exists('public', 'mock_exam_sessions', 'mock_exam_sessions: owner insert', 'INSERT')
+  and pg_temp.policy_mentions('public', 'mock_exam_sessions', 'mock_exam_sessions: owner insert', 'auth.uid()')
+  and pg_temp.policy_mentions('public', 'mock_exam_sessions', 'mock_exam_sessions: owner insert', 'user_id')
+);
+select pg_temp.assert_ok(
+  'mock_exam_sessions has no update/delete policies',
+  not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'mock_exam_sessions'
+      and cmd in ('UPDATE', 'DELETE', 'ALL')
   )
 );
 

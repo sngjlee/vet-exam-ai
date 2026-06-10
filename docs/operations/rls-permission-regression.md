@@ -19,6 +19,7 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f vet-exam-ai/supabase/tests/rls-permis
 | 계정 삭제/상태 | 서버 액션/service role | 클라이언트 직접 profile 삭제, 타인 상태 변경 | profiles RLS, DELETE policy 부재 |
 | 가입 증빙 | 신청자 업로드, 관리자 조회, RPC 처리 | 타인 증빙 조회, 직접 DB 쓰기, 직접 삭제 | signup_applications direct write 부재, signup-proofs delete policy 부재 |
 | 댓글 이미지 | 본인 prefix 업로드/삭제, 공개 이미지 읽기 | 타인 prefix 업로드/삭제, 업로드 로그 직접 쓰기 | storage own prefix 정책, upload log own select only |
+| 미니 모의고사 결과 | 로그인 사용자 본인 결과 조회/삽입 | 타인 결과 조회, 클라이언트 직접 수정/삭제 | `mock_exam_sessions: owner read/insert`, UPDATE/DELETE policy 부재 |
 | Cron/운영 로그 | active admin 조회, service role 삽입 | 일반 사용자 조회, 클라이언트 직접 삽입/삭제 | cron_run_logs admin read, write policy 부재 |
 | IP 차단 | 관리자 조회/RPC 변경 | 일반 사용자 조회, 직접 insert/update/delete | ip_bans admin select only |
 
