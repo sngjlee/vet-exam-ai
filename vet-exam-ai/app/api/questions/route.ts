@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../lib/supabase/server";
 import type { Question, QuestionSummary } from "../../../lib/questions";
 import type { QuestionRow } from "../../../lib/supabase/types";
+import { logError } from "../../../lib/utils/logging";
 
 type QuestionApiRow = Pick<
   QuestionRow,
@@ -41,6 +42,7 @@ const QUESTION_SUMMARY_SELECT =
   "id, public_id, question, category, topic, difficulty, year, is_active";
 const PAGE_SIZE = 1000;
 const SESSION_POOL_LIMIT = 300;
+const BALANCED_SESSION_POOL_LIMIT = 1000;
 const MAX_SESSION_COUNT = 50;
 
 function toQuestion(row: QuestionApiRow): Question {
@@ -85,6 +87,7 @@ export async function GET(req: NextRequest) {
   const metaOnly = url.searchParams.get("meta") === "1";
   const summaryOnly = url.searchParams.get("summary") === "1";
   const sessionMode = url.searchParams.get("session") === "1";
+  const balancedSession = url.searchParams.get("balanced") === "1";
   const recentYearsRaw = url.searchParams.get("recent_years");
   const category = url.searchParams.get("category");
 
@@ -116,8 +119,9 @@ export async function GET(req: NextRequest) {
   if (sessionMode) {
     const count = clampSessionCount(url.searchParams.get("count"));
     const categories = parseCategories(url.searchParams.get("categories"));
-    const session = await loadSessionQuestions(count, categories);
+    const session = await loadSessionQuestions(count, categories, balancedSession);
     if (session.error) {
+      logError("[questions] session load failed", session.error);
       return NextResponse.json(
         { error: "Failed to load session questions" },
         { status: 500 },
@@ -282,7 +286,12 @@ export async function GET(req: NextRequest) {
   async function loadSessionQuestions(
     count: number,
     categories: string[],
+    balanced: boolean,
   ): Promise<{ data: QuestionApiRow[]; error: unknown }> {
+    if (balanced) {
+      return loadBalancedSessionQuestions(count, categories);
+    }
+
     let countQuery = supabase
       .from("questions")
       .select("id", { count: "exact", head: true })
@@ -312,6 +321,25 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query;
     if (error) return { data: [], error };
     return { data: shuffle(data ?? []).slice(0, count), error: null };
+  }
+
+  async function loadBalancedSessionQuestions(
+    count: number,
+    categories: string[],
+  ): Promise<{ data: QuestionApiRow[]; error: unknown }> {
+    let query = supabase
+      .from("questions")
+      .select(QUESTION_SELECT)
+      .eq("is_active", true)
+      .order("id", { ascending: true })
+      .limit(BALANCED_SESSION_POOL_LIMIT);
+    if (categories.length > 0) {
+      query = query.in("category", categories);
+    }
+
+    const { data, error } = await query;
+    if (error) return { data: [], error };
+    return { data: pickBalancedQuestions(data ?? [], count), error: null };
   }
 
   async function resolveYearCutoff(raw: string | null): Promise<{
@@ -349,6 +377,36 @@ function clampSessionCount(raw: string | null): number {
   const parsed = Number.parseInt(raw ?? "", 10);
   if (!Number.isFinite(parsed)) return 5;
   return Math.min(MAX_SESSION_COUNT, Math.max(1, parsed));
+}
+
+function pickBalancedQuestions(
+  questions: QuestionApiRow[],
+  targetCount: number,
+): QuestionApiRow[] {
+  const buckets = new Map<string, QuestionApiRow[]>();
+  for (const question of shuffle(questions)) {
+    const bucket = buckets.get(question.category) ?? [];
+    bucket.push(question);
+    buckets.set(question.category, bucket);
+  }
+
+  const categories = shuffle(Array.from(buckets.keys()));
+  const selected: QuestionApiRow[] = [];
+
+  while (selected.length < targetCount) {
+    let changed = false;
+    for (const category of categories) {
+      if (selected.length >= targetCount) break;
+      const bucket = buckets.get(category);
+      const next = bucket?.shift();
+      if (!next) continue;
+      selected.push(next);
+      changed = true;
+    }
+    if (!changed) break;
+  }
+
+  return shuffle(selected);
 }
 
 function shuffle<T>(items: T[]): T[] {

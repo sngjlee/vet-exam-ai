@@ -20,6 +20,8 @@ const TOTAL_QUESTIONS = 5;
 const MINI_MOCK_COUNT = 20;
 const MINI_MOCK_MINUTES = 25;
 const MINI_MOCK_SECONDS = MINI_MOCK_MINUTES * 60;
+const MINI_MOCK_HISTORY_KEY = "kvle.miniMock.history.v1";
+const MINI_MOCK_HISTORY_LIMIT = 5;
 
 type SessionMode = "practice" | "mini-mock";
 
@@ -38,11 +40,43 @@ type SessionWrongAnswer = {
   explanation: string;
 };
 
+type MiniMockHistoryItem = {
+  id: string;
+  completedAt: string;
+  total: number;
+  score: number;
+  accuracy: number;
+  elapsedSeconds: number;
+  wrongCount: number;
+  unansweredCount: number;
+  timeExpired: boolean;
+  categories: Record<string, number>;
+};
+
 function formatDuration(seconds: number) {
   const safeSeconds = Math.max(0, seconds);
   const mm = String(Math.floor(safeSeconds / 60)).padStart(2, "0");
   const ss = String(safeSeconds % 60).padStart(2, "0");
   return `${mm}:${ss}`;
+}
+
+function readMiniMockHistory(): MiniMockHistoryItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(MINI_MOCK_HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.slice(0, MINI_MOCK_HISTORY_LIMIT) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeMiniMockHistory(items: MiniMockHistoryItem[]) {
+  window.localStorage.setItem(
+    MINI_MOCK_HISTORY_KEY,
+    JSON.stringify(items.slice(0, MINI_MOCK_HISTORY_LIMIT)),
+  );
 }
 
 function StudyModeShortcuts() {
@@ -235,6 +269,95 @@ function MiniMockEntry({
   );
 }
 
+function MiniMockHistory({ history }: { history: MiniMockHistoryItem[] }) {
+  if (history.length === 0) return null;
+
+  return (
+    <section
+      className="fade-in"
+      style={{
+        position: "relative",
+        marginBottom: "1.5rem",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: 12,
+        padding: 18,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
+        <div>
+          <span className="kvle-label" style={{ fontSize: 12 }}>
+            최근 미니 모의고사
+          </span>
+          <h2 style={{ color: "var(--text)", fontSize: 18, fontWeight: 800, margin: "6px 0 0" }}>
+            결과 히스토리
+          </h2>
+        </div>
+        <span style={{ color: "var(--text-faint)", fontSize: 12, fontWeight: 800 }}>
+          최근 {history.length}회
+        </span>
+      </div>
+
+      <div style={{ display: "grid", gap: 8 }}>
+        {history.map((item) => {
+          const completedAt = new Date(item.completedAt);
+          const topCategories = Object.entries(item.categories)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([category, count]) => `${category} ${count}`)
+            .join(" · ");
+          return (
+            <div
+              key={item.id}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr) auto",
+                gap: 12,
+                alignItems: "center",
+                padding: 12,
+                borderRadius: 10,
+                background: "var(--surface-raised)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+                  <strong style={{ color: "var(--text)", fontSize: 14 }}>
+                    {item.score}/{item.total}점 · {item.accuracy}%
+                  </strong>
+                  {item.timeExpired && (
+                    <span style={{ color: "var(--wrong)", fontSize: 11, fontWeight: 800 }}>
+                      시간 종료
+                    </span>
+                  )}
+                </div>
+                <p style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.4, margin: 0 }}>
+                  {completedAt.toLocaleDateString("ko-KR")} · 소요 {formatDuration(item.elapsedSeconds)} · 오답 {item.wrongCount} · 미응답 {item.unansweredCount}
+                </p>
+                {topCategories && (
+                  <p style={{ color: "var(--text-faint)", fontSize: 11, lineHeight: 1.35, margin: "4px 0 0" }}>
+                    {topCategories}
+                  </p>
+                )}
+              </div>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: item.accuracy >= 70 ? "var(--correct)" : "var(--amber)",
+                  fontSize: 18,
+                  fontWeight: 800,
+                }}
+              >
+                {item.accuracy}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default function QuizPage() {
   const {
     meta,
@@ -254,11 +377,13 @@ export default function QuizPage() {
   const [sessionWrongAnswers, setSessionWrongAnswers] = useState<SessionWrongAnswer[]>([]);
   const [clockNow, setClockNow] = useState(() => Date.now());
   const [timeExpired, setTimeExpired] = useState(false);
+  const [miniMockHistory, setMiniMockHistory] = useState<MiniMockHistoryItem[]>([]);
   const { addNote } = useWrongNotes();
   const { logAttempt } = useAttempts();
   const { user, loading: authLoading } = useAuth();
   const dueCount = useDueCountCtx();
   const sessionIdRef = useRef<string>(crypto.randomUUID());
+  const savedMiniMockResultRef = useRef<string | null>(null);
 
   const currentQuestion = sessionQuestions[currentIndex];
   const finished = started && currentIndex >= sessionQuestions.length;
@@ -278,6 +403,10 @@ export default function QuizPage() {
   const answeredCount = score + sessionWrongAnswers.length;
   const unansweredCount = Math.max(0, sessionQuestions.length - answeredCount);
   const timerIsUrgent = remainingSeconds !== null && remainingSeconds <= 60;
+
+  useEffect(() => {
+    setMiniMockHistory(readMiniMockHistory());
+  }, []);
 
   useEffect(() => {
     if (!started || finished || !isMiniMock || !sessionStartedAt) return;
@@ -307,6 +436,9 @@ export default function QuizPage() {
       session: "1",
       count: String(count),
     });
+    if (mode === "mini-mock") {
+      params.set("balanced", "1");
+    }
     if (subjects.length > 0) {
       params.set("categories", subjects.join(","));
     }
@@ -333,6 +465,7 @@ export default function QuizPage() {
     setSessionEndedAt(null);
     setTimeExpired(false);
     setSessionWrongAnswers([]);
+    savedMiniMockResultRef.current = null;
     setStarted(true);
 
     // 세션 시작 시 댓글 수 batch fetch (1회). 실패 시 빈 Map → undefined commentCount → 카운트 미표시.
@@ -399,6 +532,45 @@ export default function QuizPage() {
     }
     startSession();
   }
+
+  useEffect(() => {
+    if (!finished || !isMiniMock || !sessionEndedAt || !sessionStartedAt) return;
+    if (savedMiniMockResultRef.current === sessionIdRef.current) return;
+
+    const categories = sessionQuestions.reduce<Record<string, number>>((acc, question) => {
+      acc[question.category] = (acc[question.category] ?? 0) + 1;
+      return acc;
+    }, {});
+    const result: MiniMockHistoryItem = {
+      id: sessionIdRef.current,
+      completedAt: new Date(sessionEndedAt).toISOString(),
+      total: sessionQuestions.length,
+      score,
+      accuracy,
+      elapsedSeconds: Math.max(0, Math.round((sessionEndedAt - sessionStartedAt) / 1000)),
+      wrongCount: sessionWrongAnswers.length,
+      unansweredCount,
+      timeExpired,
+      categories,
+    };
+    const nextHistory = [result, ...readMiniMockHistory()]
+      .filter((item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index)
+      .slice(0, MINI_MOCK_HISTORY_LIMIT);
+    writeMiniMockHistory(nextHistory);
+    setMiniMockHistory(nextHistory);
+    savedMiniMockResultRef.current = sessionIdRef.current;
+  }, [
+    accuracy,
+    finished,
+    isMiniMock,
+    score,
+    sessionEndedAt,
+    sessionQuestions,
+    sessionStartedAt,
+    sessionWrongAnswers.length,
+    timeExpired,
+    unansweredCount,
+  ]);
 
   return (
     <main
@@ -468,6 +640,7 @@ export default function QuizPage() {
           onStart={startSession}
         />
       )}
+      {!started && <MiniMockHistory history={miniMockHistory} />}
 
       {!started && !authLoading && user && (
         <div
