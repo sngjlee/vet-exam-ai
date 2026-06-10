@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import QuestionCard from "../../components/QuestionCard";
 import SessionSetup from "../../components/SessionSetup";
@@ -13,12 +13,13 @@ import { useQuestionMeta } from "../../lib/hooks/useQuestionMeta";
 import {
   Sparkles, BookOpen, Clock,
   ArrowRight, CheckCircle2, RotateCcw,
-  ListChecks, MessageSquare, ClipboardCheck, Timer,
+  ListChecks, MessageSquare, ClipboardCheck, Timer, AlertTriangle,
 } from "lucide-react";
 
 const TOTAL_QUESTIONS = 5;
 const MINI_MOCK_COUNT = 20;
 const MINI_MOCK_MINUTES = 25;
+const MINI_MOCK_SECONDS = MINI_MOCK_MINUTES * 60;
 
 type SessionMode = "practice" | "mini-mock";
 
@@ -36,6 +37,13 @@ type SessionWrongAnswer = {
   correctAnswer: string;
   explanation: string;
 };
+
+function formatDuration(seconds: number) {
+  const safeSeconds = Math.max(0, seconds);
+  const mm = String(Math.floor(safeSeconds / 60)).padStart(2, "0");
+  const ss = String(safeSeconds % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
 
 function StudyModeShortcuts() {
   const items = [
@@ -244,6 +252,8 @@ export default function QuizPage() {
   const [sessionStartedAt, setSessionStartedAt] = useState<number | null>(null);
   const [sessionEndedAt, setSessionEndedAt] = useState<number | null>(null);
   const [sessionWrongAnswers, setSessionWrongAnswers] = useState<SessionWrongAnswer[]>([]);
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  const [timeExpired, setTimeExpired] = useState(false);
   const { addNote } = useWrongNotes();
   const { logAttempt } = useAttempts();
   const { user, loading: authLoading } = useAuth();
@@ -259,9 +269,31 @@ export default function QuizPage() {
     sessionStartedAt && sessionEndedAt
       ? Math.max(0, Math.round((sessionEndedAt - sessionStartedAt) / 1000))
       : null;
-  const elapsedLabel = elapsedSeconds
-    ? `${Math.floor(elapsedSeconds / 60)}분 ${String(elapsedSeconds % 60).padStart(2, "0")}초`
-    : null;
+  const elapsedLabel = elapsedSeconds !== null ? formatDuration(elapsedSeconds) : null;
+  const miniMockEndsAt = isMiniMock && sessionStartedAt ? sessionStartedAt + MINI_MOCK_SECONDS * 1000 : null;
+  const remainingSeconds =
+    miniMockEndsAt && !finished
+      ? Math.max(0, Math.ceil((miniMockEndsAt - clockNow) / 1000))
+      : null;
+  const answeredCount = score + sessionWrongAnswers.length;
+  const unansweredCount = Math.max(0, sessionQuestions.length - answeredCount);
+  const timerIsUrgent = remainingSeconds !== null && remainingSeconds <= 60;
+
+  useEffect(() => {
+    if (!started || finished || !isMiniMock || !sessionStartedAt) return;
+
+    const id = window.setInterval(() => {
+      const now = Date.now();
+      setClockNow(now);
+      if (now >= sessionStartedAt + MINI_MOCK_SECONDS * 1000) {
+        setTimeExpired(true);
+        setSessionEndedAt(sessionStartedAt + MINI_MOCK_SECONDS * 1000);
+        setCurrentIndex(sessionQuestions.length);
+      }
+    }, 1000);
+
+    return () => window.clearInterval(id);
+  }, [finished, isMiniMock, sessionQuestions.length, sessionStartedAt, started]);
 
   async function startSession(payload?: SessionStartPayload) {
     const subjects = payload?.subjects ?? [];
@@ -295,8 +327,11 @@ export default function QuizPage() {
     setCurrentIndex(0);
     setScore(0);
     setSessionMode(mode);
-    setSessionStartedAt(Date.now());
+    const now = Date.now();
+    setSessionStartedAt(now);
+    setClockNow(now);
     setSessionEndedAt(null);
+    setTimeExpired(false);
     setSessionWrongAnswers([]);
     setStarted(true);
 
@@ -700,6 +735,56 @@ export default function QuizPage() {
       {/* ━━━━ 활성 세션 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       {started && !finished && currentQuestion && (
         <div style={{ position: "relative", maxWidth: "48rem", margin: "0 auto" }}>
+          {isMiniMock && remainingSeconds !== null && (
+            <section
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 14,
+                padding: "14px 16px",
+                marginBottom: 16,
+                borderRadius: 12,
+                background: timerIsUrgent ? "var(--wrong-dim)" : "var(--surface)",
+                border: `1px solid ${timerIsUrgent ? "rgba(192,74,58,0.35)" : "var(--border)"}`,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                <span
+                  style={{
+                    width: 34,
+                    height: 34,
+                    display: "grid",
+                    placeItems: "center",
+                    borderRadius: 8,
+                    color: timerIsUrgent ? "var(--wrong)" : "var(--blue)",
+                    background: timerIsUrgent ? "rgba(192,74,58,0.12)" : "var(--blue-dim)",
+                  }}
+                >
+                  {timerIsUrgent ? <AlertTriangle size={17} /> : <Timer size={17} />}
+                </span>
+                <div>
+                  <span className="kvle-label" style={{ color: timerIsUrgent ? "var(--wrong)" : "var(--blue)", fontSize: 11 }}>
+                    제한 시간
+                  </span>
+                  <p style={{ color: "var(--text-muted)", fontSize: 12, lineHeight: 1.35, margin: "3px 0 0" }}>
+                    시간이 끝나면 현재 답안으로 자동 제출됩니다.
+                  </p>
+                </div>
+              </div>
+              <strong
+                style={{
+                  flexShrink: 0,
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 24,
+                  lineHeight: 1,
+                  color: timerIsUrgent ? "var(--wrong)" : "var(--text)",
+                }}
+              >
+                {formatDuration(remainingSeconds)}
+              </strong>
+            </section>
+          )}
           <QuestionCard
             key={currentQuestion.id}
             question={currentQuestion}
@@ -802,6 +887,11 @@ export default function QuizPage() {
                   </span>
                   문제 정답
                 </p>
+                {isMiniMock && timeExpired && (
+                  <p style={{ color: "var(--wrong)", fontSize: 13, fontWeight: 800, margin: "12px 0 0" }}>
+                    제한 시간이 종료되어 자동 제출되었습니다.
+                  </p>
+                )}
                 {isMiniMock && (
                   <div
                     style={{
@@ -812,18 +902,31 @@ export default function QuizPage() {
                       marginTop: 18,
                     }}
                   >
-                    <span
-                      style={{
-                        borderRadius: 999,
-                        padding: "7px 11px",
-                        background: "var(--teal-dim)",
+                      <span
+                        style={{
+                          borderRadius: 999,
+                          padding: "7px 11px",
+                          background: "var(--teal-dim)",
                         color: "var(--teal)",
                         border: "1px solid var(--teal-border)",
                         fontSize: 12,
                         fontWeight: 800,
                       }}
+                      >
+                        정답률 {accuracy}%
+                      </span>
+                    <span
+                      style={{
+                        borderRadius: 999,
+                        padding: "7px 11px",
+                        background: unansweredCount > 0 ? "var(--wrong-dim)" : "var(--correct-dim)",
+                        color: unansweredCount > 0 ? "var(--wrong)" : "var(--correct)",
+                        border: `1px solid ${unansweredCount > 0 ? "rgba(192,74,58,0.28)" : "rgba(45,159,107,0.25)"}`,
+                        fontSize: 12,
+                        fontWeight: 800,
+                      }}
                     >
-                      정답률 {accuracy}%
+                      미응답 {unansweredCount}문제
                     </span>
                     {elapsedLabel && (
                       <span
