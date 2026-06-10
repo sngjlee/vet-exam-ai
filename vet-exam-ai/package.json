@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "check:migrations": "node scripts/check-migrations.cjs",
+    "smoke:public": "node scripts/smoke-public.cjs",
     "ci": "npm run check:migrations && npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {

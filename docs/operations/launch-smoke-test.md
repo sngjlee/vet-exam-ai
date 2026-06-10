@@ -122,7 +122,24 @@
 6. Supabase Auth, Database, Storage 대시보드에 예상치 못한 오류 spike가 없는지 확인합니다.
 7. Sentry 새 이슈가 있다면 사용자 영향, 재현 경로, 민감정보 포함 여부를 먼저 분류합니다.
 
-## 11. 결과 기록 양식
+## 11. 자동 public smoke
+
+수동 역할별 QA 전에 공개 경로, 보호 경로의 로그인 리다이렉트, 무인증 API 차단, cron secret 차단을 빠르게 확인합니다.
+
+```bash
+npm run smoke:public -- --base-url https://your-production-domain.example
+```
+
+로컬에서는 dev server를 띄운 뒤 실행합니다.
+
+```bash
+npm run dev
+npm run smoke:public -- --base-url http://127.0.0.1:3000
+```
+
+이 스크립트는 테스트 계정으로 로그인하지 않습니다. 승인 회원/관리자/가입 대기 계정의 실제 화면 조작은 위 수동 매트릭스로 계속 확인합니다.
+
+## 12. 결과 기록 양식
 
 ```md
 ## Smoke test result
@@ -138,6 +155,7 @@
 - Sentry issue 링크:
 - Vercel deployment 링크:
 - Supabase migration 기준:
+- 자동 public smoke 결과:
 ```
 
 조건부 통과는 반드시 이슈 링크와 재확인 기한을 남깁니다. 즉시 중단 이슈가 하나라도 있으면 공개 전환 또는 트래픽 확대를 보류합니다.
