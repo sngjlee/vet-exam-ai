@@ -87,3 +87,13 @@ npm run build
 
 모든 명령이 통과한 뒤 `/admin/ops`, `/admin/sentry-test`, 공개 정책 문서 `/terms`, `/privacy`, `/community-guidelines`를 표본 확인합니다.
 정식 공개 또는 큰 운영 배포에서는 이어서 `docs/operations/launch-smoke-test.md`의 역할별 스모크 테스트를 실행합니다.
+
+## 8. 결제/프리미엄 기능 게이트
+
+결제, 구독, 유료 권한, 프리미엄 API, 가격표 또는 환불 정책이 포함된 배포라면 `docs/operations/premium-readiness.md`를 먼저 확인합니다.
+
+- 사업자 정보, 통신판매, 환불 정책, 약관, 개인정보 처리방침 반영 상태가 확정되어야 합니다.
+- 테스트 결제 키와 운영 결제 키가 환경별로 분리되어야 합니다.
+- webhook 중복 처리, 결제 실패, 해지, 환불, 관리자 수동 권한 변경이 smoke test에 포함되어야 합니다.
+- 유료 기능 권한 체크는 클라이언트 표시가 아니라 서버/RLS 또는 서버 API 기준으로 보호되어야 합니다.
+- 위 항목이 준비되지 않은 경우 결제 UI와 Stripe 등 결제 연동은 production에서 비활성화합니다.
