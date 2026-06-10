@@ -141,6 +141,43 @@ export interface Database {
         Relationships: [];
       };
 
+      mock_exam_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          session_id: string;
+          total_count: number;
+          score: number;
+          accuracy: number;
+          elapsed_seconds: number;
+          wrong_count: number;
+          unanswered_count: number;
+          time_expired: boolean;
+          categories: Record<string, number>;
+          completed_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          session_id: string;
+          total_count: number;
+          score: number;
+          accuracy: number;
+          elapsed_seconds: number;
+          wrong_count: number;
+          unanswered_count: number;
+          time_expired?: boolean;
+          categories?: Record<string, number>;
+          completed_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          // mock exam session summaries are append-only
+        };
+        Relationships: [];
+      };
+
       wrong_notes: {
         Row: {
           id: string;           // uuid

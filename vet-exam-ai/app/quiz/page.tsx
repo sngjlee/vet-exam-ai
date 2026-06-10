@@ -10,6 +10,8 @@ import { useAttempts } from "../../lib/hooks/useAttempts";
 import { useAuth } from "../../lib/hooks/useAuth";
 import { useDueCountCtx } from "../../lib/context/DueCountContext";
 import { useQuestionMeta } from "../../lib/hooks/useQuestionMeta";
+import { createClient } from "../../lib/supabase/client";
+import type { Database } from "../../lib/supabase/types";
 import {
   Sparkles, BookOpen, Clock,
   ArrowRight, CheckCircle2, RotateCcw,
@@ -53,6 +55,8 @@ type MiniMockHistoryItem = {
   categories: Record<string, number>;
 };
 
+type MockExamSessionRow = Database["public"]["Tables"]["mock_exam_sessions"]["Row"];
+
 function formatDuration(seconds: number) {
   const safeSeconds = Math.max(0, seconds);
   const mm = String(Math.floor(safeSeconds / 60)).padStart(2, "0");
@@ -77,6 +81,21 @@ function writeMiniMockHistory(items: MiniMockHistoryItem[]) {
     MINI_MOCK_HISTORY_KEY,
     JSON.stringify(items.slice(0, MINI_MOCK_HISTORY_LIMIT)),
   );
+}
+
+function toMiniMockHistoryItem(row: MockExamSessionRow): MiniMockHistoryItem {
+  return {
+    id: row.session_id,
+    completedAt: row.completed_at,
+    total: row.total_count,
+    score: row.score,
+    accuracy: row.accuracy,
+    elapsedSeconds: row.elapsed_seconds,
+    wrongCount: row.wrong_count,
+    unansweredCount: row.unanswered_count,
+    timeExpired: row.time_expired,
+    categories: row.categories ?? {},
+  };
 }
 
 function StudyModeShortcuts() {
@@ -405,8 +424,39 @@ export default function QuizPage() {
   const timerIsUrgent = remainingSeconds !== null && remainingSeconds <= 60;
 
   useEffect(() => {
-    setMiniMockHistory(readMiniMockHistory());
-  }, []);
+    let cancelled = false;
+
+    async function loadHistory() {
+      const localHistory = readMiniMockHistory();
+      if (!user) {
+        setMiniMockHistory(localHistory);
+        return;
+      }
+
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("mock_exam_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("completed_at", { ascending: false })
+        .limit(MINI_MOCK_HISTORY_LIMIT);
+
+      if (cancelled) return;
+      if (error) {
+        setMiniMockHistory(localHistory);
+        return;
+      }
+
+      const remoteHistory = (data ?? []).map(toMiniMockHistoryItem);
+      setMiniMockHistory(remoteHistory.length > 0 ? remoteHistory : localHistory);
+    }
+
+    void loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!started || finished || !isMiniMock || !sessionStartedAt) return;
@@ -559,6 +609,30 @@ export default function QuizPage() {
     writeMiniMockHistory(nextHistory);
     setMiniMockHistory(nextHistory);
     savedMiniMockResultRef.current = sessionIdRef.current;
+
+    if (user) {
+      const supabase = createClient();
+      void supabase
+        .from("mock_exam_sessions")
+        .insert({
+          user_id: user.id,
+          session_id: result.id,
+          total_count: result.total,
+          score: result.score,
+          accuracy: result.accuracy,
+          elapsed_seconds: result.elapsedSeconds,
+          wrong_count: result.wrongCount,
+          unanswered_count: result.unansweredCount,
+          time_expired: result.timeExpired,
+          categories: result.categories,
+          completed_at: result.completedAt,
+        })
+        .then(({ error }) => {
+          if (!error) return;
+          // Keep local history as the fallback; duplicate inserts can happen on
+          // unusual remounts and are harmless because session_id is unique.
+        });
+    }
   }, [
     accuracy,
     finished,
@@ -570,6 +644,7 @@ export default function QuizPage() {
     sessionWrongAnswers.length,
     timeExpired,
     unansweredCount,
+    user,
   ]);
 
   return (
