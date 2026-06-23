@@ -79,6 +79,24 @@ def build_row(doc: dict, q: dict) -> dict[str, Any]:
     }
 
 
+def summarize_row_for_dry_run(row: dict[str, Any]) -> dict[str, str | int | bool | None]:
+    choices = row.get("choices")
+    question_images = row.get("question_image_files")
+    explanation_images = row.get("explanation_image_files")
+    return {
+        "id": row["id"],
+        "category": row["category"],
+        "topic": row["topic"] if isinstance(row.get("topic"), str) else None,
+        "year": row["year"] if isinstance(row.get("year"), int) else None,
+        "is_active": bool(row["is_active"]),
+        "question_chars": len(str(row.get("question") or "")),
+        "explanation_chars": len(str(row.get("explanation") or "")),
+        "choices_count": len(choices) if isinstance(choices, list) else 0,
+        "question_image_count": len(question_images) if isinstance(question_images, list) else 0,
+        "explanation_image_count": len(explanation_images) if isinstance(explanation_images, list) else 0,
+    }
+
+
 def dedup_ids(rows: list[dict], file_name: str) -> list[dict]:
     """Batch 내 id 중복 해소.
 
@@ -148,7 +166,8 @@ def process_file(
 
     if dry_run:
         if rows:
-            print(f"  [dry-run] payload 첫 행:\n{json.dumps(rows[0], ensure_ascii=False, indent=2)}")
+            preview = summarize_row_for_dry_run(rows[0])
+            print(f"  [dry-run] payload 첫 행 요약:\n{json.dumps(preview, ensure_ascii=False, indent=2)}")
         print(f"  [dry-run] 총 {len(rows)} rows ({stats['rows_active']} active, {stats['rows_inactive']} inactive)")
         return stats
 
