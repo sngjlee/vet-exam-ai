@@ -25,6 +25,7 @@
 - `cron_run_logs` 테이블에 최근 cron 실행 결과가 쌓이는지 확인한다.
 - RLS 정책을 임시로 끄거나 service role key를 브라우저에서 쓰는 코드가 없는지 확인한다.
 - Supabase 자동 백업이 활성화되어 있고 최신 백업 시각이 정상 범위인지 확인한다.
+- 베타 공개 전 라이브 계정/권한 증명은 `docs/operations/beta-live-security-proof.md` 기준으로 실행한다.
 
 ## 3. Sentry
 
@@ -87,6 +88,7 @@ npm run build
 
 모든 명령이 통과한 뒤 `/admin/ops`, `/admin/sentry-test`, 공개 정책 문서 `/terms`, `/privacy`, `/community-guidelines`를 표본 확인합니다.
 정식 공개 또는 큰 운영 배포에서는 이어서 `docs/operations/launch-smoke-test.md`의 역할별 스모크 테스트를 실행합니다.
+베타 공개에서는 같은 순서 전에 `docs/operations/beta-live-security-proof.md`의 seeded 계정 준비와 RLS regression을 완료합니다.
 
 ## 8. 결제/프리미엄 기능 게이트
 
