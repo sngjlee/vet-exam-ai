@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, ListChecks } from "lucide-react";
-import { useAuth } from "../../../lib/hooks/useAuth";
 import { useQuestion } from "../../../lib/hooks/useQuestion";
 import LoadingSpinner from "../../../components/LoadingSpinner";
 import QuestionReadOnly from "../../../components/QuestionReadOnly";
@@ -20,7 +19,6 @@ export default function QuestionDetailPage() {
   const params = useParams<{ id: string }>();
   const search = useSearchParams();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
 
   // Next 16 useParams returns the URL segment without decoding non-ASCII —
   // `2.4_공보_57회_q001` arrives as `2.4_%EA%B3%B5%EB%B3%B4_57%ED%9A%8C_q001`.
@@ -68,14 +66,6 @@ export default function QuestionDetailPage() {
     };
   }, [listContext, question?.id, question?.publicId, questionId]);
 
-  // Auth gate (UX only — RLS is the real boundary).
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      router.replace("/auth/login");
-    }
-  }, [user, authLoading, router]);
-
   const status: Status = questionLoading
     ? "loading"
     : questionError
@@ -83,14 +73,6 @@ export default function QuestionDetailPage() {
       : notFound
         ? "not_found"
         : "ready";
-
-  if (authLoading || !user) {
-    return (
-      <div style={{ padding: "48px 24px", display: "grid", placeItems: "center" }}>
-        <LoadingSpinner />
-      </div>
-    );
-  }
 
   return (
     <main

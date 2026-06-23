@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   BookOpen,
   ChevronRight,
@@ -117,8 +116,7 @@ function sanitizeStoredFilter(stored: StoredFilter): FilterState {
 }
 
 export default function QuestionsListPage() {
-  const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
   const { notes: wrongNotes, loading: notesLoading } = useWrongNotes();
   const [filter, setFilter] = useState<FilterState>(DEFAULT_FILTER);
   const [page, setPage] = useState(0);
@@ -155,11 +153,6 @@ export default function QuestionsListPage() {
       clearStoredFilter();
     }
   }, [filter, hydrated, shouldFetch]);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) router.replace("/auth/login");
-  }, [user, authLoading, router]);
 
   const serverFilter = useMemo(() => {
     if (!hydrated || !shouldFetch) return null;
@@ -243,7 +236,7 @@ export default function QuestionsListPage() {
     updateFilter({ onlyWrong: true, forceAll: false });
   }
 
-  if (authLoading || !user) {
+  if (authLoading) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-12">
         <LoadingSpinner />
