@@ -27,11 +27,24 @@ The rows are not deleted — deactivation is reversible. To restore after fixing
 question, re-upload the corrected row through the now-gated `pipeline/upload.py`
 (which sets `is_active=true` for non-image rows) or set `is_active=true` directly.
 
+## Fixes applied (2026-07-02) — 38 of 39 corrected & reactivated
+
+See `.omo/reports/question-fixes-applied-2026-07-02.md` for the per-question changelog.
+
+- 38 rows corrected to exactly 5 choices and reactivated (`is_active=true`).
+  - `choices==6` (19): removed one **true, non-answer** distractor → answer (the false
+    statement) unchanged; low risk.
+  - `choices==4` (18) + KVLE-1471: authored/added distractors in the correct truth-direction
+    (⚠️ vet spot-check recommended).
+- **KVLE-2897** left **inactive** — question/answer/explanation all empty, cannot restore.
+- Active bank now: **2,834** questions, **0** rule violations (verified live).
+
 ## Action required (content decision — owner)
 
 > **Fix worksheet:** `.omo/reports/question-fix-worksheet-2026-07-02.md` extracts each
 > row's current (broken) content with fill-in slots for the corrected 5-choice version.
 > Fill it, then re-upload through the gated `pipeline/upload.py` to restore `is_active=true`.
+> (Now largely superseded by the applied fixes above; still the path for KVLE-2897.)
 
 For each row below: either re-run the corrected rewrite through `pipeline/upload.py`
 (now gated) or set `is_active=false` until fixed. Public IDs only (no source id shown).
