@@ -27,17 +27,18 @@ The rows are not deleted — deactivation is reversible. To restore after fixing
 question, re-upload the corrected row through the now-gated `pipeline/upload.py`
 (which sets `is_active=true` for non-image rows) or set `is_active=true` directly.
 
-## Fixes applied (2026-07-02) — 38 of 39 corrected & reactivated
+## Fixes applied (2026-07-02) — all 39 corrected & reactivated
 
 See `.omo/reports/question-fixes-applied-2026-07-02.md` for the per-question changelog.
 
-- 38 rows corrected to exactly 5 choices and reactivated (`is_active=true`).
+- All 39 rows corrected to exactly 5 choices and reactivated (`is_active=true`).
   - `choices==6` (19): removed one **true, non-answer** distractor → answer (the false
     statement) unchanged; low risk.
   - `choices==4` (18) + KVLE-1471: authored/added distractors in the correct truth-direction
     (⚠️ vet spot-check recommended).
-- **KVLE-2897** left **inactive** — question/answer/explanation all empty, cannot restore.
-- Active bank now: **2,834** questions, **0** rule violations (verified live).
+  - **KVLE-2897**: was fully empty; authored a new drug-metabolism question (cat
+    glucuronidation/UGT deficiency) from the surviving topic metadata (⚠️ spot-check).
+- Active bank now: **2,835** questions, **0** rule violations (verified live).
 
 ## Action required (content decision — owner)
 
