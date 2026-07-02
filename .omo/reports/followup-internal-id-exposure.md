@@ -1,7 +1,8 @@
 # Follow-up (P1, deferred): Internal question id exposure
 
 Date filed: 2026-07-02
-Status: DEFERRED to a dedicated planned change (user decision 2026-07-02)
+Status: PLANNED — full execution plan written at `.omo/plans/b1-internal-id-exposure-migration.md`
+(2026-07-02). Blocked on staging DB + seed accounts to apply/test; not a beta blocker.
 Related: `.omo/reports/beta-launch-p0-reverification-2026-07-02.md` residual item 1
 
 ## Problem
