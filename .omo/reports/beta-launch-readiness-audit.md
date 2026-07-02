@@ -4,6 +4,8 @@ Date: 2026-06-23
 Workspace: `C:\Users\Theriogenology\Desktop\vet-exam-ai`
 Scope: read-only synthesis from `.omo/plans/beta-launch-readiness-audit.md`, `.omo/start-work/ledger.jsonl`, and Task 1-17 evidence under `.omo/evidence/beta-launch-readiness-audit/`.
 
+> **UPDATE 2026-07-02 — verdict superseded.** All four P0 blockers below were re-verified as PASS against a live Supabase instance with network access on Linux; they were environment artifacts of this audit run, not product defects. Current verdict is **GO (conditional)**. See `.omo/reports/beta-launch-p0-reverification-2026-07-02.md`. The NO-GO text below is retained as the historical 2026-06-23 record.
+
 ## Overall Verdict
 
 **Recommendation: NO-GO for beta launch.**

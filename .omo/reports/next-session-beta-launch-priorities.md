@@ -6,7 +6,9 @@ Audit report: `.omo/reports/beta-launch-readiness-audit.md`
 
 ## Current Verdict
 
-Beta launch is **NO-GO** until the P0 blockers below are fixed and re-verified. The audit package itself was final-gate approved; the product was not changed during the audit.
+> **UPDATE 2026-07-02:** Re-verified against live Supabase — verdict is now **GO (conditional)**. P0 items 1–5 below all PASS (they were audit-environment artifacts, not product bugs). Remaining work is items 6–8 (P1/quality). See `.omo/reports/beta-launch-p0-reverification-2026-07-02.md`.
+
+~~Beta launch is **NO-GO** until the P0 blockers below are fixed and re-verified.~~ The audit package itself was final-gate approved; the product was not changed during the audit.
 
 ## Start Here
 
