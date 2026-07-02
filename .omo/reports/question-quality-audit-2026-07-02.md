@@ -29,6 +29,10 @@ question, re-upload the corrected row through the now-gated `pipeline/upload.py`
 
 ## Action required (content decision — owner)
 
+> **Fix worksheet:** `.omo/reports/question-fix-worksheet-2026-07-02.md` extracts each
+> row's current (broken) content with fill-in slots for the corrected 5-choice version.
+> Fill it, then re-upload through the gated `pipeline/upload.py` to restore `is_active=true`.
+
 For each row below: either re-run the corrected rewrite through `pipeline/upload.py`
 (now gated) or set `is_active=false` until fixed. Public IDs only (no source id shown).
 
