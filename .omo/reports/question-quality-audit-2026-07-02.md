@@ -13,6 +13,20 @@ Tool: rules identical to `pipeline/upload.py::validate_question_row` (now also e
 
 All violations are the choice-count rule; no `answer∉choices` violations remain among active rows.
 
+## Remediation applied (2026-07-02)
+
+All 39 invalid active questions were deactivated (`is_active=false`) via
+`pipeline/deactivate_invalid_questions.py` logic (service-role PATCH by internal id).
+
+- Active questions: 2,835 → **2,796** (−39)
+- Re-audit of active rows: **0 remaining violations**
+- KVLE-2897 confirmed `is_active=false` (no longer served by the public API,
+  which filters `is_active=true`)
+
+The rows are not deleted — deactivation is reversible. To restore after fixing a
+question, re-upload the corrected row through the now-gated `pipeline/upload.py`
+(which sets `is_active=true` for non-image rows) or set `is_active=true` directly.
+
 ## Action required (content decision — owner)
 
 For each row below: either re-run the corrected rewrite through `pipeline/upload.py`
