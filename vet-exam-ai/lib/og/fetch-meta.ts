@@ -21,7 +21,7 @@ export type BoardOgMeta = {
 };
 
 /**
- * publicId(KVLE-NNNN) 또는 raw id로 단일 문제 메타를 조회한다.
+ * publicId(KVLE-NNNN)로 단일 문제 메타를 조회한다.
  * 못 찾으면 null. 댓글 수는 comments 테이블 count 쿼리로 별도 페치.
  */
 export async function fetchQuestionMeta(
@@ -29,29 +29,14 @@ export async function fetchQuestionMeta(
 ): Promise<QuestionOgMeta | null> {
   const supabase = await createClient();
 
-  // SELECT 화이트리스트: public_id, category, id (raw fallback 매칭용).
+  // SELECT 화이트리스트: public_id, category, id (댓글 count 조인 키).
   // question/answer/explanation/round/year/session 은 절대 포함 금지.
-  //
-  // publicId 우선 → 실패 시 raw id로 한 번 더. PostgREST or() 필터에
-  // template literal을 직접 삽입하면 escape 부담 + 한글 id에서 깨질 수 있어
-  // sequential lookup이 안전.
-  let row: { id: string; public_id: string | null; category: string | null } | null = null;
-  {
-    const { data } = await supabase
-      .from("questions")
-      .select("id, public_id, category")
-      .eq("public_id", idOrPublicId)
-      .maybeSingle();
-    row = data ?? null;
-  }
-  if (!row) {
-    const { data } = await supabase
-      .from("questions")
-      .select("id, public_id, category")
-      .eq("id", idOrPublicId)
-      .maybeSingle();
-    row = data ?? null;
-  }
+  const { data } = await supabase
+    .from("questions")
+    .select("id, public_id, category")
+    .eq("public_id", idOrPublicId)
+    .maybeSingle();
+  const row = data ?? null;
   if (!row) return null;
   const q = row;
 

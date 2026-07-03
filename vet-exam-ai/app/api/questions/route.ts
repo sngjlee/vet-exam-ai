@@ -229,13 +229,7 @@ export async function GET(req: NextRequest) {
     if (byPublicId.error) return { data: null, error: byPublicId.error };
     if (byPublicId.data) return { data: byPublicId.data, error: null };
 
-    const byId = await supabase
-      .from("questions")
-      .select(QUESTION_SELECT)
-      .eq("is_active", true)
-      .eq("id", id)
-      .maybeSingle();
-    return { data: byId.data ?? null, error: byId.error };
+    return { data: null, error: null };
   }
 
   async function loadQuestionMeta(): Promise<{

@@ -4,7 +4,6 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Filter, Search as SearchIcon, BookOpen } from "lucide-react";
-import { useAuth } from "../../lib/hooks/useAuth";
 import { useSearch } from "../../lib/hooks/useSearch";
 import {
   decodeQueryParam,
@@ -62,7 +61,6 @@ export default function SearchPageRoot() {
 function SearchPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const { user, loading: authLoading } = useAuth();
 
   // URL → state
   const urlQ        = decodeQueryParam(params.get("q"));
@@ -138,12 +136,6 @@ function SearchPage() {
     }
   }, [data, page, q, category, recentYears, includeComments, router]);
 
-  // Auth gate (UX only — RLS is the real boundary).
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) router.replace("/auth/login");
-  }, [user, authLoading, router]);
-
   function pushUrl(next: {
     q?: string;
     category?: string;
@@ -176,14 +168,6 @@ function SearchPage() {
   const suggestions = data?.suggestions ?? [];
   const totalPages = Math.max(1, Math.ceil(total / SEARCH_PAGE_SIZE));
   const safePage = Math.min(page, Math.max(0, totalPages - 1));
-
-  if (authLoading || !user) {
-    return (
-      <main className="mx-auto max-w-4xl px-6 py-12">
-        <LoadingSpinner />
-      </main>
-    );
-  }
 
   return (
     <main className="kvle-search-shell mx-auto max-w-4xl px-6 py-12 space-y-6">

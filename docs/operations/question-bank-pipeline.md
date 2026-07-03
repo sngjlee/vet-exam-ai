@@ -16,7 +16,7 @@
 |---:|---|---|---|
 | 1 | 작업 범위 고정 | batch 이름, 과목, 회차, 원천 파일 수 기록 | 예: `66회 1.1 해부 20문항` |
 | 2 | 환경 확인 | `cd pipeline`, `python -m pip install -r requirements.txt` | 가상환경과 `.env`가 준비됨 |
-| 3 | 재작성 결과 preview | `python upload.py <file> --dry-run --limit 3` | 첫 행 payload, active/inactive count 확인 |
+| 3 | 재작성 결과 preview | `python upload.py <file> --dry-run --limit 3` | 첫 행 비본문 요약, active/inactive count 확인 |
 | 4 | 이미지 파일 preview | `python upload_images.py --all --dry-run --filter <batch>` | 대상 파일 수와 content type 확인 |
 | 5 | 이미지 업로드 | `python upload_images.py --all --filter <batch>` | failed=0 |
 | 6 | 문제 row 업로드 | `python upload.py <file>` 또는 `python upload.py --all --filter <batch>` | files_failed=0, row count 기록 |
@@ -49,10 +49,11 @@ python upload.py --all --filter 1.1
 - `id` 기준 upsert라 같은 batch 재실행은 가능하지만, 이미지 분류가 시작된 기존 row를 다시 업로드하면 `is_active=false`로 되돌릴 수 있습니다.
 - 같은 원천 문제번호가 중복 파싱되면 스크립트가 `b`, `c` suffix를 붙여 보존합니다. 운영 기록에 중복 보정 건수를 남깁니다.
 - 업로드 전 `rows_active`, `rows_inactive` 수가 예상과 크게 다르면 적용하지 않습니다.
+- `--dry-run` 출력은 문제 본문, 선택지, 정답, 해설 전문을 남기지 않고 길이/개수 요약만 확인합니다. 운영 기록에는 row count, active/inactive count, 이미지 개수만 남깁니다.
 
 ## 이미지 검수 루틴
 
-이미지는 `question-images-private` bucket에 업로드되고, 파일명은 `_storage_key.py`의 ASCII key 규칙으로 정규화됩니다.
+이미지는 `question-images-private` bucket에 업로드되고, 파일명은 `_storage_key.py`의 안전한 단일 segment key 규칙으로 정규화됩니다. 영문/숫자/`.`, `_`, `-`만 원문 유지하고, 공백·경로 구분자·한글 등은 UTF-8 hex로 변환합니다.
 
 ```powershell
 python upload_images.py --all --dry-run --filter 1.1

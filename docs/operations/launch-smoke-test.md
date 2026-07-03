@@ -50,7 +50,7 @@
 | `/` | 랜딩이 200으로 열리고 주요 CTA가 로그인/회원가입으로 이동합니다. |
 | `/guide` | 처음 이용 가이드가 열리고 상단 메뉴를 늘리지 않아도 주요 기능으로 이동할 수 있습니다. |
 | `/terms`, `/privacy`, `/community-guidelines` | 사용자 공개 정책 문서가 최신 사본으로 렌더링됩니다. |
-| `/questions`, `/search`, `/quiz`, `/comments` | 공개 허용 범위에 맞게 열리거나 로그인 유도/제한이 일관됩니다. |
+| `/questions`, `/search`, `/questions/KVLE-0001`, `/quiz`, `/comments` | 공개 허용 범위에 맞게 열리거나 로그인 유도/제한이 일관됩니다. `/questions`와 `/search` discovery는 비로그인에서도 열립니다. |
 | `/admin` | 비로그인 사용자는 로그인 또는 권한 제한 흐름으로 이동합니다. |
 | `/robots.txt` | 공개 상태와 베타/noindex 상태가 `NEXT_PUBLIC_INDEXING_ENABLED`와 일치합니다. |
 
@@ -159,3 +159,5 @@ npm run smoke:public -- --base-url http://127.0.0.1:3000
 ```
 
 조건부 통과는 반드시 이슈 링크와 재확인 기한을 남깁니다. 즉시 중단 이슈가 하나라도 있으면 공개 전환 또는 트래픽 확대를 보류합니다.
+
+베타 공개 전 seeded 계정과 staging DB 준비물은 `docs/operations/beta-live-security-proof.md`를 함께 확인합니다.

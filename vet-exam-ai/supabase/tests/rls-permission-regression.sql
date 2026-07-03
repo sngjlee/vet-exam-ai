@@ -89,6 +89,8 @@ select pg_temp.assert_ok('cron_run_logs RLS enabled', pg_temp.rls_enabled('publi
 select pg_temp.assert_ok('ip_bans RLS enabled', pg_temp.rls_enabled('public', 'ip_bans'));
 select pg_temp.assert_ok('profiles RLS enabled', pg_temp.rls_enabled('public', 'profiles'));
 select pg_temp.assert_ok('mock_exam_sessions RLS enabled', pg_temp.rls_enabled('public', 'mock_exam_sessions'));
+select pg_temp.assert_ok('attempts RLS enabled', pg_temp.rls_enabled('public', 'attempts'));
+select pg_temp.assert_ok('wrong_notes RLS enabled', pg_temp.rls_enabled('public', 'wrong_notes'));
 
 -- Comments: public can read visible rows; only approved owner inserts; owner/admin update; nobody hard-deletes.
 select pg_temp.assert_ok(
@@ -319,6 +321,66 @@ select pg_temp.assert_ok(
     where schemaname = 'public'
       and tablename = 'mock_exam_sessions'
       and cmd in ('UPDATE', 'DELETE', 'ALL')
+  )
+);
+
+-- Attempts: immutable per-user answer log. Owner may read and insert own rows only;
+-- no update/delete policy must exist (the log must never be rewritten or purged by users).
+select pg_temp.assert_ok(
+  'attempts owner read policy exists',
+  pg_temp.policy_exists('public', 'attempts', 'attempts: owner read', 'SELECT')
+  and pg_temp.policy_mentions('public', 'attempts', 'attempts: owner read', 'auth.uid()')
+  and pg_temp.policy_mentions('public', 'attempts', 'attempts: owner read', 'user_id')
+);
+select pg_temp.assert_ok(
+  'attempts owner insert policy exists',
+  pg_temp.policy_exists('public', 'attempts', 'attempts: owner insert', 'INSERT')
+  and pg_temp.policy_mentions('public', 'attempts', 'attempts: owner insert', 'auth.uid()')
+  and pg_temp.policy_mentions('public', 'attempts', 'attempts: owner insert', 'user_id')
+);
+select pg_temp.assert_ok(
+  'attempts is immutable (no update/delete policy)',
+  not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'attempts'
+      and cmd in ('UPDATE', 'DELETE', 'ALL')
+  )
+);
+
+-- Wrong notes: owner-scoped review list. Owner may read/insert/update/delete own rows;
+-- every policy must be scoped to the owner and no table-wide ALL policy may exist.
+select pg_temp.assert_ok(
+  'wrong_notes owner read policy exists',
+  pg_temp.policy_exists('public', 'wrong_notes', 'wrong_notes: owner read', 'SELECT')
+  and pg_temp.policy_mentions('public', 'wrong_notes', 'wrong_notes: owner read', 'auth.uid()')
+  and pg_temp.policy_mentions('public', 'wrong_notes', 'wrong_notes: owner read', 'user_id')
+);
+select pg_temp.assert_ok(
+  'wrong_notes owner insert policy exists',
+  pg_temp.policy_exists('public', 'wrong_notes', 'wrong_notes: owner insert', 'INSERT')
+  and pg_temp.policy_mentions('public', 'wrong_notes', 'wrong_notes: owner insert', 'auth.uid()')
+  and pg_temp.policy_mentions('public', 'wrong_notes', 'wrong_notes: owner insert', 'user_id')
+);
+select pg_temp.assert_ok(
+  'wrong_notes owner update policy exists',
+  pg_temp.policy_exists('public', 'wrong_notes', 'wrong_notes: owner update', 'UPDATE')
+  and pg_temp.policy_mentions('public', 'wrong_notes', 'wrong_notes: owner update', 'auth.uid()')
+  and pg_temp.policy_mentions('public', 'wrong_notes', 'wrong_notes: owner update', 'user_id')
+);
+select pg_temp.assert_ok(
+  'wrong_notes owner delete policy exists',
+  pg_temp.policy_exists('public', 'wrong_notes', 'wrong_notes: owner delete', 'DELETE')
+  and pg_temp.policy_mentions('public', 'wrong_notes', 'wrong_notes: owner delete', 'auth.uid()')
+  and pg_temp.policy_mentions('public', 'wrong_notes', 'wrong_notes: owner delete', 'user_id')
+);
+select pg_temp.assert_ok(
+  'wrong_notes has no table-wide ALL policy',
+  not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'wrong_notes'
+      and cmd = 'ALL'
   )
 );
 
