@@ -8,7 +8,7 @@ export type NotificationType = Database["public"]["Enums"]["notification_type"];
 
 export type RelatedCommentLite = {
   id: string;
-  question_id: string;
+  question_public_id: string | null;
   parent_id: string | null;
 } | null;
 
@@ -20,7 +20,10 @@ export type FormattedNotification = {
 const NO_HREF = "#";
 
 function buildCommentHref(rel: NonNullable<RelatedCommentLite>): string {
-  return `/questions/${encodeURIComponent(rel.question_id)}?comment=${encodeURIComponent(rel.id)}`;
+  // B1: deep-link with the KVLE public id. Falls back to no-op if a legacy
+  // comment has no backfilled public id.
+  if (!rel.question_public_id) return NO_HREF;
+  return `/questions/${encodeURIComponent(rel.question_public_id)}?comment=${encodeURIComponent(rel.id)}`;
 }
 
 function buildQuestionHref(payload: Record<string, unknown>): string {

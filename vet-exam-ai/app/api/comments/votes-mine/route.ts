@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   const { data: ids, error: idsErr } = await supabase
     .from("comments")
     .select("id")
-    .eq("question_id", questionId)
+    .eq("question_public_id", questionId)
     .limit(QUESTION_COMMENT_STATE_LOOKUP_LIMIT);
 
   if (idsErr) {

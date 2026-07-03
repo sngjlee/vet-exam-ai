@@ -46,9 +46,14 @@ const BALANCED_SESSION_POOL_LIMIT = 1000;
 const MAX_SESSION_COUNT = 50;
 
 function toQuestion(row: QuestionApiRow): Question {
+  // B1: never expose the internal id (encodes exam round + subject). The public
+  // KVLE id is the sole external identifier — placed in `id` so all existing
+  // client consumers (round-trip to attempts/wrong_notes/comments, keys, URLs)
+  // work unchanged. `year`/`source` are INTERNAL-only and are omitted here.
+  const publicId = row.public_id ?? row.id;
   return {
-    id: row.id,
-    publicId: row.public_id ?? undefined,
+    id: publicId,
+    publicId,
     question: row.question,
     choices: row.choices,
     answer: row.answer,
@@ -57,8 +62,6 @@ function toQuestion(row: QuestionApiRow): Question {
     subject: row.subject ?? undefined,
     topic: row.topic ?? undefined,
     difficulty: row.difficulty ?? undefined,
-    source: row.source ?? undefined,
-    year: row.year ?? undefined,
     tags: row.tags ?? undefined,
     isActive: row.is_active,
     questionImageFiles: row.question_image_files ?? undefined,
@@ -67,14 +70,15 @@ function toQuestion(row: QuestionApiRow): Question {
 }
 
 function toQuestionSummary(row: QuestionSummaryApiRow): QuestionSummary {
+  // B1: expose only the public KVLE id; omit internal id and year.
+  const publicId = row.public_id ?? row.id;
   return {
-    id: row.id,
-    publicId: row.public_id ?? undefined,
+    id: publicId,
+    publicId,
     question: row.question,
     category: row.category,
     topic: row.topic ?? undefined,
     difficulty: row.difficulty ?? undefined,
-    year: row.year ?? undefined,
     isActive: row.is_active,
   };
 }

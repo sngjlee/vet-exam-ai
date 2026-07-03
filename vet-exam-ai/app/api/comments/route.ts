@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabase
     .from("comments")
-    .select("id, question_id, user_id, type, body_text, vote_score, reply_count, created_at", {
+    .select("id, question_public_id, user_id, type, body_text, vote_score, reply_count, created_at", {
       count: "exact",
     })
     .eq("status", "visible")
@@ -97,7 +97,9 @@ export async function GET(req: NextRequest) {
     typeCounts[item.value] = typeCountResults[index]?.count ?? 0;
   });
   const totalPages = Math.max(1, Math.ceil(total / COMMENTS_PAGE_SIZE));
-  const questionIds = Array.from(new Set(rows.map((row) => row.question_id)));
+  const questionIds = Array.from(
+    new Set(rows.map((row) => row.question_public_id).filter((v): v is string => Boolean(v))),
+  );
   const userIds = Array.from(
     new Set(rows.map((row) => row.user_id).filter((value): value is string => Boolean(value))),
   );
@@ -107,7 +109,7 @@ export async function GET(req: NextRequest) {
       ? supabase
           .from("questions")
           .select("id, public_id, question, category, topic")
-          .in("id", questionIds)
+          .in("public_id", questionIds)
       : Promise.resolve({ data: [], error: null }),
     userIds.length > 0
       ? supabase
@@ -124,16 +126,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: profilesRes.error.message }, { status: 500 });
   }
 
-  const questionById = new Map((questionsRes.data ?? []).map((question) => [question.id, question]));
+  const questionById = new Map(
+    (questionsRes.data ?? []).map((question) => [question.public_id ?? question.id, question]),
+  );
   const nicknameByUserId = new Map(
     (profilesRes.data ?? []).map((profile) => [profile.user_id, profile.nickname]),
   );
 
   const comments: CommentPreview[] = rows.map((row) => {
-    const question = questionById.get(row.question_id);
+    const question = questionById.get(row.question_public_id ?? "");
     return {
       id: row.id,
-      questionId: row.question_id,
+      questionId: row.question_public_id ?? "",
       userId: row.user_id,
       type: row.type,
       bodyText: row.body_text,
@@ -214,7 +218,7 @@ export async function POST(req: NextRequest) {
   if (parent_id) {
     const { data: parent, error: parentErr } = await supabase
       .from("comments")
-      .select("id, question_id, parent_id, status")
+      .select("id, question_public_id, parent_id, status")
       .eq("id", parent_id)
       .maybeSingle();
 
@@ -227,7 +231,7 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
-    if (parent.question_id !== question_id) {
+    if (parent.question_public_id !== question_id) {
       return NextResponse.json(
         { error: "Parent belongs to another question" },
         { status: 400 }
@@ -256,7 +260,8 @@ export async function POST(req: NextRequest) {
   const { data, error } = await supabase
     .from("comments")
     .insert({
-      question_id,
+      // B1: `question_id` from the request is now the KVLE public id.
+      question_public_id: question_id,
       user_id: user.id,
       parent_id: effectiveParentId,
       type: effectiveType,
@@ -265,7 +270,7 @@ export async function POST(req: NextRequest) {
       image_urls,
     })
     .select(
-      "id, question_id, user_id, parent_id, type, body_text, body_html, image_urls, status, created_at, updated_at, edit_count"
+      "id, question_public_id, user_id, parent_id, type, body_text, body_html, image_urls, status, created_at, updated_at, edit_count"
     )
     .single();
 

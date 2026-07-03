@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   const { data, error } = await admin
     .from("question_corrections")
     .select("proposed_by, proposed_change, status, resolved_at")
-    .eq("question_id", questionId);
+    .eq("question_public_id", questionId);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
