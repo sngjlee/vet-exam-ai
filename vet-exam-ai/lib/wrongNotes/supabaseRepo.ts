@@ -9,7 +9,8 @@ type WrongNoteInsert = Database["public"]["Tables"]["wrong_notes"]["Insert"];
 
 function rowToNote(row: WrongNoteRow): WrongAnswerNote {
   return {
-    questionId: row.question_id,
+    // B1: prefer the KVLE public id; fall back to legacy internal id for un-backfilled rows.
+    questionId: row.question_public_id ?? row.question_id ?? "",
     question: row.question_text,
     category: row.category,
     choices: row.choices,
@@ -46,7 +47,8 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
     const now = new Date().toISOString();
     const row: WrongNoteInsert = {
       user_id: this.userId,
-      question_id: note.questionId,
+      // B1: note.questionId is now the KVLE public id.
+      question_public_id: note.questionId,
       question_text: note.question,
       category: note.category,
       choices: note.choices,
@@ -63,7 +65,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
     };
     const { error } = await this.supabase
       .from("wrong_notes")
-      .upsert(row, { onConflict: "user_id,question_id" });
+      .upsert(row, { onConflict: "user_id,question_public_id" });
     if (error) logError("wrong_notes upsert failed:", error);
   }
 
@@ -72,7 +74,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
       .from("wrong_notes")
       .delete()
       .eq("user_id", this.userId)
-      .eq("question_id", questionId);
+      .eq("question_public_id", questionId);
     if (error) logError("wrong_notes delete failed:", error);
   }
 
@@ -118,7 +120,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
         next_review_at: nextReviewAt,
       })
       .eq("user_id", this.userId)
-      .eq("question_id", questionId);
+      .eq("question_public_id", questionId);
 
     if (error) logError("wrong_notes updateReview failed:", error);
   }

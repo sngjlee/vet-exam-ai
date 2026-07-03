@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
 
   type RelatedComment = {
     id: string;
-    question_id: string;
+    question_public_id: string | null;
     parent_id: string | null;
   };
 
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
   if (commentIds.length > 0) {
     const { data: comments, error: commentErr } = await supabase
       .from("comments")
-      .select("id, question_id, parent_id")
+      .select("id, question_public_id, parent_id")
       .in("id", commentIds);
 
     if (commentErr) {
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
       for (const c of comments ?? []) {
         relatedById.set(c.id, {
           id: c.id,
-          question_id: c.question_id,
+          question_public_id: c.question_public_id,
           parent_id: c.parent_id,
         });
       }

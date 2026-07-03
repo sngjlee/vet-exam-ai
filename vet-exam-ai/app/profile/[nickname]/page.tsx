@@ -60,7 +60,7 @@ export default async function ProfilePage({
   // 4. Comments page 1 (peek-21)
   const { data: commentsRaw } = await supabase
     .from("comments")
-    .select("id, question_id, body_text, vote_score, type, created_at")
+    .select("id, question_public_id, body_text, vote_score, type, created_at")
     .eq("user_id", profile.user_id)
     .eq("status", "visible")
     .order("created_at", { ascending: false })
@@ -71,20 +71,24 @@ export default async function ProfilePage({
   const pageComments = hasMore ? allComments.slice(0, PAGE_SIZE) : allComments;
 
   // 5. Question stems
-  const questionIds = Array.from(new Set(pageComments.map((c) => c.question_id)));
+  const questionIds = Array.from(
+    new Set(pageComments.map((c) => c.question_public_id).filter((v): v is string => Boolean(v))),
+  );
   const stemById = new Map<string, string>();
   if (questionIds.length > 0) {
     const { data: qs } = await supabase
       .from("questions")
-      .select("id, question")
-      .in("id", questionIds);
-    for (const q of qs ?? []) stemById.set(q.id, q.question);
+      .select("public_id, question")
+      .in("public_id", questionIds);
+    for (const q of qs ?? []) {
+      if (q.public_id) stemById.set(q.public_id, q.question);
+    }
   }
 
   const initialComments = pageComments.map((c) => ({
     id: c.id,
-    question_id: c.question_id,
-    question_stem_preview: (stemById.get(c.question_id) ?? "").slice(0, 80),
+    question_id: c.question_public_id ?? "",
+    question_stem_preview: (stemById.get(c.question_public_id ?? "") ?? "").slice(0, 80),
     body_text_preview: c.body_text.slice(0, 120),
     vote_score: c.vote_score,
     type: c.type,

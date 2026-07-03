@@ -163,7 +163,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       let rootQuery = supabase
         .from("comments")
         .select(commentSelect)
-        .eq("question_id", questionId)
+        .eq("question_public_id", questionId)
         .in("status", VISIBLE_STATUSES)
         .is("parent_id", null)
         .limit(ROOT_FETCH_LIMIT);
@@ -191,7 +191,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
         const repliesRes = await supabase
           .from("comments")
           .select(commentSelect)
-          .eq("question_id", questionId)
+          .eq("question_public_id", questionId)
           .in("status", VISIBLE_STATUSES)
           .in("parent_id", rootIds)
           .order("created_at", { ascending: true })
@@ -213,7 +213,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           .from("comments")
           .select(commentSelect)
           .eq("id", highlightCommentId)
-          .eq("question_id", questionId)
+          .eq("question_public_id", questionId)
           .in("status", VISIBLE_STATUSES)
           .maybeSingle();
         if (cancelled) return;
@@ -227,7 +227,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
                 .from("comments")
                 .select(commentSelect)
                 .eq("id", highlighted.parent_id)
-                .eq("question_id", questionId)
+                .eq("question_public_id", questionId)
                 .in("status", VISIBLE_STATUSES)
                 .maybeSingle();
               if (cancelled) return;

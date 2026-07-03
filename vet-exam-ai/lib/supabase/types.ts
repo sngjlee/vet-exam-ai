@@ -117,7 +117,8 @@ export interface Database {
           id: string;           // uuid
           user_id: string;      // uuid — references profiles.id
           session_id: string;   // uuid — client-generated per quiz session
-          question_id: string;
+          question_id: string | null;         // legacy internal id — nullable during B1 cutover, dropped in Phase 3
+          question_public_id: string | null;  // KVLE public id — canonical external key (B1)
           category: string;
           selected_answer: string;
           correct_answer: string;
@@ -128,7 +129,8 @@ export interface Database {
           id?: string;
           user_id: string;
           session_id: string;
-          question_id: string;
+          question_id?: string | null;
+          question_public_id?: string | null;
           category: string;
           selected_answer: string;
           correct_answer: string;
@@ -182,7 +184,8 @@ export interface Database {
         Row: {
           id: string;           // uuid
           user_id: string;      // uuid — references profiles.id
-          question_id: string;  // references questions.id
+          question_id: string | null;          // legacy internal id — nullable during B1 cutover
+          question_public_id: string | null;   // KVLE public id — canonical key (B1); FK-less, best-effort
           question_text: string;
           category: string;
           choices: string[];
@@ -197,7 +200,8 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
-          question_id: string;
+          question_id?: string | null;
+          question_public_id?: string | null;
           question_text: string;
           category: string;
           choices: string[];
@@ -289,7 +293,8 @@ export interface Database {
       comments: {
         Row: {
           id: string;
-          question_id: string;
+          question_id: string | null;
+          question_public_id: string | null;
           user_id: string | null;
           parent_id: string | null;
           type: Database["public"]["Enums"]["comment_type"];
@@ -310,7 +315,8 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          question_id: string;
+          question_id?: string | null;
+          question_public_id?: string | null;
           user_id?: string | null;
           parent_id?: string | null;
           type: Database["public"]["Enums"]["comment_type"];
@@ -398,14 +404,16 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          question_id: string;
+          question_id: string | null;
+          question_public_id: string | null;
           comment_id: string;
           created_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
-          question_id: string;
+          question_id?: string | null;
+          question_public_id?: string | null;
           comment_id: string;
           created_at?: string;
         };
@@ -498,7 +506,8 @@ export interface Database {
       question_corrections: {
         Row: {
           id: string;
-          question_id: string;
+          question_id: string | null;
+          question_public_id: string | null;
           proposed_by: string | null;
           proposed_change: Record<string, unknown>;
           status: Database["public"]["Enums"]["correction_status"];
@@ -510,7 +519,8 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          question_id: string;
+          question_id?: string | null;
+          question_public_id?: string | null;
           proposed_by?: string | null;
           proposed_change: Record<string, unknown>;
           status?: Database["public"]["Enums"]["correction_status"];

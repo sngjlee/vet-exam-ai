@@ -15,7 +15,8 @@ export class SupabaseAttemptsRepository {
     const row: AttemptInsert = {
       user_id: this.userId,
       session_id: payload.sessionId,
-      question_id: payload.questionId,
+      // B1: payload.questionId is now the KVLE public id; store in question_public_id.
+      question_public_id: payload.questionId,
       category: payload.category,
       selected_answer: payload.selectedAnswer,
       correct_answer: payload.correctAnswer,

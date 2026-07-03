@@ -106,7 +106,8 @@ export async function GET(req: NextRequest) {
   }
 
   const questionHits: SearchHit[] = rows.map((r) => ({
-    id:        r.id,
+    // B1: never surface the internal id to the client — use the public KVLE id.
+    id:        r.public_id,
     publicId:  r.public_id,
     question:  r.question,
     category:  r.category,

@@ -18,10 +18,11 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = await createClient();
+  // B1: `ids` are KVLE public ids; count against question_public_id.
   const { data, error } = await supabase
     .from("comments")
-    .select("question_id")
-    .in("question_id", ids);
+    .select("question_public_id")
+    .in("question_public_id", ids);
 
   if (error) {
     return NextResponse.json({}, { status: 500 });
@@ -29,7 +30,8 @@ export async function GET(req: NextRequest) {
 
   const counts: Record<string, number> = Object.fromEntries(ids.map((id) => [id, 0]));
   for (const row of data ?? []) {
-    counts[row.question_id] = (counts[row.question_id] ?? 0) + 1;
+    if (!row.question_public_id) continue;
+    counts[row.question_public_id] = (counts[row.question_public_id] ?? 0) + 1;
   }
   return NextResponse.json(counts);
 }

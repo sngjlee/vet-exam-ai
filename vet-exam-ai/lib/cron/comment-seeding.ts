@@ -296,36 +296,59 @@ async function ensureSeedAccounts(admin: AdminClient) {
 export async function runDailyCommentSeeding(admin: AdminClient) {
   const limit = parseDailyLimit();
   const authorIds = await ensureSeedAccounts(admin);
-  const questionIds = [...new Set(seedComments.map((comment) => comment.questionId))];
+  const internalIds = [...new Set(seedComments.map((comment) => comment.questionId))];
+
+  // B1: seed data carries internal question ids; resolve them to KVLE public ids
+  // so seeded comments live in the same identifier space as user comments.
+  const { data: questionRows, error: questionError } = await admin
+    .from("questions")
+    .select("id, public_id")
+    .in("id", internalIds);
+  if (questionError) throw questionError;
+
+  const publicIdByInternal = new Map<string, string>();
+  for (const q of questionRows ?? []) {
+    if (q.public_id) publicIdByInternal.set(q.id, q.public_id);
+  }
+
+  // Only seed comments whose question resolved to a public id.
+  const resolvable = seedComments.filter((comment) =>
+    publicIdByInternal.has(comment.questionId),
+  );
+  const questionPublicIds = [
+    ...new Set(resolvable.map((comment) => publicIdByInternal.get(comment.questionId)!)),
+  ];
 
   const { data: existingRows, error: existingError } = await admin
     .from("comments")
-    .select("question_id, body_text")
-    .in("question_id", questionIds);
+    .select("question_public_id, body_text")
+    .in("question_public_id", questionPublicIds);
   if (existingError) throw existingError;
 
   const existing = new Set(
-    (existingRows ?? []).map((row) => `${row.question_id}\n${row.body_text}`),
+    (existingRows ?? []).map((row) => `${row.question_public_id}\n${row.body_text}`),
   );
-  const existingSeedCount = seedComments.filter((comment) =>
-    existing.has(`${comment.questionId}\n${comment.bodyText}`),
+  const keyOf = (comment: (typeof seedComments)[number]) =>
+    `${publicIdByInternal.get(comment.questionId)}\n${comment.bodyText}`;
+  const existingSeedCount = resolvable.filter((comment) =>
+    existing.has(keyOf(comment)),
   ).length;
 
-  const pending = seedComments
-    .filter((comment) => !existing.has(`${comment.questionId}\n${comment.bodyText}`))
+  const pending = resolvable
+    .filter((comment) => !existing.has(keyOf(comment)))
     .slice(0, limit);
 
   if (pending.length === 0) {
     return {
       ok: true,
       inserted: 0,
-      remaining: seedComments.length - existingSeedCount,
+      remaining: resolvable.length - existingSeedCount,
       limit,
     };
   }
 
   const rows = pending.map((comment) => ({
-    question_id: comment.questionId,
+    question_public_id: publicIdByInternal.get(comment.questionId)!,
     user_id: authorIds[comment.author],
     parent_id: null,
     type: comment.type,
@@ -338,13 +361,13 @@ export async function runDailyCommentSeeding(admin: AdminClient) {
   const { data, error } = await admin
     .from("comments")
     .insert(rows)
-    .select("id, question_id, type");
+    .select("id, question_public_id, type");
   if (error) throw error;
 
   return {
     ok: true,
     inserted: data?.length ?? 0,
-    remaining: seedComments.length - existingSeedCount - (data?.length ?? 0),
+    remaining: resolvable.length - existingSeedCount - (data?.length ?? 0),
     limit,
   };
 }

@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     .from("comment_pins")
     .select("comment_id")
     .eq("user_id", user.id)
-    .eq("question_id", questionId)
+    .eq("question_public_id", questionId)
     .maybeSingle();
 
   if (error) {
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     .from("comment_pins")
     .select("id, comment_id")
     .eq("user_id", user.id)
-    .eq("question_id", parsed.question_id)
+    .eq("question_public_id", parsed.question_id)
     .maybeSingle();
 
   if (existingErr) {
@@ -99,10 +99,11 @@ export async function POST(req: NextRequest) {
     .upsert(
       {
         user_id: user.id,
-        question_id: parsed.question_id,
+        // B1: parsed.question_id is the KVLE public id.
+        question_public_id: parsed.question_id,
         comment_id: parsed.comment_id,
       },
-      { onConflict: "user_id,question_id" },
+      { onConflict: "user_id,question_public_id" },
     );
 
   if (upsertErr) {

@@ -39,7 +39,10 @@ export async function migrateGuestNotes(userId: string): Promise<void> {
 
   const rows: WrongNoteInsert[] = guestNotes.map((note) => ({
     user_id: userId,
-    question_id: note.questionId,
+    // B1: note.questionId is the KVLE public id for notes created after cutover.
+    // Legacy guest notes may still carry an internal id — stored as-is (no FK on
+    // wrong_notes), display stays correct via the denormalized snapshot.
+    question_public_id: note.questionId,
     question_text: note.question,
     category: note.category,
     choices: note.choices,
@@ -50,7 +53,7 @@ export async function migrateGuestNotes(userId: string): Promise<void> {
 
   const { error } = await supabase
     .from("wrong_notes")
-    .upsert(rows, { onConflict: "user_id,question_id" });
+    .upsert(rows, { onConflict: "user_id,question_public_id" });
 
   if (error) {
     console.error(
