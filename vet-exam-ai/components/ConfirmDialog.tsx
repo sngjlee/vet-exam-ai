@@ -68,6 +68,7 @@ export default function ConfirmDialog({
           style={{
             position: "relative",
             borderRadius: "var(--radius-md)",
+            borderTop: "3px solid var(--wrong)",
             padding: "1.5rem",
             background: "var(--surface)",
             boxShadow: "var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.06)",
