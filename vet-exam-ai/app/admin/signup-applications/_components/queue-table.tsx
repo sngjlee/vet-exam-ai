@@ -59,7 +59,7 @@ export function QueueTable({ rows }: { rows: Row[] }) {
                   style={{
                     display:      "inline-block",
                     padding:      "2px 8px",
-                    borderRadius: 999,
+                    borderRadius: "var(--radius-full)",
                     fontSize:     11,
                     background:   r.applicant_type === "passer" ? "var(--amber-dim)" : "var(--teal-dim)",
                     color:        r.applicant_type === "passer" ? "var(--amber)"     : "var(--teal)",

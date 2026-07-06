@@ -94,7 +94,7 @@ export function ApplicationDetailDrawer({
       </dl>
 
       {row.free_note && (
-        <div style={{ background: "var(--surface-raised)", padding: 12, borderRadius: 8, fontSize: 13, marginBottom: 16 }}>
+        <div style={{ background: "var(--surface-raised)", padding: 12, borderRadius: "var(--radius-sm)", fontSize: 13, marginBottom: 16 }}>
           <div style={{ fontWeight: 600, marginBottom: 4 }}>자유 메모</div>
           <div style={{ whiteSpace: "pre-wrap" }}>{row.free_note}</div>
         </div>
@@ -105,12 +105,12 @@ export function ApplicationDetailDrawer({
         {row.proof_kind === "image" ? (
           imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageUrl} alt="증빙 이미지" style={{ width: "100%", borderRadius: 8 }} />
+            <img src={imageUrl} alt="증빙 이미지" style={{ width: "100%", borderRadius: "var(--radius-sm)" }} />
           ) : (
             <div style={{ fontSize: 12, color: "var(--text-faint)" }}>이미지 로딩 중…</div>
           )
         ) : (
-          <div style={{ background: "var(--surface-raised)", padding: 12, borderRadius: 8, fontSize: 13, whiteSpace: "pre-wrap" }}>
+          <div style={{ background: "var(--surface-raised)", padding: 12, borderRadius: "var(--radius-sm)", fontSize: 13, whiteSpace: "pre-wrap" }}>
             {row.proof_text ?? "—"}
           </div>
         )}

@@ -42,7 +42,7 @@ export function UsersFilters({
   const inputStyle: React.CSSProperties = {
     background:   "var(--surface)",
     border:       "1px solid var(--rule)",
-    borderRadius: 6,
+    borderRadius: "var(--radius-sm)",
     padding:      "6px 10px",
     fontSize:     13,
     color:        "var(--text)",

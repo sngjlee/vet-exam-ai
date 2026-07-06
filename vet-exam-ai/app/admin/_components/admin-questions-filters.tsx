@@ -47,7 +47,7 @@ export function AdminQuestionsFilters({
     background: "var(--bg)",
     border: "1px solid var(--rule)",
     color: "var(--text)",
-    borderRadius: "6px",
+    borderRadius: "var(--radius-sm)",
     padding: "6px 10px",
     fontSize: "13px",
     minWidth: "120px",
@@ -56,7 +56,7 @@ export function AdminQuestionsFilters({
   return (
     <div
       className="rounded-lg p-3 mb-4 flex flex-wrap items-center gap-2"
-      style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)" }}
+      style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)", boxShadow: "var(--shadow-sm)" }}
     >
       <div className="relative flex-1 min-w-[200px]">
         <Search size={13} style={{ position: "absolute", left: 10, top: 9, color: "var(--text-muted)" }} />
@@ -179,7 +179,7 @@ export function AdminQuestionsFilters({
           color: "var(--text-muted)",
           background: "transparent",
           border: "1px solid var(--rule)",
-          borderRadius: 6,
+          borderRadius: "var(--radius-sm)",
           padding: "6px 10px",
           cursor: "pointer",
         }}

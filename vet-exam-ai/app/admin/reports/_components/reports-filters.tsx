@@ -35,7 +35,7 @@ export function ReportsFilters({
     background: "var(--bg)",
     border: "1px solid var(--rule)",
     color: "var(--text)",
-    borderRadius: 6,
+    borderRadius: "var(--radius-sm)",
     padding: "6px 10px",
     fontSize: 13,
     minWidth: 120,
@@ -44,7 +44,7 @@ export function ReportsFilters({
   return (
     <div
       className="rounded-lg p-3 mb-4 flex flex-wrap items-center gap-2"
-      style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)" }}
+      style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)", boxShadow: "var(--shadow-sm)" }}
     >
       <select
         value={current.status}
@@ -78,7 +78,7 @@ export function ReportsFilters({
           color: "var(--text-muted)",
           background: "transparent",
           border: "1px solid var(--rule)",
-          borderRadius: 6,
+          borderRadius: "var(--radius-sm)",
           padding: "6px 10px",
           cursor: "pointer",
         }}

@@ -83,7 +83,7 @@ export function AdminQuestionsTable({ rows }: { rows: AdminQuestionRow[] }) {
     return (
       <div
         className="rounded-lg p-10 text-center text-sm"
-        style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)", color: "var(--text-muted)" }}
+        style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)", color: "var(--text-muted)", boxShadow: "var(--shadow-sm)" }}
       >
         조건에 맞는 문제가 없습니다.{" "}
         <Link href="/admin/questions" style={{ color: "var(--teal)", textDecoration: "underline" }}>
@@ -116,7 +116,7 @@ export function AdminQuestionsTable({ rows }: { rows: AdminQuestionRow[] }) {
   return (
     <div
       className="overflow-x-auto rounded-lg"
-      style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)" }}
+      style={{ background: "var(--surface-raised)", border: "1px solid var(--rule)", boxShadow: "var(--shadow-sm)" }}
     >
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
@@ -191,7 +191,7 @@ export function AdminQuestionsTable({ rows }: { rows: AdminQuestionRow[] }) {
                     justifyContent: "center",
                     width: 28,
                     height: 28,
-                    borderRadius: 6,
+                    borderRadius: "var(--radius-sm)",
                     color: "var(--teal)",
                   }}
                 >

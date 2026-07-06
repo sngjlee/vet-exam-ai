@@ -23,7 +23,7 @@ export function CorrectionsPager({
     gap: 4,
     padding: "6px 12px",
     border: "1px solid var(--rule)",
-    borderRadius: 6,
+    borderRadius: "var(--radius-sm)",
     fontSize: 13,
     color: "var(--text)",
     textDecoration: "none",
