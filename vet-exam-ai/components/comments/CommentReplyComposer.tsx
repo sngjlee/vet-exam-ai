@@ -138,7 +138,7 @@ export default function CommentReplyComposer(props: Props) {
         padding: "10px 12px",
         background: "var(--bg)",
         border: "1px solid var(--border)",
-        borderRadius: 10,
+        borderRadius: "var(--radius-md)",
       }}
     >
       <textarea
@@ -151,7 +151,7 @@ export default function CommentReplyComposer(props: Props) {
         style={{
           background: "var(--surface)",
           border: "1px solid var(--border)",
-          borderRadius: 8,
+          borderRadius: "var(--radius-sm)",
           padding: "8px 10px",
           fontSize: 13,
           fontFamily: "inherit",
@@ -188,7 +188,7 @@ export default function CommentReplyComposer(props: Props) {
               border: "1px solid var(--border)",
               color: "var(--text-muted)",
               padding: "6px 14px",
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               fontSize: 12,
               fontWeight: 600,
               cursor: submitting ? "not-allowed" : "pointer",
@@ -206,7 +206,7 @@ export default function CommentReplyComposer(props: Props) {
               color: canSubmit ? "#061218" : "var(--text-faint)",
               border: "none",
               padding: "6px 16px",
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               fontSize: 12,
               fontWeight: 700,
               cursor: canSubmit ? "pointer" : "not-allowed",
