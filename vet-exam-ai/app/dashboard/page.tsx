@@ -75,10 +75,10 @@ function ReviewStatusCard({
     <div style={{
       background: "var(--surface)",
       border: "1px solid var(--border)",
-      borderTop: "3px solid var(--teal)",
-      borderRadius: 12,
-      padding: 26,
-      marginBottom: 22,
+      borderRadius: "var(--radius-lg)",
+      padding: "var(--space-6)",
+      marginBottom: "var(--space-5)",
+      boxShadow: "var(--shadow-sm)",
     }}>
       <div style={{
         display: "grid",
@@ -212,9 +212,9 @@ function StatCard({
     <div style={{
       background: "var(--surface)",
       border: "1px solid var(--border)",
-      borderTop: accent ? "2px solid var(--teal)" : "1px solid var(--border)",
-      borderRadius: 10,
-      padding: "18px 18px",
+      borderRadius: "var(--radius-md)",
+      padding: "var(--space-4)",
+      boxShadow: "var(--shadow-sm)",
     }}>
       <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0,
         color: "var(--text-faint)", marginBottom: 8 }}>{label}</div>
@@ -517,9 +517,10 @@ function StudyFirstPanel({
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",
-        borderRadius: 12,
-        padding: 18,
-        marginBottom: 22,
+        borderRadius: "var(--radius-lg)",
+        padding: "var(--space-5)",
+        marginBottom: "var(--space-5)",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <div style={{ marginBottom: 16 }}>
@@ -674,9 +675,10 @@ function TodayStarterChecklist({
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",
-        borderRadius: 12,
-        padding: 18,
-        marginBottom: 22,
+        borderRadius: "var(--radius-lg)",
+        padding: "var(--space-5)",
+        marginBottom: "var(--space-5)",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
@@ -887,7 +889,7 @@ export default function DashboardPage() {
       {/* ── 2-col: subject bars + CTAs ── */}
       <div className="dashboard-2col" style={{ marginBottom: 22 }}>
         <div style={{ background: "var(--surface)", border: "1px solid var(--border)",
-          borderRadius: 12, padding: 22 }}>
+          borderRadius: "var(--radius-lg)", padding: "var(--space-6)", boxShadow: "var(--shadow-sm)" }}>
           <div style={{ display: "flex", justifyContent: "space-between",
             alignItems: "baseline", marginBottom: 16 }}>
             <div>
@@ -913,7 +915,7 @@ export default function DashboardPage() {
             color: "#061218", borderRadius: 12, padding: "16px 18px",
             display: "flex", justifyContent: "space-between", alignItems: "center",
             gap: 14, textDecoration: "none",
-            boxShadow: "0 8px 20px rgba(30,167,187,0.18), inset 0 1px 0 rgba(255,255,255,0.2)",
+            boxShadow: "var(--shadow-teal)",
           }}>
             <div>
               <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.14em",
@@ -970,7 +972,7 @@ export default function DashboardPage() {
 
       {/* ── Week at a glance ── */}
       <div style={{ background: "var(--surface)", border: "1px solid var(--border)",
-        borderRadius: 12, padding: 22 }}>
+        borderRadius: "var(--radius-lg)", padding: "var(--space-6)", boxShadow: "var(--shadow-sm)" }}>
         <span className="kvle-label" style={{ marginBottom: 4, fontSize: 13 }}>최근 7일</span>
         <WeekChart recentAttempts={recentAttempts} />
       </div>
