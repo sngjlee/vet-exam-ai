@@ -78,7 +78,7 @@ export default function DDayPlanWidget() {
         background: "var(--surface)",
         border: "1px solid var(--border)",
         borderTop: "3px solid var(--wrong)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         padding: 22,
         marginBottom: 22,
         gap: 24,

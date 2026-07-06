@@ -71,7 +71,7 @@ export default function QuestionImageGallery({ files, altPrefix }: Props) {
               style={{
                 padding: 0,
                 border: "1px solid var(--border)",
-                borderRadius: 8,
+                borderRadius: "var(--radius-sm)",
                 overflow: "hidden",
                 background: "var(--surface)",
                 cursor: "zoom-in",
