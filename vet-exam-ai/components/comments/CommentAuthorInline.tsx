@@ -58,7 +58,7 @@ export default function CommentAuthorInline({
               alignItems: "center",
               gap: 3,
               padding: `1px ${padX}px`,
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               background: meta.background,
               color: meta.color,
               fontSize: fontSize - 1,

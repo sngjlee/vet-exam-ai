@@ -81,7 +81,7 @@ export default function CommentMenuOverflow({
             marginTop: 4,
             background: "var(--bg)",
             border: "1px solid var(--border)",
-            borderRadius: 8,
+            borderRadius: "var(--radius-sm)",
             boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
             minWidth: 120,
             zIndex: 20,

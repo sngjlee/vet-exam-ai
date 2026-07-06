@@ -914,7 +914,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
               style={{
                 height: 64,
                 background: "var(--surface-raised)",
-                borderRadius: 10,
+                borderRadius: "var(--radius-md)",
                 opacity: 0.4,
               }}
             />
@@ -928,7 +928,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             padding: "16px 14px",
             background: "var(--wrong-dim)",
             border: "1px solid rgba(192,74,58,0.3)",
-            borderRadius: 10,
+            borderRadius: "var(--radius-md)",
             fontSize: 13,
             color: "var(--text)",
             display: "flex",
@@ -946,7 +946,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
               border: "1px solid var(--border)",
               color: "var(--text)",
               padding: "4px 12px",
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               fontSize: 11,
               fontWeight: 600,
               cursor: "pointer",
@@ -965,7 +965,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
               style={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
-                borderRadius: 12,
+                borderRadius: "var(--radius-md)",
                 padding: 12,
                 display: "flex",
                 gap: 8,
@@ -987,7 +987,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
                     aria-pressed={active}
                     style={{
                       minHeight: 34,
-                      borderRadius: 999,
+                      borderRadius: "var(--radius-full)",
                       padding: "7px 11px",
                       display: "inline-flex",
                       alignItems: "center",
@@ -1022,7 +1022,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
               style={{
                 background: "var(--teal-dim)",
                 border: "1px solid var(--teal-border)",
-                borderRadius: 12,
+                borderRadius: "var(--radius-md)",
                 padding: "12px 14px 14px",
                 display: "flex",
                 flexDirection: "column",
@@ -1114,7 +1114,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
                 padding: "14px 16px",
                 background: "var(--bg)",
                 border: "1px dashed var(--border)",
-                borderRadius: 10,
+                borderRadius: "var(--radius-md)",
                 fontSize: 13,
                 color: "var(--text-muted)",
                 textAlign: "center",
@@ -1155,7 +1155,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
             background: "var(--text)",
             color: "var(--bg)",
             padding: "10px 18px",
-            borderRadius: 999,
+            borderRadius: "var(--radius-full)",
             fontSize: 13,
             fontWeight: 600,
             boxShadow: "0 8px 24px rgba(0,0,0,0.18)",

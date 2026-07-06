@@ -73,7 +73,7 @@ export default function CommentSortToggle({ value, onChange }: Props) {
             marginTop: 4,
             background: "var(--bg)",
             border: "1px solid var(--border)",
-            borderRadius: 8,
+            borderRadius: "var(--radius-sm)",
             boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
             minWidth: 100,
             zIndex: 10,
