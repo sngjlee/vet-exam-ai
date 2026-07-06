@@ -121,7 +121,7 @@ export default function GuidePage() {
             background: "var(--surface)",
             border: "1px solid var(--border)",
             borderTop: "3px solid var(--teal)",
-            borderRadius: 12,
+            borderRadius: "var(--radius-md)",
             padding: 28,
           }}
         >
@@ -160,7 +160,7 @@ export default function GuidePage() {
           style={{
             background: "var(--surface-raised)",
             border: "1px solid var(--border)",
-            borderRadius: 12,
+            borderRadius: "var(--radius-md)",
             padding: 22,
             display: "flex",
             flexDirection: "column",
@@ -172,7 +172,7 @@ export default function GuidePage() {
             style={{
               width: 42,
               height: 42,
-              borderRadius: 10,
+              borderRadius: "var(--radius-md)",
               display: "grid",
               placeItems: "center",
               color: "var(--teal)",
@@ -212,7 +212,7 @@ export default function GuidePage() {
                 justifyContent: "space-between",
                 gap: 18,
                 padding: 20,
-                borderRadius: 10,
+                borderRadius: "var(--radius-md)",
                 border: `1px solid ${border}`,
                 background: bg,
                 color: "var(--text)",
@@ -223,7 +223,7 @@ export default function GuidePage() {
                 style={{
                   width: 34,
                   height: 34,
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-sm)",
                   display: "grid",
                   placeItems: "center",
                   color: tone,
@@ -249,7 +249,7 @@ export default function GuidePage() {
           marginTop: 24,
           background: "var(--surface)",
           border: "1px solid var(--border)",
-          borderRadius: 12,
+          borderRadius: "var(--radius-md)",
           padding: 24,
         }}
       >
@@ -279,7 +279,7 @@ export default function GuidePage() {
                 alignItems: "start",
                 minHeight: 92,
                 padding: 14,
-                borderRadius: 8,
+                borderRadius: "var(--radius-sm)",
                 border: "1px solid var(--border)",
                 background: "var(--bg)",
                 color: "var(--text)",
@@ -290,7 +290,7 @@ export default function GuidePage() {
                 style={{
                   width: 34,
                   height: 34,
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-sm)",
                   display: "grid",
                   placeItems: "center",
                   color: "var(--teal)",
@@ -324,7 +324,7 @@ export default function GuidePage() {
             style={{
               background: "var(--surface)",
               border: "1px solid var(--border)",
-              borderRadius: 10,
+              borderRadius: "var(--radius-md)",
               padding: 20,
             }}
           >
@@ -345,7 +345,7 @@ export default function GuidePage() {
           marginTop: 24,
           background: "var(--surface)",
           border: "1px solid var(--border)",
-          borderRadius: 12,
+          borderRadius: "var(--radius-md)",
           padding: 22,
           display: "flex",
           alignItems: "center",
