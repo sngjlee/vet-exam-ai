@@ -77,7 +77,7 @@ export default function ProfileCommentList({
             color: "var(--text-faint)",
             fontSize: 13,
             border: "1px dashed var(--border)",
-            borderRadius: 10,
+            borderRadius: "var(--radius-md)",
           }}
         >
           아직 작성한 댓글이 없습니다.
@@ -103,7 +103,7 @@ export default function ProfileCommentList({
               display: "block",
               padding: "12px 14px",
               border: "1px solid var(--border)",
-              borderRadius: 10,
+              borderRadius: "var(--radius-md)",
               background: "var(--surface)",
               textDecoration: "none",
               color: "var(--text)",
@@ -157,7 +157,7 @@ export default function ProfileCommentList({
             padding: "10px",
             background: "var(--surface-raised)",
             border: "1px solid var(--border)",
-            borderRadius: 10,
+            borderRadius: "var(--radius-md)",
             color: "var(--text-muted)",
             fontSize: 13,
             fontWeight: 600,

@@ -119,8 +119,9 @@ export default async function ProfilePage({
         style={{
           background: "var(--surface)",
           border: "1px solid var(--border)",
-          borderRadius: 12,
+          borderRadius: "var(--radius-md)",
           padding: 22,
+          boxShadow: "var(--shadow-sm)",
         }}
       >
         {isOwner ? (
@@ -214,9 +215,9 @@ function StatCard({
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",
-        borderTop: "3px solid var(--teal)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         padding: "1.35rem",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <span
