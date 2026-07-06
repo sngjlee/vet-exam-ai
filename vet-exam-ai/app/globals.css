@@ -114,21 +114,33 @@ p, h1, h2, h3, h4, button, label, span, td, th {
 }
 
 @layer utilities {
-  /* Cards */
+  /* Cards — default: elevation-based, no accent stripe */
   .kvle-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-top: 3px solid var(--teal);
-    border-radius: 12px;
-    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-6);
   }
 
   .kvle-card-raised {
     background: var(--surface-raised);
     border: 1px solid var(--border);
-    border-top: 3px solid var(--teal);
-    border-radius: 12px;
-    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-6);
+  }
+
+  /* Primary card — reserved for the single most important card per screen.
+     Refined teal signal via a soft top wash, not a heavy stripe. */
+  .kvle-card-primary {
+    position: relative;
+    background: var(--surface);
+    background-image: linear-gradient(180deg, var(--teal-dim), transparent 96px);
+    border: 1px solid var(--teal-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--space-6);
   }
 
   /* Footer links — muted text with CSS hover, no JS handlers (Server Component safe) */
