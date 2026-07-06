@@ -98,7 +98,7 @@ export default function QuestionDetailPage() {
             padding: "20px 18px",
             background: "var(--wrong-dim)",
             border: "1px solid rgba(192,74,58,0.3)",
-            borderRadius: 12,
+            borderRadius: "var(--radius-md)",
             color: "var(--text)",
             fontSize: 14,
           }}
@@ -113,7 +113,7 @@ export default function QuestionDetailPage() {
             padding: "20px 18px",
             background: "var(--bg)",
             border: "1px dashed var(--border)",
-            borderRadius: 12,
+            borderRadius: "var(--radius-md)",
             color: "var(--text-muted)",
             fontSize: 14,
             textAlign: "center",
@@ -149,7 +149,7 @@ export default function QuestionDetailPage() {
             <div
               style={{
                 padding: "12px 14px",
-                borderRadius: 10,
+                borderRadius: "var(--radius-md)",
                 border: "1px solid var(--teal-border)",
                 background: "var(--teal-dim)",
               }}

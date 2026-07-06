@@ -60,7 +60,7 @@ function SubjectChip({ subject }: { subject: string }) {
     <span style={{
       display: "inline-flex", alignItems: "center",
       background: `${color}18`, border: `1px solid ${color}40`,
-      borderRadius: 999, padding: "2px 8px",
+      borderRadius: "var(--radius-full)", padding: "2px 8px",
       fontSize: 10, fontWeight: 700, color, letterSpacing: "0.04em",
       flexShrink: 0,
     }}>
@@ -80,7 +80,7 @@ function DueBadge({ due, accent }: { due: number; accent: string }) {
                 `+${due}`;
   return (
     <div style={{
-      width: 36, height: 36, flexShrink: 0, borderRadius: 8,
+      width: 36, height: 36, flexShrink: 0, borderRadius: "var(--radius-sm)",
       background: "var(--surface-raised)", display: "grid", placeItems: "center",
       fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700,
       color: accent, border: `1px solid ${borderColor}`,
@@ -250,7 +250,7 @@ export default function ReviewPage() {
               <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{
-                    width: 8, height: 8, borderRadius: 999,
+                    width: 8, height: 8, borderRadius: "var(--radius-full)",
                     background: group.accent, display: "inline-block",
                   }} />
                   <span style={{
@@ -270,8 +270,9 @@ export default function ReviewPage() {
               <div style={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
-                borderRadius: 12,
+                borderRadius: "var(--radius-md)",
                 overflow: "hidden",
+                boxShadow: "var(--shadow-sm)",
               }}>
                 {items.map((q, i) => (
                   <div
@@ -313,14 +314,14 @@ export default function ReviewPage() {
             onClick={startSession}
             style={{
               background: "var(--teal)", color: "#061218", border: "none",
-              padding: "14px 22px", borderRadius: 999, fontSize: 14, fontWeight: 700,
+              padding: "14px 22px", borderRadius: "var(--radius-full)", fontSize: 14, fontWeight: 700,
               cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 12,
               marginTop: 8, boxShadow: "0 8px 20px rgba(30,167,187,0.2)",
             }}
           >
             복습 시작 ({Math.min(actionableCount, MAX_REVIEW)}문제)
             <span style={{
-              width: 28, height: 28, borderRadius: 999,
+              width: 28, height: 28, borderRadius: "var(--radius-full)",
               background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center",
             }}>
               <ChevronRight size={14} />

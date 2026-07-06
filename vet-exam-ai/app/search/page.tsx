@@ -210,11 +210,12 @@ function SearchPage() {
           style={{
             background:    "var(--surface)",
             border:        "1px solid var(--border)",
-            borderRadius:  12,
+            borderRadius:  "var(--radius-md)",
             padding:       16,
             display:       "flex",
             flexDirection: "column",
             gap:           12,
+            boxShadow:     "var(--shadow-sm)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-muted)" }}>
@@ -388,8 +389,9 @@ function ResultList({
       style={{
         background:    "var(--surface)",
         border:        "1px solid var(--border)",
-        borderRadius:  12,
+        borderRadius:  "var(--radius-md)",
         overflow:      "hidden",
+        boxShadow:     "var(--shadow-sm)",
       }}
     >
       {items.map((it, i) => {
@@ -435,7 +437,7 @@ function ResultList({
                 style={{
                   fontSize:      10,
                   padding:       "2px 8px",
-                  borderRadius:  999,
+                  borderRadius:  "var(--radius-full)",
                   background:    "var(--surface-raised)",
                   border:        "1px solid var(--border)",
                   color:         "var(--text-muted)",
@@ -449,7 +451,7 @@ function ResultList({
                 style={{
                   fontSize:      10,
                   padding:       "2px 8px",
-                  borderRadius:  999,
+                  borderRadius:  "var(--radius-full)",
                   background:    "var(--teal-dim)",
                   border:        "1px solid var(--teal-border)",
                   color:         "var(--teal)",
@@ -586,7 +588,7 @@ function ChipToggle({
       style={{
         padding:      "8px 14px",
         minHeight:    36,
-        borderRadius: 999,
+        borderRadius: "var(--radius-full)",
         fontSize:     12,
         fontWeight:   600,
         cursor:       "pointer",

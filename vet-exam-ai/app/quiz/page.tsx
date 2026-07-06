@@ -137,7 +137,7 @@ function StudyModeShortcuts() {
             alignItems: "center",
             gap: 12,
             padding: "14px 16px",
-            borderRadius: 12,
+            borderRadius: "var(--radius-md)",
             border: "1px solid var(--border)",
             background: "var(--surface)",
             color: "var(--text)",
@@ -148,7 +148,7 @@ function StudyModeShortcuts() {
             style={{
               width: 34,
               height: 34,
-              borderRadius: 8,
+              borderRadius: "var(--radius-sm)",
               display: "grid",
               placeItems: "center",
               background: "var(--surface-raised)",
@@ -195,7 +195,7 @@ function MiniMockEntry({
         background: "var(--surface)",
         border: "1px solid var(--border)",
         borderTop: "3px solid var(--blue)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         padding: 20,
         display: "grid",
         gridTemplateColumns: "minmax(0, 1fr) auto",
@@ -231,7 +231,7 @@ function MiniMockEntry({
               display: "inline-flex",
               alignItems: "center",
               gap: 5,
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               padding: "5px 9px",
               background: "var(--surface-raised)",
               color: "var(--text-muted)",
@@ -245,7 +245,7 @@ function MiniMockEntry({
           </span>
           <span
             style={{
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               padding: "5px 9px",
               background: "var(--blue-dim)",
               color: "var(--blue)",
@@ -270,7 +270,7 @@ function MiniMockEntry({
           gap: 10,
           minHeight: 46,
           whiteSpace: "nowrap",
-          borderRadius: 999,
+          borderRadius: "var(--radius-full)",
           padding: "10px 18px",
           border: "none",
           background: "var(--blue)",
@@ -299,8 +299,9 @@ function MiniMockHistory({ history }: { history: MiniMockHistoryItem[] }) {
         marginBottom: "1.5rem",
         background: "var(--surface)",
         border: "1px solid var(--border)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         padding: 18,
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
@@ -334,7 +335,7 @@ function MiniMockHistory({ history }: { history: MiniMockHistoryItem[] }) {
                 gap: 12,
                 alignItems: "center",
                 padding: 12,
-                borderRadius: 10,
+                borderRadius: "var(--radius-md)",
                 background: "var(--surface-raised)",
                 border: "1px solid var(--border)",
               }}
@@ -728,7 +729,7 @@ export default function QuizPage() {
             className="fade-in md:col-span-2"
             style={{
               padding: "6px",
-              borderRadius: "22px",
+              borderRadius: "var(--radius-lg)",
               background: "var(--surface-raised)",
               border: "1px solid var(--border)",
               animationDelay: "60ms",
@@ -736,13 +737,12 @@ export default function QuizPage() {
           >
             <div
               style={{
-                borderRadius: "16px",
+                borderRadius: "var(--radius-lg)",
                 padding: "1.5rem",
                 position: "relative",
                 overflow: "hidden",
                 height: "100%",
                 background: "var(--surface)",
-                borderTop: "3px solid var(--teal)",
                 boxShadow: "inset 0 1px 0 rgba(28,45,64,0.04)",
                 display: "flex",
                 flexDirection: "column",
@@ -799,7 +799,7 @@ export default function QuizPage() {
             className="fade-in"
             style={{
               padding: "6px",
-              borderRadius: "22px",
+              borderRadius: "var(--radius-lg)",
               background: "var(--surface-raised)",
               border: "1px solid var(--border)",
               animationDelay: "120ms",
@@ -807,7 +807,7 @@ export default function QuizPage() {
           >
             <div
               style={{
-                borderRadius: "16px",
+                borderRadius: "var(--radius-lg)",
                 padding: "1.5rem",
                 position: "relative",
                 overflow: "hidden",
@@ -876,7 +876,7 @@ export default function QuizPage() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    borderRadius: "9999px",
+                    borderRadius: "var(--radius-full)",
                     paddingLeft: "1rem",
                     paddingRight: "0.375rem",
                     paddingTop: "0.5rem",
@@ -925,7 +925,7 @@ export default function QuizPage() {
           style={{
             marginBottom: "2.5rem",
             padding: "6px",
-            borderRadius: "22px",
+            borderRadius: "var(--radius-lg)",
             background: "var(--surface-raised)",
             border: "1px solid var(--border)",
             animationDelay: "60ms",
@@ -934,12 +934,11 @@ export default function QuizPage() {
           <div
             className="grid grid-cols-1 gap-6"
             style={{
-              borderRadius: "16px",
+              borderRadius: "var(--radius-lg)",
               padding: "1.5rem",
               position: "relative",
               overflow: "hidden",
               background: "var(--surface)",
-              borderTop: "3px solid var(--teal)",
               boxShadow: "inset 0 1px 0 rgba(28,45,64,0.04)",
             }}
           >
@@ -992,7 +991,7 @@ export default function QuizPage() {
                 gap: 14,
                 padding: "14px 16px",
                 marginBottom: 16,
-                borderRadius: 12,
+                borderRadius: "var(--radius-md)",
                 background: timerIsUrgent ? "var(--wrong-dim)" : "var(--surface)",
                 border: `1px solid ${timerIsUrgent ? "rgba(192,74,58,0.35)" : "var(--border)"}`,
               }}
@@ -1004,7 +1003,7 @@ export default function QuizPage() {
                     height: 34,
                     display: "grid",
                     placeItems: "center",
-                    borderRadius: 8,
+                    borderRadius: "var(--radius-sm)",
                     color: timerIsUrgent ? "var(--wrong)" : "var(--blue)",
                     background: timerIsUrgent ? "rgba(192,74,58,0.12)" : "var(--blue-dim)",
                   }}
@@ -1059,7 +1058,7 @@ export default function QuizPage() {
           <div
             style={{
               padding: "6px",
-              borderRadius: "22px",
+              borderRadius: "var(--radius-lg)",
               background: "var(--surface-raised)",
               border: "1px solid var(--border)",
               marginBottom: "2rem",
@@ -1067,7 +1066,7 @@ export default function QuizPage() {
           >
             <div
               style={{
-                borderRadius: "16px",
+                borderRadius: "var(--radius-lg)",
                 padding: "2rem",
                 textAlign: "center",
                 position: "relative",
@@ -1152,7 +1151,7 @@ export default function QuizPage() {
                   >
                       <span
                         style={{
-                          borderRadius: 999,
+                          borderRadius: "var(--radius-full)",
                           padding: "7px 11px",
                           background: "var(--teal-dim)",
                         color: "var(--teal)",
@@ -1165,7 +1164,7 @@ export default function QuizPage() {
                       </span>
                     <span
                       style={{
-                        borderRadius: 999,
+                        borderRadius: "var(--radius-full)",
                         padding: "7px 11px",
                         background: unansweredCount > 0 ? "var(--wrong-dim)" : "var(--correct-dim)",
                         color: unansweredCount > 0 ? "var(--wrong)" : "var(--correct)",
@@ -1179,7 +1178,7 @@ export default function QuizPage() {
                     {elapsedLabel && (
                       <span
                         style={{
-                          borderRadius: 999,
+                          borderRadius: "var(--radius-full)",
                           padding: "7px 11px",
                           background: "var(--surface-raised)",
                           color: "var(--text-muted)",
@@ -1341,7 +1340,7 @@ export default function QuizPage() {
               style={{
                 background: "var(--teal)",
                 color: "#080D1A",
-                borderRadius: "9999px",
+                borderRadius: "var(--radius-full)",
                 padding: "10px 10px 10px 22px",
                 fontSize: "0.875rem",
                 border: "none",
@@ -1373,7 +1372,7 @@ export default function QuizPage() {
               style={{
                 color: "var(--text-muted)",
                 border: "1px solid var(--border)",
-                borderRadius: "9999px",
+                borderRadius: "var(--radius-full)",
                 padding: "10px 22px",
                 fontSize: "0.875rem",
                 transition: "color 300ms cubic-bezier(0.32,0.72,0,1), border-color 300ms cubic-bezier(0.32,0.72,0,1), transform 200ms cubic-bezier(0.32,0.72,0,1)",
