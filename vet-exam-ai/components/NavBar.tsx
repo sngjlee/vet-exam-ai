@@ -67,8 +67,9 @@ export default function NavBar() {
     <header
       className="sticky top-0 z-50 w-full"
       style={{
-        background: "var(--bg)",
-        borderBottom: "1px solid var(--rule)",
+        background: "var(--surface)",
+        borderBottom: "1px solid var(--border)",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <div className="kvle-app-header-inner mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3">
