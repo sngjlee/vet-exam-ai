@@ -212,8 +212,9 @@ export default function QuestionCard({
           background: "var(--surface)",
           border: "1px solid var(--border)",
           borderLeft: "4px solid var(--teal)",
-          borderRadius: 14,
-          padding: "28px 32px",
+          borderRadius: "var(--radius-lg)",
+          boxShadow: "var(--shadow-sm)",
+          padding: "var(--space-6)",
         }}
       >
         {/* Meta row */}
@@ -256,7 +257,7 @@ export default function QuestionCard({
                 disabled={submitted}
                 style={{
                   ...getChoiceStyle(choice),
-                  borderRadius: 12,
+                  borderRadius: "var(--radius-md)",
                   padding: "14px 16px",
                   display: "flex",
                   alignItems: "center",
@@ -339,7 +340,7 @@ export default function QuestionCard({
               <div
                 style={{
                   padding: "16px 18px",
-                  borderRadius: 12,
+                  borderRadius: "var(--radius-md)",
                   marginBottom: 18,
                   background: isCorrect ? "var(--correct-dim)" : "var(--wrong-dim)",
                   border: `1px solid ${isCorrect ? "rgba(45,159,107,0.3)" : "rgba(192,74,58,0.3)"}`,
@@ -439,7 +440,7 @@ export default function QuestionCard({
                       background: "var(--bg)",
                       border: "1px solid var(--border)",
                       padding: "14px 16px",
-                      borderRadius: 10,
+                      borderRadius: "var(--radius-sm)",
                     }}
                   >
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
