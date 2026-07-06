@@ -196,7 +196,7 @@ export default function NavBar() {
                   justifyContent: "center",
                   width: 40,
                   height: 40,
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-sm)",
                   color: "var(--text-muted)",
                   background: "none",
                   border: "none",
@@ -218,7 +218,7 @@ export default function NavBar() {
               style={{
                 background: "var(--teal)",
                 color: "#080D1A",
-                borderRadius: "9999px",
+                borderRadius: "var(--radius-full)",
                 padding: "8px 18px",
                 fontSize: "0.875rem",
                 textDecoration: "none",

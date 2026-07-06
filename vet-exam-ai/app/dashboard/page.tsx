@@ -114,7 +114,7 @@ function ReviewStatusCard({
               right: 12,
               top: 36,
               height: 3,
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               background: "var(--surface-raised)",
             }} />
             <div style={{
@@ -123,7 +123,7 @@ function ReviewStatusCard({
               width: `calc((100% - 24px) * ${activeStage / 4})`,
               top: 36,
               height: 3,
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               background: "var(--teal)",
             }} />
             <div style={{
@@ -140,7 +140,7 @@ function ReviewStatusCard({
                     <div style={{
                       width: current ? 22 : 16,
                       height: current ? 22 : 16,
-                      borderRadius: 999,
+                      borderRadius: "var(--radius-full)",
                       border: `2px solid ${active ? "var(--teal)" : "var(--border)"}`,
                       background: current ? "var(--teal)" : "var(--surface)",
                       boxShadow: current ? "0 0 0 5px var(--teal-dim)" : "none",
@@ -162,7 +162,7 @@ function ReviewStatusCard({
 
         <div style={{
           border: "1px solid var(--border)",
-          borderRadius: 10,
+          borderRadius: "var(--radius-md)",
           padding: 18,
           background: "var(--surface-raised)",
         }}>
@@ -252,7 +252,7 @@ function SubjectBars({ byCategory }: { byCategory: CategoryStat[] }) {
               justifyContent: "space-between", marginBottom: 6 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{
-                  width: 7, height: 7, borderRadius: 999,
+                  width: 7, height: 7, borderRadius: "var(--radius-full)",
                   background: color, display: "inline-block", flexShrink: 0,
                 }} />
                 <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
@@ -276,9 +276,9 @@ function SubjectBars({ byCategory }: { byCategory: CategoryStat[] }) {
               </div>
             </div>
             <div style={{ height: 6, background: "var(--surface-raised)",
-              borderRadius: 999, overflow: "hidden", position: "relative" }}>
+              borderRadius: "var(--radius-full)", overflow: "hidden", position: "relative" }}>
               <div style={{ height: "100%", width: `${s.accuracy}%`,
-                background: color, borderRadius: 999 }} />
+                background: color, borderRadius: "var(--radius-full)" }} />
               <div style={{ position: "absolute", left: "70%", top: -2,
                 bottom: -2, width: 1, background: "rgba(255,255,255,0.12)" }} />
             </div>
@@ -394,7 +394,7 @@ function FirstLoginGuideBanner({ userId }: { userId: string }) {
         background: "var(--surface)",
         border: "1px solid var(--teal-border)",
         borderLeft: "3px solid var(--teal)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         padding: "16px 16px 16px 18px",
         marginBottom: 16,
         display: "grid",
@@ -411,7 +411,7 @@ function FirstLoginGuideBanner({ userId }: { userId: string }) {
               height: 28,
               display: "grid",
               placeItems: "center",
-              borderRadius: 8,
+              borderRadius: "var(--radius-sm)",
               color: "var(--teal)",
               background: "var(--teal-dim)",
             }}
@@ -453,7 +453,7 @@ function FirstLoginGuideBanner({ userId }: { userId: string }) {
           height: 34,
           display: "grid",
           placeItems: "center",
-          borderRadius: 8,
+          borderRadius: "var(--radius-sm)",
           border: "1px solid var(--border)",
           background: "var(--surface-raised)",
           color: "var(--text-muted)",
@@ -536,7 +536,7 @@ function StudyFirstPanel({
               gap: 6,
               minHeight: 34,
               padding: "6px 10px",
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               border: "1px solid var(--border)",
               color: "var(--text-muted)",
               background: "var(--surface-raised)",
@@ -584,7 +584,7 @@ function StudyFirstPanel({
               justifyContent: "space-between",
               gap: 12,
               padding: 16,
-              borderRadius: 10,
+              borderRadius: "var(--radius-md)",
               border: `1px solid ${border}`,
               background,
               color: "var(--text)",
@@ -597,7 +597,7 @@ function StudyFirstPanel({
                 height: 32,
                 display: "grid",
                 placeItems: "center",
-                borderRadius: 8,
+                borderRadius: "var(--radius-sm)",
                 background: "rgba(255,255,255,0.05)",
                 color: tone,
               }}
@@ -706,7 +706,7 @@ function TodayStarterChecklist({
               gridTemplateRows: "auto 1fr auto",
               gap: 10,
               padding: 14,
-              borderRadius: 10,
+              borderRadius: "var(--radius-md)",
               border: `1px solid ${done ? "rgba(45,159,107,0.3)" : "var(--border)"}`,
               background: done ? "rgba(45,159,107,0.08)" : "var(--surface-raised)",
               color: "var(--text)",
@@ -720,7 +720,7 @@ function TodayStarterChecklist({
                   height: 30,
                   display: "grid",
                   placeItems: "center",
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-sm)",
                   color: tone,
                   background: done ? "rgba(45,159,107,0.13)" : "var(--surface)",
                 }}
@@ -912,7 +912,7 @@ export default function DashboardPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Link href="/review" style={{
             background: "linear-gradient(135deg, var(--teal) 0%, #188ba0 100%)",
-            color: "#061218", borderRadius: 12, padding: "16px 18px",
+            color: "#061218", borderRadius: "var(--radius-md)", padding: "16px 18px",
             display: "flex", justifyContent: "space-between", alignItems: "center",
             gap: 14, textDecoration: "none",
             boxShadow: "var(--shadow-teal)",
@@ -932,7 +932,7 @@ export default function DashboardPage() {
 
           <Link href="/practice/weakest" style={{
             background: "var(--surface)", border: "1px solid var(--border)",
-            borderRadius: 12, padding: "14px 16px", color: "var(--text)",
+            borderRadius: "var(--radius-md)", padding: "14px 16px", color: "var(--text)",
             display: "flex", justifyContent: "space-between", alignItems: "center",
             gap: 14, textDecoration: "none",
           }}>
@@ -952,7 +952,7 @@ export default function DashboardPage() {
 
           <Link href="/quiz" style={{
             background: "transparent", border: "1px solid var(--border)",
-            borderRadius: 12, padding: "14px 16px", color: "var(--text-muted)",
+            borderRadius: "var(--radius-md)", padding: "14px 16px", color: "var(--text-muted)",
             display: "flex", justifyContent: "space-between", alignItems: "center",
             gap: 14, textDecoration: "none",
           }}>

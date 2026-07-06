@@ -47,7 +47,7 @@ function HeroProductPreview() {
       style={{
         background: "rgba(240,237,216,0.04)",
         border: "1px solid var(--border)",
-        borderRadius: 18,
+        borderRadius: "var(--radius-lg)",
         padding: 16,
         position: "relative",
         overflow: "hidden",
@@ -67,7 +67,7 @@ function HeroProductPreview() {
             <span
               key={label}
               style={{
-                borderRadius: 999,
+                borderRadius: "var(--radius-full)",
                 padding: "5px 9px",
                 background: index === 0 ? "var(--teal-dim)" : "var(--surface-raised)",
                 border: `1px solid ${index === 0 ? "var(--teal-border)" : "var(--border)"}`,
@@ -90,7 +90,7 @@ function HeroProductPreview() {
           style={{
             background: "var(--surface)",
             border: "1px solid var(--border)",
-            borderRadius: 12,
+            borderRadius: "var(--radius-md)",
             padding: 18,
           }}
         >
@@ -109,7 +109,7 @@ function HeroProductPreview() {
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
-                  borderRadius: 10,
+                  borderRadius: "var(--radius-md)",
                   border: `1px solid ${index === 1 ? "var(--teal-border)" : "var(--border)"}`,
                   background: index === 1 ? "var(--teal-dim)" : "var(--bg)",
                   color: index === 1 ? "var(--teal)" : "var(--text-muted)",
@@ -130,7 +130,7 @@ function HeroProductPreview() {
             style={{
               background: "var(--surface)",
               border: "1px solid var(--border)",
-              borderRadius: 12,
+              borderRadius: "var(--radius-md)",
               padding: 16,
             }}
           >
@@ -142,7 +142,7 @@ function HeroProductPreview() {
               style={{
                 background: "var(--bg)",
                 border: "1px solid var(--teal-border)",
-                borderRadius: 10,
+                borderRadius: "var(--radius-md)",
                 padding: 10,
               }}
             >
@@ -157,7 +157,7 @@ function HeroProductPreview() {
             style={{
               background: "var(--surface)",
               border: "1px solid var(--border)",
-              borderRadius: 12,
+              borderRadius: "var(--radius-md)",
               padding: 16,
             }}
           >
@@ -224,19 +224,19 @@ export default function LandingPage() {
           <div className="landing-nav-actions" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             <Link href="/auth/login" className="btn-ghost-pill" style={{
               display: "inline-flex", alignItems: "center",
-              padding: "8px 16px", borderRadius: "999px",
+              padding: "8px 16px", borderRadius: "var(--radius-full)",
               border: "1px solid var(--border)", color: "var(--text-muted)",
               fontSize: "13px", fontWeight: 600, background: "transparent",
             }}>로그인</Link>
             <Link href="/quiz" className="btn-primary-pill landing-nav-primary" style={{
               display: "inline-flex", alignItems: "center", gap: "8px",
-              padding: "8px 8px 8px 16px", borderRadius: "999px",
+              padding: "8px 8px 8px 16px", borderRadius: "var(--radius-full)",
               background: "var(--teal)", color: "#061218",
               fontSize: "13px", fontWeight: 700,
               boxShadow: "0 8px 20px rgba(30,167,187,0.2), inset 0 1px 0 rgba(255,255,255,0.2)",
             }}>
               문제 풀기
-              <span style={{ width: "26px", height: "26px", borderRadius: "999px", background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center" }}>
+              <span style={{ width: "26px", height: "26px", borderRadius: "var(--radius-full)", background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center" }}>
                 <ArrowSVG size={11} />
               </span>
             </Link>
@@ -271,19 +271,19 @@ export default function LandingPage() {
               <div className="landing-hero-actions" style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                 <Link href="/quiz" className="btn-primary-pill" style={{
                   display: "inline-flex", alignItems: "center", gap: "10px",
-                  padding: "12px 12px 12px 22px", borderRadius: "999px",
+                  padding: "12px 12px 12px 22px", borderRadius: "var(--radius-full)",
                   background: "var(--teal)", color: "#061218",
                   fontSize: "14px", fontWeight: 700,
                   boxShadow: "0 8px 20px rgba(30,167,187,0.2), inset 0 1px 0 rgba(255,255,255,0.2)",
                 }}>
                   바로 문제 풀기
-                  <span style={{ width: "32px", height: "32px", borderRadius: "999px", background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center" }}>
+                  <span style={{ width: "32px", height: "32px", borderRadius: "var(--radius-full)", background: "rgba(0,0,0,0.18)", display: "grid", placeItems: "center" }}>
                     <ArrowSVG />
                   </span>
                 </Link>
                 <Link href="/review" className="btn-ghost-pill" style={{
                   display: "inline-flex", alignItems: "center", gap: "8px",
-                  padding: "12px 22px", borderRadius: "999px",
+                  padding: "12px 22px", borderRadius: "var(--radius-full)",
                   border: "1px solid var(--border)", color: "var(--text-muted)",
                   fontSize: "14px", fontWeight: 600, background: "transparent",
                 }}>
@@ -408,8 +408,8 @@ export default function LandingPage() {
                 {SRS_ROWS.map(({ day, w, tag, tagColor }) => (
                   <div key={day} className="landing-feature-row landing-feature-row-srs" style={{ display: "grid", gridTemplateColumns: "40px 1fr 60px", alignItems: "center", gap: "12px" }}>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)" }}>{day}</span>
-                    <div style={{ height: "4px", background: "var(--surface-raised)", borderRadius: "999px", overflow: "hidden" }}>
-                      <span style={{ display: "block", height: "100%", width: w, background: "var(--teal)", borderRadius: "999px" }} />
+                    <div style={{ height: "4px", background: "var(--surface-raised)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
+                      <span style={{ display: "block", height: "100%", width: w, background: "var(--teal)", borderRadius: "var(--radius-full)" }} />
                     </div>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", textAlign: "right", color: tagColor, fontWeight: 600 }}>{tag}</span>
                   </div>
@@ -439,8 +439,8 @@ export default function LandingPage() {
                 {WEAK_SUBJECTS.map(({ name, pct, bar, color }) => (
                   <div key={name} className="landing-feature-row landing-feature-row-weak" style={{ display: "grid", gridTemplateColumns: "90px 1fr 44px", alignItems: "center", gap: "12px" }}>
                     <span style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--text)" }}>{name}</span>
-                    <div style={{ height: "6px", background: "var(--surface-raised)", borderRadius: "999px", overflow: "hidden" }}>
-                      <span style={{ display: "block", height: "100%", width: `${pct}%`, background: bar, borderRadius: "999px" }} />
+                    <div style={{ height: "6px", background: "var(--surface-raised)", borderRadius: "var(--radius-full)", overflow: "hidden" }}>
+                      <span style={{ display: "block", height: "100%", width: `${pct}%`, background: bar, borderRadius: "var(--radius-full)" }} />
                     </div>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", fontWeight: 700, textAlign: "right", color }}>{pct}%</span>
                   </div>
@@ -509,7 +509,7 @@ export default function LandingPage() {
               ].map(({ type, typeColor, typeBg, typeBorder, nickname, badge, badgeColor, body, votes, replies, ago }) => (
                 <div key={nickname} style={{
                   background: "var(--bg)", border: "1px solid var(--border)",
-                  borderRadius: "14px", padding: "22px",
+                  borderRadius: "var(--radius-lg)", padding: "22px",
                   display: "flex", flexDirection: "column", gap: "14px",
                   minHeight: "240px",
                 }}>
@@ -522,7 +522,7 @@ export default function LandingPage() {
                     }}>{type}</span>
                     <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>{nickname}</span>
                     <span style={{
-                      fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "999px",
+                      fontSize: "10px", fontWeight: 700, padding: "2px 7px", borderRadius: "var(--radius-full)",
                       color: badgeColor, border: `1px solid ${badgeColor}`,
                       opacity: 0.85,
                     }}>{badge}</span>
@@ -622,7 +622,7 @@ export default function LandingPage() {
                   }}>{num}</div>
                   <h3 style={{ fontSize: "20px", fontWeight: 700, color: "var(--text)", letterSpacing: "-0.015em", margin: "0 0 10px" }}>{head}</h3>
                   <p style={{ fontSize: "14px", color: "var(--text-muted)", lineHeight: 1.7, margin: 0 }}>{body}</p>
-                  <div style={{ marginTop: "24px", padding: "14px 16px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "10px", color: "var(--text-muted)" }}>
+                  <div style={{ marginTop: "24px", padding: "14px 16px", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", color: "var(--text-muted)" }}>
                     {preview}
                   </div>
                 </div>
@@ -640,7 +640,7 @@ export default function LandingPage() {
           </p>
           <div style={{ marginTop: "28px", fontSize: "13px", color: "var(--text-muted)", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: "12px" }}>
             <span style={{
-              width: "32px", height: "32px", borderRadius: "999px", flexShrink: 0,
+              width: "32px", height: "32px", borderRadius: "var(--radius-full)", flexShrink: 0,
               background: "linear-gradient(135deg, #4A7FA8, #1ea7bb)",
               color: "#fff", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "13px",
             }}>박</span>
