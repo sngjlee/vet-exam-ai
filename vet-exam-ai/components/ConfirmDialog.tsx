@@ -59,7 +59,7 @@ export default function ConfirmDialog({
           width: "100%",
           maxWidth: "400px",
           padding: "6px",
-          borderRadius: "20px",
+          borderRadius: "var(--radius-lg)",
           background: "rgba(255,255,255,0.02)",
           border: "1px solid rgba(255,255,255,0.07)",
         }}
@@ -67,11 +67,10 @@ export default function ConfirmDialog({
         <div
           style={{
             position: "relative",
-            borderRadius: "14px",
+            borderRadius: "var(--radius-md)",
             padding: "1.5rem",
             background: "var(--surface)",
-            borderTop: "3px solid var(--wrong)",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+            boxShadow: "var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
           <button

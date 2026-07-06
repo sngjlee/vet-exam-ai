@@ -67,8 +67,9 @@ export default function WrongNotesPage() {
         style={{
           background: "var(--surface)",
           border: "1px solid var(--border)",
-          borderRadius: "12px",
+          borderRadius: "var(--radius-md)",
           padding: "1.5rem",
+          boxShadow: "var(--shadow-sm)",
         }}
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

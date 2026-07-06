@@ -64,7 +64,7 @@ export default function SubjectChipGroup({
                 border: active ? "1px solid var(--teal)" : "1px solid var(--border)",
                 color: active ? "var(--teal)" : "var(--text-muted)",
                 padding: "0.3125rem 0.75rem",
-                borderRadius: "9999px",
+                borderRadius: "var(--radius-full)",
                 fontSize: "0.75rem",
                 fontWeight: 500,
                 cursor: "pointer",
