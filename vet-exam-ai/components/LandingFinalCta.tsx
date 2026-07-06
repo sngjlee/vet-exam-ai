@@ -54,7 +54,7 @@ export default function LandingFinalCta() {
     <section style={{ maxWidth: "1100px", margin: "0 auto", padding: "32px", position: "relative" }}>
       <div
         style={{
-          borderRadius: "24px",
+          borderRadius: "var(--radius-lg)",
           background: "linear-gradient(135deg, #FFFFFF 0%, #EAF7FA 100%)",
           border: "1px solid var(--teal-border)",
           padding: "68px 48px",
@@ -79,7 +79,7 @@ export default function LandingFinalCta() {
               alignItems: "center",
               gap: "12px",
               padding: "8px 14px",
-              borderRadius: "999px",
+              borderRadius: "var(--radius-full)",
               background: "rgba(30,167,187,0.12)",
               border: "1px solid var(--teal-border)",
               marginBottom: "18px",
@@ -135,7 +135,7 @@ export default function LandingFinalCta() {
                 alignItems: "center",
                 gap: "12px",
                 padding: "14px 14px 14px 26px",
-                borderRadius: "999px",
+                borderRadius: "var(--radius-full)",
                 background: "var(--teal)",
                 color: "#061218",
                 fontSize: "15px",
@@ -149,7 +149,7 @@ export default function LandingFinalCta() {
                 style={{
                   width: "32px",
                   height: "32px",
-                  borderRadius: "999px",
+                  borderRadius: "var(--radius-full)",
                   background: "rgba(0,0,0,0.18)",
                   display: "grid",
                   placeItems: "center",

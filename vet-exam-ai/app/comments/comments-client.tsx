@@ -156,7 +156,7 @@ export default function CommentsClient({ viewerIsAdmin = false }: { viewerIsAdmi
         style={{
           background: "linear-gradient(135deg, rgba(30,167,187,0.10), rgba(255,255,255,0.92))",
           border: "1px solid var(--teal-border)",
-          borderRadius: 12,
+          borderRadius: "var(--radius-md)",
           padding: 16,
           display: "flex",
           alignItems: "center",
@@ -170,7 +170,7 @@ export default function CommentsClient({ viewerIsAdmin = false }: { viewerIsAdmi
             style={{
               width: 38,
               height: 38,
-              borderRadius: 12,
+              borderRadius: "var(--radius-md)",
               background: "var(--teal-dim)",
               border: "1px solid var(--teal-border)",
               display: "grid",
@@ -208,7 +208,7 @@ export default function CommentsClient({ viewerIsAdmin = false }: { viewerIsAdmi
         style={{
           background: "var(--surface)",
           border: "1px solid var(--border)",
-          borderRadius: 12,
+          borderRadius: "var(--radius-md)",
           padding: 12,
           display: "flex",
           gap: 10,
@@ -255,7 +255,7 @@ export default function CommentsClient({ viewerIsAdmin = false }: { viewerIsAdmi
         style={{
           background: "var(--surface)",
           border: "1px solid var(--border)",
-          borderRadius: 12,
+          borderRadius: "var(--radius-md)",
           padding: 14,
           display: "flex",
           alignItems: "center",
@@ -437,7 +437,7 @@ function FilterLink({
         gap: 6,
         minHeight: 34,
         padding: "7px 12px",
-        borderRadius: 999,
+        borderRadius: "var(--radius-full)",
         fontSize: 12,
         fontWeight: 700,
         textDecoration: "none",
@@ -483,7 +483,7 @@ function CommentCard({
         display: "block",
         background: "var(--surface)",
         border: "1px solid var(--border)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         padding: 16,
         color: "inherit",
       }}
@@ -493,7 +493,7 @@ function CommentCard({
           style={{
             background: meta.bg,
             color: meta.color,
-            borderRadius: 999,
+            borderRadius: "var(--radius-full)",
             padding: "2px 8px",
             fontSize: 11,
             fontWeight: 800,
@@ -511,7 +511,7 @@ function CommentCard({
               background: "#FFF7ED",
               border: "1px solid #FED7AA",
               color: "#C2410C",
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               padding: "2px 8px",
               fontSize: 10,
               fontWeight: 800,
@@ -541,7 +541,7 @@ function CommentCard({
             style={{
               width: 28,
               height: 28,
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               border: "1px solid var(--border)",
               background: "var(--bg)",
               color: "var(--wrong)",
@@ -622,7 +622,7 @@ function SmallPill({ children }: { children: React.ReactNode }) {
   return (
     <span
       style={{
-        borderRadius: 999,
+        borderRadius: "var(--radius-full)",
         border: "1px solid var(--border)",
         background: "var(--surface-raised)",
         color: "var(--text-muted)",
@@ -649,7 +649,7 @@ function StatusBox({
         padding: "32px 20px",
         background: "var(--bg)",
         border: "1px dashed var(--border)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         color: tone === "error" ? "var(--wrong)" : "var(--text-muted)",
         textAlign: "center",
         fontSize: 14,
@@ -669,7 +669,7 @@ function CommentSkeletonList() {
           style={{
             background: "var(--surface)",
             border: "1px solid var(--border)",
-            borderRadius: 12,
+            borderRadius: "var(--radius-md)",
             padding: 16,
           }}
         >
@@ -698,7 +698,7 @@ function SkeletonLine({ width }: { width: number | string }) {
         width,
         maxWidth: "100%",
         height: 12,
-        borderRadius: 999,
+        borderRadius: "var(--radius-full)",
         background: "var(--surface-raised)",
       }}
     />

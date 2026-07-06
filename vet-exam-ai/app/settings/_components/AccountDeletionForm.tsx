@@ -50,10 +50,11 @@ export default function AccountDeletionForm({ email }: { email: string }) {
     <section
       style={{
         padding: 20,
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         background: "var(--surface)",
         border: "1px solid rgba(192,74,58,0.35)",
         marginTop: 20,
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <h2
@@ -123,7 +124,7 @@ export default function AccountDeletionForm({ email }: { email: string }) {
             role="alert"
             style={{
               padding: "8px 12px",
-              borderRadius: 8,
+              borderRadius: "var(--radius-sm)",
               background: "var(--wrong-dim)",
               color: "var(--wrong)",
               border: "1px solid rgba(192,74,58,0.3)",

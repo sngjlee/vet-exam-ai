@@ -109,7 +109,7 @@ export default function SignupApplicationForm({
           role="alert"
           style={{
             padding: "12px 14px",
-            borderRadius: 12,
+            borderRadius: "var(--radius-md)",
             background: "var(--wrong-dim)",
             border: "1px solid rgba(192,74,58,0.3)",
             color: "var(--wrong)",

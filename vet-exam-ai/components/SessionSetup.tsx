@@ -151,7 +151,7 @@ export default function SessionSetup({
                     : "1px solid var(--border)",
                   color: active ? "var(--teal)" : "var(--text-muted)",
                   padding: "0.375rem 0.875rem",
-                  borderRadius: "9999px",
+                  borderRadius: "var(--radius-full)",
                   fontSize: "0.8125rem",
                   fontWeight: 600,
                   cursor: disabled ? "not-allowed" : "pointer",
@@ -193,7 +193,7 @@ export default function SessionSetup({
         style={{
           background: "var(--teal)",
           color: "#fff",
-          borderRadius: "9999px",
+          borderRadius: "var(--radius-full)",
           padding: "10px 10px 10px 22px",
           fontSize: "0.875rem",
           border: "none",

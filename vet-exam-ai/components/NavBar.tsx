@@ -67,8 +67,9 @@ export default function NavBar() {
     <header
       className="sticky top-0 z-50 w-full"
       style={{
-        background: "var(--bg)",
-        borderBottom: "1px solid var(--rule)",
+        background: "var(--surface)",
+        borderBottom: "1px solid var(--border)",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <div className="kvle-app-header-inner mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3">
@@ -195,7 +196,7 @@ export default function NavBar() {
                   justifyContent: "center",
                   width: 40,
                   height: 40,
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-sm)",
                   color: "var(--text-muted)",
                   background: "none",
                   border: "none",
@@ -217,7 +218,7 @@ export default function NavBar() {
               style={{
                 background: "var(--teal)",
                 color: "#080D1A",
-                borderRadius: "9999px",
+                borderRadius: "var(--radius-full)",
                 padding: "8px 18px",
                 fontSize: "0.875rem",
                 textDecoration: "none",

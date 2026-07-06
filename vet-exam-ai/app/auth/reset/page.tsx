@@ -33,17 +33,18 @@ export default function ResetPage() {
           width: "100%",
           maxWidth: 400,
           padding: 6,
-          borderRadius: 22,
+          borderRadius: "var(--radius-lg)",
           background: "rgba(255,255,255,0.02)",
           border: "1px solid rgba(255,255,255,0.07)",
         }}
       >
         <div
           style={{
-            borderRadius: 16,
+            borderRadius: "var(--radius-lg)",
             padding: "2rem",
             background: "var(--surface)",
             borderTop: "3px solid var(--teal)",
+            boxShadow: "var(--shadow-sm)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.75rem" }}>
@@ -51,7 +52,7 @@ export default function ResetPage() {
               style={{
                 display: "inline-flex",
                 padding: 4,
-                borderRadius: 10,
+                borderRadius: "var(--radius-md)",
                 background: "var(--teal-dim)",
                 border: "1px solid var(--teal-border)",
               }}

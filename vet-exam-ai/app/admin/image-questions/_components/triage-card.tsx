@@ -85,6 +85,7 @@ export function TriageCard({
       style={{
         background:  "var(--surface-raised)",
         border:      "1px solid var(--rule)",
+        boxShadow:   "var(--shadow-sm)",
         opacity:     pending ? 0.6 : 1,
         transition:  "opacity 0.15s ease",
       }}
@@ -119,7 +120,7 @@ export function TriageCard({
             style={{
               marginLeft:   "auto",
               padding:      "2px 8px",
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               fontSize:     11,
               background:   decidedColor.bg,
               color:        decidedColor.fg,

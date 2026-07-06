@@ -122,7 +122,7 @@ export default function MyStatsPage() {
           style={{
             border: "1px solid var(--border)",
             borderLeft: `3px solid ${weakestTone.color}`,
-            borderRadius: 12,
+            borderRadius: "var(--radius-md)",
             background: "var(--surface)",
             padding: 22,
           }}
@@ -154,7 +154,7 @@ export default function MyStatsPage() {
               style={{
                 flex: 1,
                 height: 10,
-                borderRadius: 999,
+                borderRadius: "var(--radius-full)",
                 background: "var(--surface-raised)",
                 overflow: "hidden",
               }}
@@ -164,7 +164,7 @@ export default function MyStatsPage() {
                   width: `${weakest.accuracy}%`,
                   height: "100%",
                   background: weakestTone.color,
-                  borderRadius: 999,
+                  borderRadius: "var(--radius-full)",
                 }}
               />
             </div>
@@ -278,7 +278,7 @@ export default function MyStatsPage() {
                           style={{
                             flex: 1,
                             height: "5px",
-                            borderRadius: "9999px",
+                            borderRadius: "var(--radius-full)",
                             background: "var(--surface-raised)",
                             overflow: "hidden",
                             minWidth: "60px",
@@ -289,7 +289,7 @@ export default function MyStatsPage() {
                               height: "100%",
                               width: `${row.accuracy}%`,
                               background: accuracyColor,
-                              borderRadius: "9999px",
+                              borderRadius: "var(--radius-full)",
                             }}
                           />
                         </div>
@@ -404,7 +404,7 @@ function StatCard({
         background: "var(--surface)",
         border: "1px solid var(--border)",
         borderTop: featured ? "3px solid var(--teal)" : "3px solid var(--border)",
-        borderRadius: "12px",
+        borderRadius: "var(--radius-md)",
         padding: "1.35rem",
       }}
     >

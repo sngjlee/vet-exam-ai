@@ -15,7 +15,7 @@ export default function DDayBadge() {
   return (
     <div style={{
       display: "inline-flex", alignItems: "center", gap: "10px",
-      padding: "8px 14px", borderRadius: "10px",
+      padding: "8px 14px", borderRadius: "var(--radius-md)",
       background: "rgba(192,74,58,0.08)",
       border: "1px solid rgba(192,74,58,0.25)",
       fontFamily: "var(--font-mono)",

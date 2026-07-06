@@ -111,7 +111,7 @@ export default function CommentEditComposer({
         padding: "10px 12px",
         background: "var(--bg)",
         border: "1px solid var(--border)",
-        borderRadius: 10,
+        borderRadius: "var(--radius-md)",
       }}
     >
       <textarea
@@ -123,7 +123,7 @@ export default function CommentEditComposer({
         style={{
           background: "var(--surface)",
           border: "1px solid var(--border)",
-          borderRadius: 8,
+          borderRadius: "var(--radius-sm)",
           padding: "8px 10px",
           fontSize: 13,
           fontFamily: "inherit",
@@ -159,7 +159,7 @@ export default function CommentEditComposer({
               border: "1px solid var(--border)",
               color: "var(--text-muted)",
               padding: "6px 14px",
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               fontSize: 12,
               fontWeight: 600,
               cursor: submitting ? "not-allowed" : "pointer",
@@ -177,7 +177,7 @@ export default function CommentEditComposer({
               color: canSubmit ? "#061218" : "var(--text-faint)",
               border: "none",
               padding: "6px 16px",
-              borderRadius: 999,
+              borderRadius: "var(--radius-full)",
               fontSize: 12,
               fontWeight: 700,
               cursor: canSubmit ? "pointer" : "not-allowed",

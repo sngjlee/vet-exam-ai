@@ -44,7 +44,7 @@ export default function SearchBar({
         gap:          8,
         background:   "var(--surface)",
         border:       "1px solid var(--border)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         padding:      "10px 14px",
       }}
     >

@@ -11,12 +11,12 @@ const sectionStyle = {
 
 const primarySectionStyle = {
   ...sectionStyle,
-  borderTop: "3px solid var(--teal)",
+  boxShadow: "var(--shadow-sm)",
 } as const;
 
 const secondarySectionStyle = {
   ...sectionStyle,
-  borderTop: "3px solid var(--amber)",
+  boxShadow: "var(--shadow-sm)",
 } as const;
 
 export default async function BoardTabPage() {

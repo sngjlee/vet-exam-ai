@@ -32,7 +32,7 @@ export default function SessionProgress({ current, total, score }: Props) {
               justifyContent: "center",
               width: "2.25rem",
               height: "2.25rem",
-              borderRadius: "0.5rem",
+              borderRadius: "var(--radius-sm)",
               background: "var(--surface-raised)",
               border: "1px solid var(--border)",
               color: "var(--text)",
@@ -49,7 +49,7 @@ export default function SessionProgress({ current, total, score }: Props) {
             display: "flex",
             alignItems: "center",
             gap: "0.5rem",
-            borderRadius: "0.5rem",
+            borderRadius: "var(--radius-sm)",
             padding: "0.5rem 0.75rem",
             background: "var(--surface-raised)",
             border: "1px solid var(--border)",
@@ -67,7 +67,7 @@ export default function SessionProgress({ current, total, score }: Props) {
       <div
         style={{
           width: "100%",
-          borderRadius: "9999px",
+          borderRadius: "var(--radius-full)",
           height: "3px",
           overflow: "hidden",
           background: "var(--surface-raised)",
@@ -76,7 +76,7 @@ export default function SessionProgress({ current, total, score }: Props) {
         <div
           style={{
             height: "100%",
-            borderRadius: "9999px",
+            borderRadius: "var(--radius-full)",
             width: `${percent}%`,
             background: "var(--teal)",
             transition: "width 500ms cubic-bezier(0.32,0.72,0,1)",

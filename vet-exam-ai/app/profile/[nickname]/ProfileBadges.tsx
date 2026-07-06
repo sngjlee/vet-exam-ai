@@ -36,7 +36,7 @@ export default function ProfileBadges({ ownedBadges }: Props) {
                 alignItems: "center",
                 gap: 6,
                 padding: "6px 12px",
-                borderRadius: 999,
+                borderRadius: "var(--radius-full)",
                 fontSize: 13,
                 fontWeight: 600,
                 background: has ? meta.background : "transparent",

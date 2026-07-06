@@ -22,7 +22,7 @@ function SubjectChip({ subject }: { subject: string }) {
         alignItems: "center",
         background: `${color}18`,
         border: `1px solid ${color}40`,
-        borderRadius: 999,
+        borderRadius: "var(--radius-full)",
         padding: "2px 8px",
         fontSize: 10,
         fontWeight: 700,
@@ -48,7 +48,7 @@ export default function QuestionReadOnly({ question }: Props) {
         background: "var(--surface)",
         border: "1px solid var(--border)",
         borderLeft: "4px solid var(--teal)",
-        borderRadius: 14,
+        borderRadius: "var(--radius-lg)",
         padding: "28px 32px",
       }}
     >
@@ -103,7 +103,7 @@ export default function QuestionReadOnly({ question }: Props) {
                 border: `1px solid ${isCorrect ? "rgba(45,159,107,0.5)" : "var(--border)"}`,
                 color: isCorrect ? "var(--text)" : "var(--text-muted)",
                 opacity: isCorrect ? 1 : 0.85,
-                borderRadius: 12,
+                borderRadius: "var(--radius-md)",
                 padding: "12px 16px",
                 display: "flex",
                 alignItems: "center",
@@ -117,7 +117,7 @@ export default function QuestionReadOnly({ question }: Props) {
                   width: 28,
                   height: 28,
                   flexShrink: 0,
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-sm)",
                   display: "grid",
                   placeItems: "center",
                   fontFamily: "var(--font-mono)",
@@ -147,7 +147,7 @@ export default function QuestionReadOnly({ question }: Props) {
           background: "var(--bg)",
           border: "1px solid var(--border)",
           padding: "14px 16px",
-          borderRadius: 10,
+          borderRadius: "var(--radius-md)",
         }}
       >
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>

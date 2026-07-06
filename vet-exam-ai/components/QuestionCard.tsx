@@ -43,7 +43,7 @@ function SubjectChip({ subject }: { subject: string }) {
         alignItems: "center",
         background: `${color}18`,
         border: `1px solid ${color}40`,
-        borderRadius: 999,
+        borderRadius: "var(--radius-full)",
         padding: "2px 8px",
         fontSize: 10,
         fontWeight: 700,
@@ -150,7 +150,7 @@ export default function QuestionCard({
             color: "var(--text-muted)",
             padding: "10px 16px",
             minHeight: 44,
-            borderRadius: 999,
+            borderRadius: "var(--radius-full)",
             fontSize: 12,
             fontWeight: 600,
             cursor: "pointer",
@@ -189,7 +189,7 @@ export default function QuestionCard({
         style={{
           height: 3,
           background: "var(--surface-raised)",
-          borderRadius: 999,
+          borderRadius: "var(--radius-full)",
           marginBottom: 24,
           overflow: "hidden",
         }}
@@ -199,7 +199,7 @@ export default function QuestionCard({
             height: "100%",
             width: `${progress}%`,
             background: "var(--teal)",
-            borderRadius: 999,
+            borderRadius: "var(--radius-full)",
             transition: "width 300ms cubic-bezier(0.32,0.72,0,1)",
           }}
         />
@@ -212,8 +212,9 @@ export default function QuestionCard({
           background: "var(--surface)",
           border: "1px solid var(--border)",
           borderLeft: "4px solid var(--teal)",
-          borderRadius: 14,
-          padding: "28px 32px",
+          borderRadius: "var(--radius-lg)",
+          boxShadow: "var(--shadow-sm)",
+          padding: "var(--space-6)",
         }}
       >
         {/* Meta row */}
@@ -256,7 +257,7 @@ export default function QuestionCard({
                 disabled={submitted}
                 style={{
                   ...getChoiceStyle(choice),
-                  borderRadius: 12,
+                  borderRadius: "var(--radius-md)",
                   padding: "14px 16px",
                   display: "flex",
                   alignItems: "center",
@@ -273,7 +274,7 @@ export default function QuestionCard({
                     width: 30,
                     height: 30,
                     flexShrink: 0,
-                    borderRadius: 8,
+                    borderRadius: "var(--radius-sm)",
                     display: "grid",
                     placeItems: "center",
                     fontFamily: "var(--font-mono)",
@@ -314,7 +315,7 @@ export default function QuestionCard({
                   border: "none",
                   padding: "12px 22px",
                   minHeight: 44,
-                  borderRadius: 999,
+                  borderRadius: "var(--radius-full)",
                   fontSize: 13,
                   fontWeight: 700,
                   cursor: selected === null ? "not-allowed" : "pointer",
@@ -339,7 +340,7 @@ export default function QuestionCard({
               <div
                 style={{
                   padding: "16px 18px",
-                  borderRadius: 12,
+                  borderRadius: "var(--radius-md)",
                   marginBottom: 18,
                   background: isCorrect ? "var(--correct-dim)" : "var(--wrong-dim)",
                   border: `1px solid ${isCorrect ? "rgba(45,159,107,0.3)" : "rgba(192,74,58,0.3)"}`,
@@ -439,7 +440,7 @@ export default function QuestionCard({
                       background: "var(--bg)",
                       border: "1px solid var(--border)",
                       padding: "14px 16px",
-                      borderRadius: 10,
+                      borderRadius: "var(--radius-sm)",
                     }}
                   >
                     <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
@@ -486,7 +487,7 @@ export default function QuestionCard({
                       color: "var(--text-muted)",
                       padding: "12px 18px",
                       minHeight: 44,
-                      borderRadius: 999,
+                      borderRadius: "var(--radius-full)",
                       fontSize: 12,
                       fontWeight: 600,
                       cursor: "default",
@@ -506,7 +507,7 @@ export default function QuestionCard({
                     border: "none",
                     padding: "12px 20px 12px 24px",
                     minHeight: 44,
-                    borderRadius: 999,
+                    borderRadius: "var(--radius-full)",
                     fontSize: 13,
                     fontWeight: 700,
                     cursor: "pointer",

@@ -68,7 +68,7 @@ const inputStyle: React.CSSProperties = {
   background: "var(--bg)",
   border: "1px solid var(--rule)",
   color: "var(--text)",
-  borderRadius: 6,
+  borderRadius: "var(--radius-sm)",
   padding: "8px 10px",
   fontSize: 13,
   width: "100%",
@@ -85,9 +85,10 @@ const labelStyle: React.CSSProperties = {
 const sectionStyle: React.CSSProperties = {
   background: "var(--surface-raised)",
   border: "1px solid var(--rule)",
-  borderRadius: 8,
+  borderRadius: "var(--radius-sm)",
   padding: 20,
   marginBottom: 16,
+  boxShadow: "var(--shadow-sm)",
 };
 
 function MetaRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -342,7 +343,7 @@ export default async function AdminQuestionEditPage({
             style={{
               padding: "8px 16px",
               border: "1px solid var(--rule)",
-              borderRadius: 6,
+              borderRadius: "var(--radius-sm)",
               color: "var(--text-muted)",
               textDecoration: "none",
             }}
@@ -354,7 +355,7 @@ export default async function AdminQuestionEditPage({
             className="text-xs font-medium"
             style={{
               padding: "8px 16px",
-              borderRadius: 6,
+              borderRadius: "var(--radius-sm)",
               background: "var(--teal)",
               color: "white",
               border: "none",

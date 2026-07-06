@@ -87,7 +87,7 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
         padding: "12px 14px",
         background: "var(--bg)",
         border: "1px solid var(--border)",
-        borderRadius: 10,
+        borderRadius: "var(--radius-md)",
       }}
     >
       <div className="kvle-comment-type-row" style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -104,7 +104,7 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
                 border: `1px solid ${active ? "var(--teal-border)" : "var(--border)"}`,
                 color: active ? "var(--text)" : "var(--text-muted)",
                 padding: "4px 10px",
-                borderRadius: 999,
+                borderRadius: "var(--radius-full)",
                 fontSize: 11,
                 fontWeight: 600,
                 cursor: "pointer",
@@ -125,7 +125,7 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
         style={{
           background: "var(--surface)",
           border: "1px solid var(--border)",
-          borderRadius: 8,
+          borderRadius: "var(--radius-sm)",
           padding: "10px 12px",
           fontSize: 13,
           fontFamily: "inherit",
@@ -157,7 +157,7 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
             color: canSubmit ? "#061218" : "var(--text-faint)",
             border: "none",
             padding: "6px 16px",
-            borderRadius: 999,
+            borderRadius: "var(--radius-full)",
             fontSize: 12,
             fontWeight: 700,
             cursor: canSubmit ? "pointer" : "not-allowed",

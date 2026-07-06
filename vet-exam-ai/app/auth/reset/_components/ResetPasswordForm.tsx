@@ -131,7 +131,7 @@ export default function ResetPasswordForm() {
           role="alert"
           style={{
             padding: "8px 12px",
-            borderRadius: 8,
+            borderRadius: "var(--radius-sm)",
             background: "var(--wrong-dim)",
             color: "var(--wrong)",
             border: "1px solid rgba(192,74,58,0.3)",

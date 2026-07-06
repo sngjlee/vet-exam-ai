@@ -140,7 +140,7 @@ export default function NotificationDropdown({
         maxWidth: "calc(100vw - 24px)",
         background: "var(--surface-raised)",
         border: "1px solid var(--border)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
         zIndex: 60,
         overflow: "hidden",

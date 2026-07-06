@@ -358,8 +358,9 @@ function StudyStartPanel({
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         padding: 16,
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <div
@@ -382,7 +383,7 @@ function StudyStartPanel({
               justifyContent: "space-between",
               gap: 12,
               padding: 16,
-              borderRadius: 10,
+              borderRadius: "var(--radius-md)",
               border: "1px solid var(--border)",
               background: "var(--bg)",
               color: "var(--text)",
@@ -396,7 +397,7 @@ function StudyStartPanel({
                 height: 32,
                 display: "grid",
                 placeItems: "center",
-                borderRadius: 8,
+                borderRadius: "var(--radius-sm)",
                 background: "var(--surface-raised)",
                 color: tone,
               }}
@@ -422,7 +423,7 @@ function StudyStartPanel({
             justifyContent: "space-between",
             gap: 12,
             padding: 16,
-            borderRadius: 10,
+            borderRadius: "var(--radius-md)",
             border: "1px solid var(--teal-border)",
             background: "var(--teal-dim)",
             color: "var(--text)",
@@ -435,7 +436,7 @@ function StudyStartPanel({
               height: 32,
               display: "grid",
               placeItems: "center",
-              borderRadius: 8,
+              borderRadius: "var(--radius-sm)",
               background: "rgba(255,255,255,0.06)",
               color: "var(--teal)",
             }}
@@ -482,11 +483,12 @@ function FilterPanel({
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         padding: 16,
         display: "flex",
         flexDirection: "column",
         gap: 14,
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -650,7 +652,7 @@ function ChipToggle({
       style={{
         padding: "8px 13px",
         minHeight: 36,
-        borderRadius: 999,
+        borderRadius: "var(--radius-full)",
         fontSize: 12,
         fontWeight: 700,
         cursor: "pointer",
@@ -675,7 +677,7 @@ function QuietPrompt({ onShowAll }: { onShowAll: () => void }) {
         padding: "16px 18px",
         background: "var(--bg)",
         border: "1px dashed var(--border)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         flexWrap: "wrap",
       }}
     >
@@ -747,8 +749,9 @@ function QuestionList({
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         overflow: "hidden",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       {items.map((question, index) => (
@@ -840,7 +843,7 @@ function Pill({
       style={{
         fontSize: 10,
         padding: "2px 8px",
-        borderRadius: 999,
+        borderRadius: "var(--radius-full)",
         background: isWrong ? "var(--wrong-dim)" : "var(--surface-raised)",
         border: isWrong ? "1px solid rgba(192,74,58,0.3)" : "1px solid var(--border)",
         color: isWrong ? "var(--wrong)" : "var(--text-muted)",
@@ -868,7 +871,7 @@ function StatusBox({
         padding: "2rem 1.5rem",
         background: isError ? "var(--wrong-dim)" : "var(--bg)",
         border: `1px ${isError ? "solid rgba(192,74,58,0.3)" : "dashed var(--border)"}`,
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         color: isError ? "var(--wrong)" : "var(--text-muted)",
         fontSize: 14,
       }}

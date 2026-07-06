@@ -152,14 +152,14 @@ function LoginForm() {
           width: "100%",
           maxWidth: "400px",
           padding: "6px",
-          borderRadius: "22px",
+          borderRadius: "var(--radius-lg)",
           background: "var(--surface-raised)",
           border: "1px solid var(--border)",
         }}
       >
         <div
           style={{
-            borderRadius: "16px",
+            borderRadius: "var(--radius-lg)",
             padding: "2rem",
             background: "var(--surface)",
             borderTop: "3px solid var(--teal)",
@@ -189,7 +189,7 @@ function LoginForm() {
                 style={{
                   display: "inline-flex",
                   padding: "4px",
-                  borderRadius: "10px",
+                  borderRadius: "var(--radius-md)",
                   background: "var(--teal-dim)",
                   border: "1px solid var(--teal-border)",
                 }}

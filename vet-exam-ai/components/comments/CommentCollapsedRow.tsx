@@ -29,7 +29,7 @@ export default function CommentCollapsedRow({
       style={{
         background: "var(--bg)",
         border: "1px dashed var(--border)",
-        borderRadius: 10,
+        borderRadius: "var(--radius-md)",
         padding: "10px 14px",
         display: "flex",
         alignItems: "center",
