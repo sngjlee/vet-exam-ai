@@ -40,6 +40,40 @@
   --font-serif: 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif;
   --font-sans:  'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif;
   --font-mono:  var(--font-ibm-plex-mono), monospace;
+
+  /* ── Spacing scale (4px base) ─────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* ── Radius scale ─────────────────────────────────────────── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* ── Elevation (shadows tinted toward text #172033) ───────── */
+  --shadow-sm: 0 1px 2px rgba(23, 32, 51, 0.05), 0 1px 3px rgba(23, 32, 51, 0.06);
+  --shadow-md: 0 2px 6px rgba(23, 32, 51, 0.06), 0 8px 20px rgba(23, 32, 51, 0.08);
+  --shadow-lg: 0 12px 32px rgba(23, 32, 51, 0.12), 0 4px 10px rgba(23, 32, 51, 0.06);
+  --shadow-teal: 0 8px 20px rgba(30, 167, 187, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+  /* ── Type scale (size / line-height) ──────────────────────── */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 34px;
+  --leading-tight: 1.15;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
 }
 
 body {
@@ -762,6 +796,40 @@ p, h1, h2, h3, h4, button, label, span, td, th {
   --text-faint:     #8A98A8;
   --border:         rgba(28, 45, 64, 0.11);
   --rule:           rgba(30, 167, 187, 0.18);
+
+  /* ── Spacing scale (4px base) ─────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* ── Radius scale ─────────────────────────────────────────── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* ── Elevation (shadows tinted toward text #172033) ───────── */
+  --shadow-sm: 0 1px 2px rgba(23, 32, 51, 0.05), 0 1px 3px rgba(23, 32, 51, 0.06);
+  --shadow-md: 0 2px 6px rgba(23, 32, 51, 0.06), 0 8px 20px rgba(23, 32, 51, 0.08);
+  --shadow-lg: 0 12px 32px rgba(23, 32, 51, 0.12), 0 4px 10px rgba(23, 32, 51, 0.06);
+  --shadow-teal: 0 8px 20px rgba(30, 167, 187, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+  /* ── Type scale (size / line-height) ──────────────────────── */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 34px;
+  --leading-tight: 1.15;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
   color-scheme: light;
   min-height: 100vh;
   background:
