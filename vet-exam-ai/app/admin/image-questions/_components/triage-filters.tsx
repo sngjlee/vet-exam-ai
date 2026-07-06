@@ -59,6 +59,7 @@ export function TriageFilters({
       style={{
         background: "var(--surface-raised)",
         border:     "1px solid var(--rule)",
+        boxShadow:  "var(--shadow-sm)",
         opacity:    pending ? 0.6 : 1,
       }}
     >

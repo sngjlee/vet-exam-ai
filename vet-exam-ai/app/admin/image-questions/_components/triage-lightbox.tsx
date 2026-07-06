@@ -56,7 +56,7 @@ export function TriageLightbox({
         style={{
           padding:      0,
           border:       "none",
-          borderRadius: 8,
+          borderRadius: "var(--radius-sm)",
           maxWidth:     "min(90vw, 1200px)",
           maxHeight:    "90vh",
           background:   "transparent",
@@ -72,7 +72,8 @@ export function TriageLightbox({
               maxHeight:    "90vh",
               display:      "block",
               background:   "white",
-              borderRadius: 8,
+              borderRadius: "var(--radius-sm)",
+              boxShadow:    "var(--shadow-lg)",
             }}
           />
           <button

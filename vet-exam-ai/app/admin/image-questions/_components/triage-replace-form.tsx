@@ -136,7 +136,7 @@ export function TriageReplaceForm({
         padding: 12,
         background: "var(--surface)",
         border: "1px solid var(--rule)",
-        borderRadius: 6,
+        borderRadius: "var(--radius-sm)",
       }}
     >
       <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
