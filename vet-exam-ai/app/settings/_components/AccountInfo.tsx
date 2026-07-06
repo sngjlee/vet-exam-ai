@@ -20,9 +20,10 @@ export default async function AccountInfo() {
     <section
       style={{
         padding: 20,
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         background: "var(--surface)",
         border: "1px solid var(--border)",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <h2

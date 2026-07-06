@@ -54,10 +54,11 @@ export default function PasswordChangeForm() {
     <section
       style={{
         padding: 20,
-        borderRadius: 12,
+        borderRadius: "var(--radius-md)",
         background: "var(--surface)",
         border: "1px solid var(--border)",
         marginTop: 20,
+        boxShadow: "var(--shadow-sm)",
       }}
     >
       <h2
@@ -135,7 +136,7 @@ export default function PasswordChangeForm() {
             role="alert"
             style={{
               padding: "8px 12px",
-              borderRadius: 8,
+              borderRadius: "var(--radius-sm)",
               background: "var(--wrong-dim)",
               color: "var(--wrong)",
               border: "1px solid rgba(192,74,58,0.3)",
@@ -151,7 +152,7 @@ export default function PasswordChangeForm() {
             role="status"
             style={{
               padding: "8px 12px",
-              borderRadius: 8,
+              borderRadius: "var(--radius-sm)",
               background: "var(--correct-dim)",
               color: "var(--correct)",
               border: "1px solid rgba(45,159,107,0.3)",
