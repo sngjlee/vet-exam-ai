@@ -388,7 +388,7 @@ export default function LandingPage() {
             {/* SRS card — featured, teal top border */}
             <div className="landing-feature-card" style={{
               background: "var(--surface)", border: "1px solid var(--border)",
-              borderTop: "3px solid var(--teal)", borderRadius: "20px",
+              borderTop: "3px solid var(--teal)",
               padding: "40px", position: "relative", overflow: "hidden",
               display: "flex", flexDirection: "column", minHeight: "440px",
             }}>
@@ -404,7 +404,7 @@ export default function LandingPage() {
                 맞힌 문제는 긴 간격으로, 틀린 문제는 짧은 간격으로. 잊기 전에 만나면 노력 대비 기억이 몇 배 길어집니다.
               </p>
               {/* 4-row mini queue viz */}
-              <div className="landing-feature-viz" style={{ marginTop: "auto", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "12px", padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="landing-feature-viz" style={{ marginTop: "auto", background: "var(--bg)", border: "1px solid var(--border)", padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
                 {SRS_ROWS.map(({ day, w, tag, tagColor }) => (
                   <div key={day} className="landing-feature-row landing-feature-row-srs" style={{ display: "grid", gridTemplateColumns: "40px 1fr 60px", alignItems: "center", gap: "12px" }}>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: 700, color: "var(--text-muted)" }}>{day}</span>
@@ -420,7 +420,7 @@ export default function LandingPage() {
             {/* Weak-point targeting card */}
             <div className="landing-feature-card" style={{
               background: "var(--surface)", border: "1px solid var(--border)",
-              borderRadius: "20px", padding: "40px", position: "relative", overflow: "hidden",
+              padding: "40px", position: "relative", overflow: "hidden",
               display: "flex", flexDirection: "column", minHeight: "440px",
             }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
@@ -435,7 +435,7 @@ export default function LandingPage() {
                 KVLE는 정답률이 낮은 과목을 자동으로 상위에 배치하고, 약점 집중 세션에서 우선 출제합니다.
               </p>
               {/* 5-subject ranking bars */}
-              <div className="landing-feature-viz" style={{ marginTop: "auto", background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "12px", padding: "18px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div className="landing-feature-viz" style={{ marginTop: "auto", background: "var(--bg)", border: "1px solid var(--border)", padding: "18px", display: "flex", flexDirection: "column", gap: "12px" }}>
                 {WEAK_SUBJECTS.map(({ name, pct, bar, color }) => (
                   <div key={name} className="landing-feature-row landing-feature-row-weak" style={{ display: "grid", gridTemplateColumns: "90px 1fr 44px", alignItems: "center", gap: "12px" }}>
                     <span style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--text)" }}>{name}</span>

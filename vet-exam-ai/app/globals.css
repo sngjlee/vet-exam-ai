@@ -771,6 +771,18 @@ p, h1, h2, h3, h4, button, label, span, td, th {
   .duo-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
 }
 
+/* Landing feature cards — elevation + unified radius */
+.landing-feature-card {
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
+}
+.landing-feature-card:hover {
+  box-shadow: var(--shadow-md);
+}
+.landing-feature-viz {
+  border-radius: var(--radius-md);
+}
+
 /* How-it-works steps */
 .steps-grid { display: grid; grid-template-columns: 1fr; margin-top: 52px; }
 .step-item { padding: 36px 0; border-top: 1px solid var(--border); }
