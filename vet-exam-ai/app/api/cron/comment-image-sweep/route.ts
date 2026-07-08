@@ -11,22 +11,33 @@ const BUCKET = "comment-images";
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const CRON_LOG_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 const BATCH = 100;
+const REF_PAGE = 1000;
 
 export async function GET(req: NextRequest) {
   return runCronJob(req, "comment-image-sweep", async (admin) => {
-    // 1) Collect referenced storage paths from all comment image_urls
-    const { data: refRows, error: refErr } = await admin
-      .from("comments")
-      .select("image_urls")
-      .not("image_urls", "eq", "{}");
-    if (refErr) throw new Error(`fetch_referenced_failed: ${refErr.message}`);
-
+    // 1) Collect referenced storage paths from ALL comment image_urls.
+    // MUST paginate: a single Supabase select silently caps at 1000 rows, and an
+    // incomplete "referenced" set would misclassify live images as orphans and
+    // delete them permanently. Fail closed — abort the whole sweep on any page
+    // error so we never delete against a partial reference set.
     const referenced = new Set<string>();
-    for (const row of refRows ?? []) {
-      for (const url of (row.image_urls ?? []) as string[]) {
-        const path = urlToStoragePath(url);
-        if (path) referenced.add(path);
+    for (let from = 0; ; from += REF_PAGE) {
+      const { data: refRows, error: refErr } = await admin
+        .from("comments")
+        .select("id, image_urls")
+        .not("image_urls", "eq", "{}")
+        .order("id", { ascending: true })
+        .range(from, from + REF_PAGE - 1);
+      if (refErr) throw new Error(`fetch_referenced_failed: ${refErr.message}`);
+
+      const rows = refRows ?? [];
+      for (const row of rows) {
+        for (const url of (row.image_urls ?? []) as string[]) {
+          const path = urlToStoragePath(url);
+          if (path) referenced.add(path);
+        }
       }
+      if (rows.length < REF_PAGE) break;
     }
 
     // 2) Walk storage tree: {userId}/{yyyymm}/* and collect orphans

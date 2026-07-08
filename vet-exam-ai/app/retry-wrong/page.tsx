@@ -115,6 +115,7 @@ export default function RetryWrongPage() {
 
       {!finished && currentQuestion && (
         <QuestionCard
+          key={currentQuestion.id}
           question={currentQuestion}
           questionNumber={currentIndex + 1}
           total={sessionQuestions.length}

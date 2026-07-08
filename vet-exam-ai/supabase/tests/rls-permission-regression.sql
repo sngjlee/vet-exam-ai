@@ -114,6 +114,16 @@ select pg_temp.assert_ok(
   'comments admin update policy exists',
   pg_temp.policy_exists('public', 'comments', 'comments: admin update', 'UPDATE')
 );
+-- Hardened 2026-07-08: authenticated may UPDATE only body/status columns; the
+-- trigger-maintained counters (vote_score, *_count) are not client-writable, so
+-- an author cannot inflate their own score via a direct PostgREST PATCH.
+select pg_temp.assert_ok(
+  'comments counter columns are not client-updatable',
+  has_column_privilege('authenticated', 'public.comments', 'body_text', 'UPDATE')
+  and has_column_privilege('authenticated', 'public.comments', 'status', 'UPDATE')
+  and not has_column_privilege('authenticated', 'public.comments', 'vote_score', 'UPDATE')
+  and not has_column_privilege('authenticated', 'public.comments', 'report_count', 'UPDATE')
+);
 select pg_temp.assert_ok(
   'comments has no hard-delete policy',
   not exists (
@@ -236,11 +246,19 @@ select pg_temp.assert_ok(
   'comment image public read policy exists',
   pg_temp.policy_exists('storage', 'objects', 'comment-images public read', 'SELECT')
 );
+-- Note: pg_get_functiondef never emits "SECURITY INVOKER" (it is the default and
+-- is omitted; only SECURITY DEFINER is printed). Check prosecdef from the catalog
+-- instead — prosecdef = false means the function runs SECURITY INVOKER, keeping
+-- RLS in force for the caller.
 select pg_temp.assert_ok(
   'search_comments filters visible top-level comments',
   position('c.status = ''visible''' in pg_get_functiondef('public.search_comments(text, text, integer, integer, integer)'::regprocedure)) > 0
   and position('c.parent_id is null' in pg_get_functiondef('public.search_comments(text, text, integer, integer, integer)'::regprocedure)) > 0
-  and position('security invoker' in lower(pg_get_functiondef('public.search_comments(text, text, integer, integer, integer)'::regprocedure))) > 0
+  and not (
+    select p.prosecdef
+    from pg_proc p
+    where p.oid = 'public.search_comments(text, text, integer, integer, integer)'::regprocedure
+  )
 );
 select pg_temp.assert_ok(
   'comment_image_upload_log own select only',
@@ -274,10 +292,24 @@ select pg_temp.assert_ok(
 );
 
 -- Profiles and IP bans: account status is not public-writable; IP bans are admin read/RPC-write.
+-- Hardened 2026-07-08 (20260708000000_security_rls_hardening): the owner UPDATE
+-- policy was removed and UPDATE revoked from authenticated. profiles is written
+-- only by SECURITY DEFINER RPCs / service_role; user edits go to
+-- user_profiles_public. This closes the role='admin' self-promotion vector, so
+-- the regression now asserts the ABSENCE of any client UPDATE path.
 select pg_temp.assert_ok(
-  'profiles owner read/update policies exist',
+  'profiles owner read policy exists',
   pg_temp.policy_exists('public', 'profiles', 'profiles: owner read', 'SELECT')
-  and pg_temp.policy_exists('public', 'profiles', 'profiles: owner update', 'UPDATE')
+);
+select pg_temp.assert_ok(
+  'profiles has no client UPDATE policy and no authenticated UPDATE grant',
+  not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'profiles'
+      and cmd in ('UPDATE', 'ALL')
+  )
+  and not has_table_privilege('authenticated', 'public.profiles', 'UPDATE')
 );
 select pg_temp.assert_ok(
   'profiles admin read policy exists',
