@@ -3,6 +3,8 @@
 // Bypasses ALL RLS. Use exclusively for auth admin APIs and system-level
 // mutations that explicitly require it (e.g. password reset link issuance).
 
+// Hard guard: importing this module from any client bundle is a build error.
+import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 

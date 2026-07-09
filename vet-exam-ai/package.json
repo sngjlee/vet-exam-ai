@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "check:migrations": "node scripts/check-migrations.cjs",
     "smoke:public": "node scripts/smoke-public.cjs",
-    "ci": "npm run check:migrations && npm run lint && npm run typecheck && npm run build"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "ci": "npm run check:migrations && npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.53.1",
@@ -35,6 +37,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }
