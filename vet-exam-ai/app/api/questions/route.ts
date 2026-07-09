@@ -4,6 +4,7 @@ import { fetchAllPaged } from "../../../lib/supabase/paginate";
 import type { Question, QuestionSummary } from "../../../lib/questions";
 import type { QuestionRow } from "../../../lib/supabase/types";
 import { logError } from "../../../lib/utils/logging";
+import { jsonError, ApiError } from "../../../lib/api/errors";
 
 type QuestionApiRow = Pick<
   QuestionRow,
@@ -100,13 +101,11 @@ export async function GET(req: NextRequest) {
   if (lookupId) {
     const question = await loadQuestionById(lookupId);
     if (question.error) {
-      return NextResponse.json(
-        { error: "Failed to load question" },
-        { status: 500 },
-      );
+      logError("[questions] load question failed", question.error);
+      return jsonError(ApiError.Internal, 500);
     }
     if (!question.data) {
-      return NextResponse.json({ error: "Question not found" }, { status: 404 });
+      return jsonError(ApiError.NotFound, 404);
     }
     return NextResponse.json(toQuestion(question.data));
   }
@@ -114,10 +113,8 @@ export async function GET(req: NextRequest) {
   if (metaOnly) {
     const meta = await loadQuestionMeta();
     if (meta.error) {
-      return NextResponse.json(
-        { error: "Failed to load question metadata" },
-        { status: 500 },
-      );
+      logError("[questions] load question metadata failed", meta.error);
+      return jsonError(ApiError.Internal, 500);
     }
     return NextResponse.json(meta.data, {
       headers: {
@@ -132,29 +129,22 @@ export async function GET(req: NextRequest) {
     const session = await loadSessionQuestions(count, categories, balancedSession);
     if (session.error) {
       logError("[questions] session load failed", session.error);
-      return NextResponse.json(
-        { error: "Failed to load session questions" },
-        { status: 500 },
-      );
+      return jsonError(ApiError.Internal, 500);
     }
     return NextResponse.json(session.data.map(toQuestion));
   }
 
   const yearCutoff = await resolveYearCutoff(recentYearsRaw);
   if (yearCutoff.error) {
-    return NextResponse.json(
-      { error: "Failed to resolve latest year" },
-      { status: 500 },
-    );
+    logError("[questions] resolve latest year failed", yearCutoff.error);
+    return jsonError(ApiError.Internal, 500);
   }
 
   if (summaryOnly) {
     const summaries = await loadQuestionSummaries(yearCutoff.value, category);
     if (summaries.error) {
-      return NextResponse.json(
-        { error: "Failed to load question summaries" },
-        { status: 500 },
-      );
+      logError("[questions] load question summaries failed", summaries.error);
+      return jsonError(ApiError.Internal, 500);
     }
     return NextResponse.json(summaries.data.map(toQuestionSummary));
   }
@@ -175,7 +165,8 @@ export async function GET(req: NextRequest) {
     },
   );
   if (allError) {
-    return NextResponse.json({ error: "Failed to load questions" }, { status: 500 });
+    logError("[questions] load questions failed", allError);
+    return jsonError(ApiError.Internal, 500);
   }
   return NextResponse.json(all.map(toQuestion));
 
