@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "../../../../lib/auth/requireUser";
+import { jsonError, ApiError } from "../../../../lib/api/errors";
+import { logError } from "../../../../lib/utils/logging";
 
 export async function GET() {
   const auth = await requireUser();
@@ -13,7 +15,8 @@ export async function GET() {
     .is("read_at", null);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logError("[notifications/unread-count] failed", error);
+    return jsonError(ApiError.Internal, 500);
   }
 
   return NextResponse.json({ count: count ?? 0 });

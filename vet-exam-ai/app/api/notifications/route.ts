@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireUser } from "../../../lib/auth/requireUser";
 import { logWarn } from "../../../lib/utils/logging";
+import { jsonError, ApiError } from "../../../lib/api/errors";
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
   if (limitParam != null) {
     const parsed = Number(limitParam);
     if (!Number.isFinite(parsed) || parsed < 1) {
-      return NextResponse.json({ error: "Invalid limit" }, { status: 400 });
+      return jsonError(ApiError.MissingParam, 400);
     }
     limit = Math.min(Math.floor(parsed), MAX_LIMIT);
   }
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     logWarn("[GET /api/notifications] list failed", error);
-    return NextResponse.json({ error: "notifications_fetch_failed" }, { status: 500 });
+    return jsonError(ApiError.Internal, 500);
   }
 
   const safeRows = rows ?? [];
