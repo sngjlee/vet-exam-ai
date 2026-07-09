@@ -30,7 +30,12 @@ comment on column public.profiles.signup_status is
   'Signup gating state. approved = full member; pending_proof/pending_review/rejected lock writes.';
 
 -- Grandfather every existing row (approved before gating shipped).
-update public.profiles set signup_status = 'approved';
+-- Guard to the rows just auto-defaulted to 'pending_proof' by the ADD COLUMN
+-- above. At original apply-time this matches every existing row (identical
+-- effect); the WHERE keeps any replay / fresh-provision from clobbering
+-- legitimately pending_review / pending_proof / rejected users back to approved.
+update public.profiles set signup_status = 'approved'
+where signup_status = 'pending_proof';
 
 -- 3. signup_applications table ------------------------------------------------
 create table public.signup_applications (
