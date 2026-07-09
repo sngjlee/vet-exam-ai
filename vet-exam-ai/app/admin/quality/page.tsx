@@ -31,14 +31,18 @@ type QuestionRecord = QuestionQualityFields & {
   created_at: string;
 };
 
+// B1: attempts/comments/question_corrections are keyed by question_public_id
+// (KVLE). Their legacy internal question_id is NULL for rows written after the
+// B1 cutover, so joining on it silently drops all new data. question_image_triage
+// was NOT migrated — it still keys on the internal question_id.
 type AttemptRecord = {
-  question_id: string;
+  question_public_id: string | null;
   is_correct: boolean;
 };
 
 type ReportedComment = {
   id: string;
-  question_id: string;
+  question_public_id: string | null;
   report_count: number;
   status: string;
   body_text: string;
@@ -51,7 +55,7 @@ type TriageRecord = {
 };
 
 type CorrectionRecord = {
-  question_id: string;
+  question_public_id: string | null;
   status: string;
 };
 
@@ -101,12 +105,12 @@ async function loadQualityDashboard() {
       .limit(QUESTION_LIMIT),
     supabase
       .from("attempts")
-      .select("question_id, is_correct")
+      .select("question_public_id, is_correct")
       .order("answered_at", { ascending: false })
       .limit(ATTEMPT_LIMIT),
     supabase
       .from("comments")
-      .select("id, question_id, report_count, status, body_text, created_at")
+      .select("id, question_public_id, report_count, status, body_text, created_at")
       .gt("report_count", 0)
       .order("report_count", { ascending: false })
       .limit(COMMENT_LIMIT),
@@ -116,7 +120,7 @@ async function loadQualityDashboard() {
       .limit(QUESTION_LIMIT),
     supabase
       .from("question_corrections")
-      .select("question_id, status")
+      .select("question_public_id, status")
       .in("status", ["proposed", "reviewing"])
       .limit(COMMENT_LIMIT),
   ]);
@@ -126,7 +130,8 @@ async function loadQualityDashboard() {
     choices: question.choices ?? [],
     tags: question.tags ?? [],
   }));
-  const questionMap = new Map(questions.map((question) => [question.id, question]));
+  // Keyed by public_id — the canonical join key for attempts/comments/corrections (B1).
+  const questionMap = new Map(questions.map((question) => [question.public_id, question]));
   const attempts = (attemptsRes.data ?? []) as AttemptRecord[];
   const reportedComments = (commentsRes.data ?? []) as ReportedComment[];
   const triageRows = (triageRes.data ?? []) as TriageRecord[];
@@ -136,8 +141,9 @@ async function loadQualityDashboard() {
     Object.keys(QUESTION_QUALITY_LABELS).map((issue) => [issue, 0]),
   ) as Record<QuestionQualityIssue, number>;
   const issueRows: ImagePendingRow[] = [];
+  // triage keeps the internal question_id (not migrated to public_id); corrections use public_id.
   const triageMap = new Map(triageRows.map((row) => [row.question_id, row.status]));
-  const correctionMap = new Map(correctionRows.map((row) => [row.question_id, row.status]));
+  const correctionMap = new Map(correctionRows.map((row) => [row.question_public_id, row.status]));
 
   for (const question of questions) {
     const issues = getQuestionQualityIssues(question);
@@ -146,7 +152,7 @@ async function loadQualityDashboard() {
       issueRows.push({
         question,
         triageStatus: triageMap.get(question.id) ?? null,
-        correctionStatus: correctionMap.get(question.id) ?? null,
+        correctionStatus: correctionMap.get(question.public_id) ?? null,
         issues,
       });
     }
@@ -154,9 +160,11 @@ async function loadQualityDashboard() {
 
   const reportedByQuestion = new Map<string, ReportedQuestionRow>();
   for (const comment of reportedComments) {
-    const question = questionMap.get(comment.question_id);
+    const pubId = comment.question_public_id;
+    if (!pubId) continue;
+    const question = questionMap.get(pubId);
     if (!question) continue;
-    const current = reportedByQuestion.get(comment.question_id) ?? {
+    const current = reportedByQuestion.get(pubId) ?? {
       question,
       reportCount: 0,
       commentCount: 0,
@@ -167,15 +175,17 @@ async function loadQualityDashboard() {
     current.commentCount += 1;
     if (comment.status !== "visible") current.hiddenCount += 1;
     if (comment.created_at > current.latestReportedAt) current.latestReportedAt = comment.created_at;
-    reportedByQuestion.set(comment.question_id, current);
+    reportedByQuestion.set(pubId, current);
   }
 
   const attemptsByQuestion = new Map<string, AccuracyQuestionRow>();
   const topicAgg = new Map<string, TopicRow>();
   for (const attempt of attempts) {
-    const question = questionMap.get(attempt.question_id);
+    const pubId = attempt.question_public_id;
+    if (!pubId) continue;
+    const question = questionMap.get(pubId);
     if (!question) continue;
-    const current = attemptsByQuestion.get(attempt.question_id) ?? {
+    const current = attemptsByQuestion.get(pubId) ?? {
       question,
       attempts: 0,
       correct: 0,
@@ -186,7 +196,7 @@ async function loadQualityDashboard() {
     if (attempt.is_correct) current.correct += 1;
     else current.incorrect += 1;
     current.accuracy = current.correct / current.attempts;
-    attemptsByQuestion.set(attempt.question_id, current);
+    attemptsByQuestion.set(pubId, current);
 
     const topic = question.topic?.trim() || "(topic 없음)";
     const key = `${question.category}\n${topic}`;
