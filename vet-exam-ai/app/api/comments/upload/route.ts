@@ -5,7 +5,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { nanoid } from "nanoid";
-import { createClient } from "../../../../lib/supabase/server";
+import { requireUser } from "../../../../lib/auth/requireUser";
 import { createAdminClient } from "../../../../lib/supabase/admin";
 import { readWebpDimensions } from "../../../../lib/webp-dimensions";
 import { urlToStoragePath } from "../../../../lib/comments/imageUrlValidate";
@@ -18,13 +18,9 @@ const RATE_LIMIT = 10; // 10 uploads / hour / user
 const BUCKET = "comment-images";
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   const lengthHeader = req.headers.get("content-length");
   if (lengthHeader && Number(lengthHeader) > MAX_BYTES + 8192 /* multipart overhead */) {
@@ -125,13 +121,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   const url = req.nextUrl.searchParams.get("url");
   if (!url) {

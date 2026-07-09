@@ -1,6 +1,6 @@
 // vet-exam-ai/app/api/comments/[id]/vote/route.ts
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "../../../../../lib/supabase/server";
+import { requireUser } from "../../../../../lib/auth/requireUser";
 import { VoteRequestSchema } from "../../../../../lib/comments/voteSchema";
 import { checkRateLimit, RATE_LIMITS } from "../../../../../lib/rate-limit";
 
@@ -29,13 +29,9 @@ export async function POST(
   }
   const { value } = parsed.data;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { supabase, user } = auth;
 
   const rl = await checkRateLimit(supabase, RATE_LIMITS.commentVote, user.id);
   if (!rl.allowed) {
