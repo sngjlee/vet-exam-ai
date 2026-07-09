@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireUser } from "../../../../../lib/auth/requireUser";
 import { VoteRequestSchema } from "../../../../../lib/comments/voteSchema";
 import { checkRateLimit, RATE_LIMITS } from "../../../../../lib/rate-limit";
+import { jsonError, ApiError } from "../../../../../lib/api/errors";
+import { logError } from "../../../../../lib/utils/logging";
 
 export async function POST(
   req: NextRequest,
@@ -10,22 +12,19 @@ export async function POST(
 ) {
   const { id } = await params;
   if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    return jsonError(ApiError.MissingParam, 400);
   }
 
   let payload: unknown;
   try {
     payload = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return jsonError(ApiError.InvalidJson, 400);
   }
 
   const parsed = VoteRequestSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", issues: parsed.error.issues },
-      { status: 422 }
-    );
+    return jsonError(ApiError.ValidationFailed, 422, { issues: parsed.error.issues });
   }
   const { value } = parsed.data;
 
@@ -35,10 +34,9 @@ export async function POST(
 
   const rl = await checkRateLimit(supabase, RATE_LIMITS.commentVote, user.id);
   if (!rl.allowed) {
-    return NextResponse.json(
-      { error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } },
-    );
+    const res = jsonError(ApiError.RateLimited, 429);
+    res.headers.set("Retry-After", String(rl.retryAfterSeconds));
+    return res;
   }
 
   // 1) load comment for owner / status checks
@@ -49,22 +47,17 @@ export async function POST(
     .maybeSingle();
 
   if (commentErr) {
-    return NextResponse.json({ error: commentErr.message }, { status: 500 });
+    logError("[comments/[id]/vote] POST select comment failed", commentErr);
+    return jsonError(ApiError.Internal, 500);
   }
   if (!comment) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    return jsonError(ApiError.NotFound, 404);
   }
   if (comment.user_id === user.id) {
-    return NextResponse.json(
-      { error: "Cannot vote on own comment" },
-      { status: 403 }
-    );
+    return jsonError(ApiError.Forbidden, 403);
   }
   if (comment.status !== "visible" && comment.status !== "hidden_by_votes") {
-    return NextResponse.json(
-      { error: "Voting is not available on this comment" },
-      { status: 409 }
-    );
+    return jsonError(ApiError.Conflict, 409);
   }
 
   // 2) load existing vote (if any) — toggle decision
@@ -76,7 +69,8 @@ export async function POST(
     .maybeSingle();
 
   if (existingErr) {
-    return NextResponse.json({ error: existingErr.message }, { status: 500 });
+    logError("[comments/[id]/vote] POST select existing vote failed", existingErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   if (!existing) {
@@ -88,7 +82,8 @@ export async function POST(
       .from("comment_votes")
       .upsert({ comment_id: id, user_id: user.id, value }, { onConflict: "comment_id,user_id" });
     if (upsertErr) {
-      return NextResponse.json({ error: upsertErr.message }, { status: 500 });
+      logError("[comments/[id]/vote] POST upsert failed", upsertErr);
+      return jsonError(ApiError.Internal, 500);
     }
     return NextResponse.json({ vote: value }, { status: 201 });
   }
@@ -100,7 +95,8 @@ export async function POST(
       .eq("comment_id", id)
       .eq("user_id", user.id);
     if (deleteErr) {
-      return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+      logError("[comments/[id]/vote] POST delete failed", deleteErr);
+      return jsonError(ApiError.Internal, 500);
     }
     return NextResponse.json({ vote: null }, { status: 200 });
   }
@@ -111,7 +107,8 @@ export async function POST(
     .eq("comment_id", id)
     .eq("user_id", user.id);
   if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    logError("[comments/[id]/vote] POST update failed", updateErr);
+    return jsonError(ApiError.Internal, 500);
   }
   return NextResponse.json({ vote: value }, { status: 200 });
 }
