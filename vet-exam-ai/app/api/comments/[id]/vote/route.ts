@@ -2,6 +2,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../../../lib/supabase/server";
 import { VoteRequestSchema } from "../../../../../lib/comments/voteSchema";
+import { checkRateLimit, RATE_LIMITS } from "../../../../../lib/rate-limit";
 
 export async function POST(
   req: NextRequest,
@@ -34,6 +35,14 @@ export async function POST(
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
+  const rl = await checkRateLimit(supabase, RATE_LIMITS.commentVote, user.id);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } },
+    );
   }
 
   // 1) load comment for owner / status checks
