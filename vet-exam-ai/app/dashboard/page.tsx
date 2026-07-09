@@ -4,7 +4,7 @@ import { useMemo, useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, CheckCircle2, CirclePlay, HelpCircle, MessageSquare, RotateCcw, X } from "lucide-react";
 import { useAuth } from "../../lib/hooks/useAuth";
-import { useStats, type CategoryStat } from "../../lib/hooks/useStats";
+import { useStats, type CategoryStat, type DayBucket } from "../../lib/hooks/useStats";
 import { useReview } from "../../lib/hooks/useReview";
 import { useDueCountCtx } from "../../lib/context/DueCountContext";
 import { findWeakestCategory } from "../../lib/stats/weakCategory";
@@ -12,7 +12,6 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 import DDayPlanWidget from "../../components/dashboard/DDayPlanWidget";
 import { AnnouncementBannerClient } from "../../components/dashboard/AnnouncementBannerClient";
 import { createClient } from "../../lib/supabase/client";
-import type { AttemptRow } from "../../lib/supabase/types";
 import type { WrongAnswerNote } from "../../lib/types";
 
 const SUBJECT_COLORS = ["#1ea7bb", "#4A7FA8", "#C8895A", "#2D9F6B", "#9B6FD4"];
@@ -289,20 +288,15 @@ function SubjectBars({ byCategory }: { byCategory: CategoryStat[] }) {
   );
 }
 
-function WeekChart({ recentAttempts }: { recentAttempts: AttemptRow[] }) {
-  const today = new Date();
-  const weekData = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
-    const dateStr = d.toDateString();
-    const dayAttempts = recentAttempts.filter(
-      (a) => new Date(a.answered_at).toDateString() === dateStr
-    );
-    const correct = dayAttempts.filter((a) => a.is_correct).length;
+function WeekChart({ weekly }: { weekly: DayBucket[] }) {
+  const weekData = weekly.map((bucket) => {
+    // Parse the KST date via local Y/M/D parts so the weekday label is stable
+    // regardless of the viewer's timezone.
+    const [y, m, d] = bucket.date.split("-").map(Number);
     return {
-      d: WEEK_DAYS[d.getDay()],
-      v: dayAttempts.length,
-      r: dayAttempts.length > 0 ? correct / dayAttempts.length : 0,
+      d: WEEK_DAYS[new Date(y, m - 1, d).getDay()],
+      v: bucket.total,
+      r: bucket.total > 0 ? bucket.correct / bucket.total : 0,
     };
   });
   const maxV = Math.max(...weekData.map((d) => d.v), 1);
@@ -758,22 +752,40 @@ export default function DashboardPage() {
     [stats]
   );
 
-  const { delta, streak, byCategory, recentAttempts, todayAttemptCount } = useMemo(() => {
+  const { delta, streak, byCategory, weekly, todayAttemptCount } = useMemo(() => {
     if (!stats) {
       return {
         delta: 0,
         streak: 0,
         byCategory: FALLBACK_CATEGORIES,
-        recentAttempts: [] as AttemptRow[],
+        weekly: [] as DayBucket[],
         todayAttemptCount: 0,
       };
     }
+
+    const byCategory =
+      stats.byCategory.length > 0 ? stats.byCategory : FALLBACK_CATEGORIES;
+
+    // Prefer server-computed KST aggregates — correct over the full history.
+    if (stats.weekly && stats.streak != null) {
+      return {
+        delta: stats.deltaVsYesterday ?? 0,
+        streak: stats.streak,
+        byCategory,
+        weekly: stats.weekly,
+        todayAttemptCount: stats.todayAttempts ?? 0,
+      };
+    }
+
+    // Fallback: legacy client-side aggregation of the recentAttempts sample,
+    // used only when the stats RPC predates 20260709020000. This under-counts
+    // once daily attempts exceed the 20-row sample — hence the server move.
     const attempts = stats.recentAttempts;
     const todayStr = today.toDateString();
     const yestStr = new Date(today.getTime() - 86400000).toDateString();
-    const todayAttempts = attempts.filter(
+    const todayTotal = attempts.filter(
       (a) => new Date(a.answered_at).toDateString() === todayStr
-    );
+    ).length;
     const todayCount = attempts.filter(
       (a) => new Date(a.answered_at).toDateString() === todayStr && a.is_correct
     ).length;
@@ -791,12 +803,26 @@ export default function DashboardPage() {
       d = new Date(d.getTime() - 86400000);
     }
 
+    const weekly: DayBucket[] = Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(today);
+      day.setDate(day.getDate() - (6 - i));
+      const dayStr = day.toDateString();
+      const dayAttempts = attempts.filter(
+        (a) => new Date(a.answered_at).toDateString() === dayStr
+      );
+      const correct = dayAttempts.filter((a) => a.is_correct).length;
+      const yyyy = day.getFullYear();
+      const mm = String(day.getMonth() + 1).padStart(2, "0");
+      const dd = String(day.getDate()).padStart(2, "0");
+      return { date: `${yyyy}-${mm}-${dd}`, total: dayAttempts.length, correct };
+    });
+
     return {
       delta: todayCount - yestCount,
       streak: streakCount,
-      byCategory: stats.byCategory.length > 0 ? stats.byCategory : FALLBACK_CATEGORIES,
-      recentAttempts: attempts,
-      todayAttemptCount: todayAttempts.length,
+      byCategory,
+      weekly,
+      todayAttemptCount: todayTotal,
     };
   }, [stats, today]);
 
@@ -974,7 +1000,7 @@ export default function DashboardPage() {
       <div style={{ background: "var(--surface)", border: "1px solid var(--border)",
         borderRadius: "var(--radius-lg)", padding: "var(--space-6)", boxShadow: "var(--shadow-sm)" }}>
         <span className="kvle-label" style={{ marginBottom: 4, fontSize: 13 }}>최근 7일</span>
-        <WeekChart recentAttempts={recentAttempts} />
+        <WeekChart weekly={weekly} />
       </div>
     </main>
   );

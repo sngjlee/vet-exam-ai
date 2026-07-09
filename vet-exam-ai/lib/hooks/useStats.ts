@@ -11,6 +11,12 @@ export type CategoryStat = {
   accuracy: number;
 };
 
+export type DayBucket = {
+  date: string; // KST date, YYYY-MM-DD
+  total: number;
+  correct: number;
+};
+
 export type Stats = {
   totalAttempts: number;
   totalCorrect: number;
@@ -18,6 +24,13 @@ export type Stats = {
   last7DaysAttempts: number;
   byCategory: CategoryStat[];
   recentAttempts: AttemptRow[];
+  // Server-side KST daily aggregation. Optional: absent when the stats RPC
+  // predates 20260709020000, in which case the dashboard falls back to
+  // client-side aggregation of recentAttempts.
+  streak?: number;
+  weekly?: DayBucket[];
+  todayAttempts?: number;
+  deltaVsYesterday?: number;
 };
 
 function emptyStats(): Stats {

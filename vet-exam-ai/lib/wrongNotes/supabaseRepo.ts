@@ -7,6 +7,10 @@ import { logError } from "../utils/logging";
 
 type WrongNoteInsert = Database["public"]["Tables"]["wrong_notes"]["Insert"];
 
+// PostgREST caps a single response (supabase max_rows = 1000), so every
+// unbounded list must page or it silently truncates. See memory quiz_selector.
+const PAGE_SIZE = 1000;
+
 function rowToNote(row: WrongNoteRow): WrongAnswerNote {
   return {
     // B1: prefer the KVLE public id; fall back to legacy internal id for un-backfilled rows.
@@ -30,17 +34,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
   ) {}
 
   async getAll(): Promise<WrongAnswerNote[]> {
-    const { data, error } = await this.supabase
-      .from("wrong_notes")
-      .select("*")
-      .eq("user_id", this.userId)
-      .order("saved_at", { ascending: false });
-
-    if (error) {
-      logError("wrong_notes getAll failed:", error);
-      return [];
-    }
-    return (data as WrongNoteRow[]).map(rowToNote);
+    return this.fetchAllPaged("all");
   }
 
   async upsert(note: WrongAnswerNote): Promise<void> {
@@ -87,18 +81,43 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
   }
 
   async getDue(): Promise<WrongAnswerNote[]> {
-    const { data, error } = await this.supabase
-      .from("wrong_notes")
-      .select("*")
-      .eq("user_id", this.userId)
-      .lte("next_review_at", new Date().toISOString())
-      .order("next_review_at", { ascending: true });
+    return this.fetchAllPaged("due");
+  }
 
-    if (error) {
-      logError("wrong_notes getDue failed:", error);
-      return [];
+  // Pages through every matching row — a single select would silently stop at
+  // PAGE_SIZE (PostgREST max_rows), dropping notes for users past 1000.
+  private async fetchAllPaged(scope: "all" | "due"): Promise<WrongAnswerNote[]> {
+    const nowIso = new Date().toISOString();
+    const rows: WrongNoteRow[] = [];
+
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const base = this.supabase
+        .from("wrong_notes")
+        .select("*")
+        .eq("user_id", this.userId);
+      // Secondary order on the per-user unique key keeps page boundaries stable.
+      const query =
+        scope === "due"
+          ? base
+              .lte("next_review_at", nowIso)
+              .order("next_review_at", { ascending: true })
+              .order("question_public_id", { ascending: true })
+          : base
+              .order("saved_at", { ascending: false })
+              .order("question_public_id", { ascending: true });
+
+      const { data, error } = await query.range(from, from + PAGE_SIZE - 1);
+      if (error) {
+        logError(`wrong_notes ${scope === "due" ? "getDue" : "getAll"} failed:`, error);
+        return [];
+      }
+
+      const page = (data as WrongNoteRow[]) ?? [];
+      rows.push(...page);
+      if (page.length < PAGE_SIZE) break;
     }
-    return (data as WrongNoteRow[]).map(rowToNote);
+
+    return rows.map(rowToNote);
   }
 
   async updateReview(
