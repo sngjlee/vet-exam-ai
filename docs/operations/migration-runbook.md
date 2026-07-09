@@ -1,7 +1,14 @@
 # Supabase 마이그레이션 런북
 
-KVLE의 신규 마이그레이션은 `vet-exam-ai/supabase/migrations/`에만 추가합니다.
-루트 `supabase/migrations/`는 초기/legacy 파일이 남아 있는 위치이며, 새 파일을 추가하지 않습니다.
+KVLE의 마이그레이션은 **단일 트리** `vet-exam-ai/supabase/migrations/`에만 존재합니다(2026-07-09 통합).
+Supabase 프로젝트 config(`config.toml`)와 `schema.sql`도 `vet-exam-ai/supabase/`에 있습니다.
+과거 루트 `supabase/migrations/`(legacy)는 통합 시 이 트리로 흡수되어 은퇴했습니다 — 다시 만들지 않습니다.
+
+> ⚠️ **프로덕션에 `supabase db push` / `db reset`를 돌리지 마세요.** 지금까지 마이그는 대부분
+> SQL Editor로 수동 적용되어 prod의 `supabase_migrations.schema_migrations`에 55개 버전이
+> 기록돼 있지 않을 가능성이 큽니다. 그 상태에서 push하면 전부 재적용을 시도해 비멱등 DDL에서
+> 실패합니다. CLI가 적용 상태를 알게 하려면 먼저 `supabase migration repair --status applied <버전들>`로
+> 히스토리를 정합화하세요. 일상 적용은 아래 SQL Editor 흐름을 씁니다.
 
 ## 1. 작성 전 확인
 
@@ -26,9 +33,9 @@ npm run typecheck
 
 `check:migrations`는 다음을 확인합니다.
 
-- active migration timestamp 중복 없음
+- migration timestamp 중복 없음
 - migration 파일명 형식
-- legacy root `supabase/migrations/`에 active보다 최신 파일이 생기지 않았는지
+- 은퇴한 루트 `supabase/migrations/`에 `.sql`이 다시 생기지 않았는지(두 번째 트리 방지 가드)
 
 ## 3. SQL Editor 적용
 

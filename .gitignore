@@ -11,6 +11,10 @@
 AI_COWORK_PROTOCOL.md
 docs/superpowers/
 
+# Retired root Supabase CLI state (project consolidated into vet-exam-ai/supabase/)
+supabase/.branches
+supabase/.temp
+
 # Local agent audit evidence and runtime state
 .omo/evidence/
 .omo/start-work/
