@@ -647,7 +647,7 @@ function TodayStarterChecklist({
     {
       href: "/practice/weakest",
       icon: BookOpen,
-      title: `${weakestName} 약점 점검`,
+      title: `${weakestName} 집중 점검`,
       detail: "통계가 쌓일수록 추천 과목이 정교해집니다",
       status: "추천",
       done: false,
@@ -853,8 +853,11 @@ export default function DashboardPage() {
 
   const totalAttempts = stats?.totalAttempts ?? 0;
   const accuracy = stats?.accuracy ?? 0;
-  const weakestName = weakest?.category ?? "약리학";
-  const weakestAcc = weakest?.accuracy ?? 62;
+  // New users have no per-category data (weakest === null). Don't fabricate a
+  // "weakest subject" from fallback numbers — gate the factual displays below.
+  const hasWeakest = weakest != null;
+  const weakestName = weakest?.category ?? "약점 과목";
+  const weakestAcc = weakest?.accuracy ?? 0;
   const accuracyTone = getAccuracyTone(accuracy);
   const weakestTone = getAccuracyTone(weakestAcc);
 
@@ -904,9 +907,9 @@ export default function DashboardPage() {
         <StatCard label="복습 대기" value={dueCount} />
         <StatCard
           label="최약 과목"
-          value={weakestName}
-          hint={`정답률 ${weakestAcc}% · ${weakestTone.label}`}
-          valueColor={weakestTone.color}
+          value={hasWeakest ? weakestName : "—"}
+          hint={hasWeakest ? `정답률 ${weakestAcc}% · ${weakestTone.label}` : "문제를 풀면 분석돼요"}
+          valueColor={hasWeakest ? weakestTone.color : undefined}
         />
       </div>
 
@@ -963,15 +966,15 @@ export default function DashboardPage() {
             gap: 14, textDecoration: "none",
           }}>
             <div>
-              <span className="kvle-label" style={{ color: weakestTone.color, marginBottom: 4, fontSize: 12 }}>
+              <span className="kvle-label" style={{ color: hasWeakest ? weakestTone.color : "var(--text-muted)", marginBottom: 4, fontSize: 12 }}>
                 약점 집중
               </span>
               <div style={{ fontFamily: "var(--font-serif)", fontSize: 15,
-                fontWeight: 800, marginTop: 4, color: weakestTone.color }}>
+                fontWeight: 800, marginTop: 4, color: hasWeakest ? weakestTone.color : "var(--text)" }}>
                 {weakestName} 집중 연습
               </div>
               <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 3 }}>
-                정답률 {weakestAcc}% · 가장 약한 과목
+                {hasWeakest ? `정답률 ${weakestAcc}% · 가장 약한 과목` : "기록이 쌓이면 추천돼요"}
               </div>
             </div>
           </Link>

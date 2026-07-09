@@ -241,7 +241,7 @@ function MiniMockEntry({
             }}
           >
             <Timer size={13} />
-            권장 {MINI_MOCK_MINUTES}분
+            제한시간 {MINI_MOCK_MINUTES}분
           </span>
           <span
             style={{

@@ -363,16 +363,11 @@ export default function QuestionCard({
                   >
                     {isCorrect ? "정답입니다" : "오답"}
                   </span>
-                  <span
-                    style={{
-                      marginLeft: "auto",
-                      fontSize: 10,
-                      fontFamily: "var(--font-mono)",
-                      color: "var(--text-faint)",
-                    }}
-                  >
-                    SRS: +{isCorrect ? "2.5" : "0"}일 · 다음 복습 {isCorrect ? "3일 후" : "1일 후"}
-                  </span>
+                  {/* SRS preview badge removed: QuestionCard has no per-question
+                      review_count, so any interval shown here was hardcoded and
+                      wrong (e.g. always "3일 후" for correct). The real schedule
+                      lives in lib/review/schedule.ts; the wrong-answer save state
+                      is already surfaced by the "오답 노트에 저장됨" control below. */}
                 </div>
 
                 {/* Tab header */}
