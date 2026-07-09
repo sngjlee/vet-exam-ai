@@ -42,7 +42,9 @@ const QUESTION_SUMMARY_SELECT =
   "id, public_id, question, category, topic, difficulty, year, is_active";
 const PAGE_SIZE = 1000;
 const SESSION_POOL_LIMIT = 300;
-const BALANCED_SESSION_POOL_LIMIT = 1000;
+// Per-category random pool for balanced sessions. Must be >= MAX_SESSION_COUNT so
+// a single-category balanced mock can still fill `count`.
+const BALANCED_PER_CATEGORY_POOL = 60;
 const MAX_SESSION_COUNT = 50;
 
 function toQuestion(row: QuestionApiRow): Question {
@@ -325,19 +327,62 @@ export async function GET(req: NextRequest) {
     count: number,
     categories: string[],
   ): Promise<{ data: QuestionApiRow[]; error: unknown }> {
-    let query = supabase
+    // Draw a random pool PER category so every category is represented. A single
+    // id-ordered limit only ever returns the first N by id, and since id encodes
+    // exam round + subject that silently drops whole categories from the pool,
+    // defeating the balance. When no category filter is given we resolve the full
+    // category list (and reuse its per-category counts to skip extra COUNT calls).
+    let targetCategories = categories;
+    let knownCounts: Record<string, number> | null = null;
+    if (targetCategories.length === 0) {
+      const meta = await loadQuestionMeta();
+      if (meta.error) return { data: [], error: meta.error };
+      targetCategories = meta.data.categories;
+      knownCounts = meta.data.countsByCategory;
+    }
+    if (targetCategories.length === 0) return { data: [], error: null };
+
+    const samples = await Promise.all(
+      targetCategories.map((category) =>
+        loadCategorySample(category, knownCounts ? knownCounts[category] ?? 0 : null),
+      ),
+    );
+    const failed = samples.find((sample) => sample.error);
+    if (failed) return { data: [], error: failed.error };
+
+    const pool = samples.flatMap((sample) => sample.data);
+    return { data: pickBalancedQuestions(pool, count), error: null };
+  }
+
+  async function loadCategorySample(
+    category: string,
+    knownTotal: number | null,
+  ): Promise<{ data: QuestionApiRow[]; error: unknown }> {
+    let total = knownTotal;
+    if (total == null) {
+      const { count, error } = await supabase
+        .from("questions")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true)
+        .eq("category", category);
+      if (error) return { data: [], error };
+      total = count ?? 0;
+    }
+    if (total <= 0) return { data: [], error: null };
+
+    const poolSize = Math.min(BALANCED_PER_CATEGORY_POOL, total);
+    const maxStart = Math.max(0, total - poolSize);
+    const from = maxStart > 0 ? Math.floor(Math.random() * (maxStart + 1)) : 0;
+
+    const { data, error } = await supabase
       .from("questions")
       .select(QUESTION_SELECT)
       .eq("is_active", true)
+      .eq("category", category)
       .order("id", { ascending: true })
-      .limit(BALANCED_SESSION_POOL_LIMIT);
-    if (categories.length > 0) {
-      query = query.in("category", categories);
-    }
-
-    const { data, error } = await query;
+      .range(from, from + poolSize - 1);
     if (error) return { data: [], error };
-    return { data: pickBalancedQuestions(data ?? [], count), error: null };
+    return { data: data ?? [], error: null };
   }
 
   async function resolveYearCutoff(raw: string | null): Promise<{
