@@ -3,7 +3,8 @@ import { requireUser } from "../../../lib/auth/requireUser";
 import { CreateCommentSchema } from "../../../lib/comments/schema";
 import { renderCommentMarkdown } from "../../../lib/comments/sanitize";
 import { findInvalidImageUrl } from "../../../lib/comments/imageUrlValidate";
-import { captureOperationalError, classifySupabaseFailure } from "../../../lib/utils/logging";
+import { captureOperationalError, classifySupabaseFailure, logError } from "../../../lib/utils/logging";
+import { jsonError, ApiError } from "../../../lib/api/errors";
 import {
   COMMENT_TYPE_FILTERS,
   COMMENTS_PAGE_SIZE,
@@ -74,14 +75,17 @@ export async function GET(req: NextRequest) {
 
   const { data: commentRows, error, count } = commentsRes;
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logError("[comments GET] fetch comments failed", error);
+    return jsonError(ApiError.Internal, 500);
   }
   if (allCountRes.error) {
-    return NextResponse.json({ error: allCountRes.error.message }, { status: 500 });
+    logError("[comments GET] all-count fetch failed", allCountRes.error);
+    return jsonError(ApiError.Internal, 500);
   }
   for (const result of typeCountResults) {
     if (result.error) {
-      return NextResponse.json({ error: result.error.message }, { status: 500 });
+      logError("[comments GET] type-count fetch failed", result.error);
+      return jsonError(ApiError.Internal, 500);
     }
   }
 
@@ -116,10 +120,12 @@ export async function GET(req: NextRequest) {
   ]);
 
   if (questionsRes.error) {
-    return NextResponse.json({ error: questionsRes.error.message }, { status: 500 });
+    logError("[comments GET] questions fetch failed", questionsRes.error);
+    return jsonError(ApiError.Internal, 500);
   }
   if (profilesRes.error) {
-    return NextResponse.json({ error: profilesRes.error.message }, { status: 500 });
+    logError("[comments GET] profiles fetch failed", profilesRes.error);
+    return jsonError(ApiError.Internal, 500);
   }
 
   const questionById = new Map(
@@ -173,15 +179,12 @@ export async function POST(req: NextRequest) {
   try {
     payload = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return jsonError(ApiError.InvalidJson, 400);
   }
 
   const parsed = CreateCommentSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", issues: parsed.error.issues },
-      { status: 400 }
-    );
+    return jsonError(ApiError.ValidationFailed, 400, { issues: parsed.error.issues });
   }
   const { question_id, parent_id, type, body_text, image_urls } = parsed.data;
 
@@ -191,10 +194,7 @@ export async function POST(req: NextRequest) {
 
   const invalidUrl = findInvalidImageUrl(image_urls, user.id);
   if (invalidUrl) {
-    return NextResponse.json(
-      { error: "invalid_image_url", detail: invalidUrl },
-      { status: 400 }
-    );
+    return jsonError("invalid_image_url", 400, { detail: invalidUrl });
   }
 
   // Reply branch: validate parent + force type
@@ -215,35 +215,24 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (parentErr) {
-      return NextResponse.json({ error: parentErr.message }, { status: 500 });
+      logError("[comments POST] parent fetch failed", parentErr);
+      return jsonError(ApiError.Internal, 500);
     }
     if (!parent || parent.status !== "visible") {
-      return NextResponse.json(
-        { error: "Parent comment not found" },
-        { status: 404 }
-      );
+      return jsonError(ApiError.NotFound, 404);
     }
     if (parent.question_public_id !== question_id) {
-      return NextResponse.json(
-        { error: "Parent belongs to another question" },
-        { status: 400 }
-      );
+      return jsonError(ApiError.ValidationFailed, 400);
     }
     if (parent.parent_id !== null) {
-      return NextResponse.json(
-        { error: "Cannot reply to a reply (depth limit 1)" },
-        { status: 400 }
-      );
+      return jsonError(ApiError.ValidationFailed, 400);
     }
     effectiveType = "discussion"; // force — request type ignored for replies
     effectiveParentId = parent_id;
   } else {
     // Root branch — refine guarantees `type` is present here
     if (!effectiveType) {
-      return NextResponse.json(
-        { error: "type is required for root comments" },
-        { status: 400 }
-      );
+      return jsonError(ApiError.MissingParam, 400);
     }
   }
 
@@ -279,15 +268,15 @@ export async function POST(req: NextRequest) {
 
     // Postgres CHECK violations → 422; depth trigger raise → 409; else 500
     if (error.code === "23514") {
-      return NextResponse.json({ error: error.message }, { status: 422 });
+      return jsonError(ApiError.ValidationFailed, 422);
     }
     if (
       error.message?.includes("Comments cannot be nested beyond 1 level") ||
       error.code === "P0001"
     ) {
-      return NextResponse.json({ error: error.message }, { status: 409 });
+      return jsonError(ApiError.Conflict, 409);
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonError(ApiError.Internal, 500);
   }
 
   return NextResponse.json(data, { status: 201 });

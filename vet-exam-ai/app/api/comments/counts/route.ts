@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../../lib/supabase/server";
+import { jsonError, ApiError } from "../../../../lib/api/errors";
+import { logError } from "../../../../lib/utils/logging";
 
 const MAX_IDS = 200;
 // PostgREST caps a response at max_rows (1000); page so busy question sets
@@ -14,10 +16,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({});
   }
   if (ids.length > MAX_IDS) {
-    return NextResponse.json(
-      { error: `Too many ids (max ${MAX_IDS})` },
-      { status: 400 }
-    );
+    return jsonError(ApiError.ValidationFailed, 400);
   }
 
   const supabase = await createClient();
@@ -38,7 +37,8 @@ export async function GET(req: NextRequest) {
       .range(from, from + PAGE_SIZE - 1);
 
     if (error) {
-      return NextResponse.json({}, { status: 500 });
+      logError("[comments/counts] page fetch failed", error);
+      return jsonError(ApiError.Internal, 500);
     }
 
     const page = data ?? [];

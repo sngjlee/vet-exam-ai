@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "../../../../lib/supabase/admin";
 import { requireUser } from "../../../../lib/auth/requireUser";
+import { jsonError, ApiError } from "../../../../lib/api/errors";
+import { logError } from "../../../../lib/utils/logging";
 import {
   CORRECTION_REVIEW_PRIORITY,
   isCorrectionReviewStatus,
@@ -18,7 +20,7 @@ type CorrectionRow = {
 export async function GET(req: NextRequest) {
   const questionId = new URL(req.url).searchParams.get("question_id")?.trim();
   if (!questionId) {
-    return NextResponse.json({ error: "Missing question_id" }, { status: 400 });
+    return jsonError(ApiError.MissingParam, 400);
   }
 
   const auth = await requireUser();
@@ -32,7 +34,8 @@ export async function GET(req: NextRequest) {
     .eq("question_public_id", questionId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logError("[comments/correction-status] failed", error);
+    return jsonError(ApiError.Internal, 500);
   }
 
   const byCommentId: CommentCorrectionReviewResponse["byCommentId"] = {};
