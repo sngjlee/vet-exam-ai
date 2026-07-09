@@ -139,27 +139,11 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       setStatus("loading");
       const supabase = createClient();
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (cancelled) return;
-      setCurrentUserId(user?.id ?? null);
-
-      if (user) {
-        const { data: profile } = await supabase
-          .from("user_profiles_public")
-          .select("nickname")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (cancelled) return;
-        setCurrentUserNickname(profile?.nickname ?? null);
-      } else {
-        setCurrentUserNickname(null);
-      }
-
       const commentSelect =
         "id, user_id, parent_id, type, body_text, body_html, image_urls, created_at, updated_at, edit_count, status, vote_score, reply_count";
 
+      // The root-comment query does not depend on the authed user, so fetch the
+      // user and the root comments concurrently.
       let rootQuery = supabase
         .from("comments")
         .select(commentSelect)
@@ -176,9 +160,16 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
           .order("created_at", { ascending: false });
       }
 
-      const { data: rootCommentRows, error } = await rootQuery;
-
+      const [userRes, rootRes] = await Promise.all([
+        supabase.auth.getUser(),
+        rootQuery,
+      ]);
       if (cancelled) return;
+
+      const user = userRes.data.user;
+      setCurrentUserId(user?.id ?? null);
+
+      const { data: rootCommentRows, error } = rootRes;
       if (error) {
         console.error("[CommentThread] comments fetch failed", error);
         setStatus("error");
@@ -187,16 +178,33 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       let rootRows = (rootCommentRows ?? []) as CommentRow[];
       const rootIds = rootRows.map((row) => row.id);
       let replyRows: CommentRow[] = [];
-      if (rootIds.length > 0) {
-        const repliesRes = await supabase
-          .from("comments")
-          .select(commentSelect)
-          .eq("question_public_id", questionId)
-          .in("status", VISIBLE_STATUSES)
-          .in("parent_id", rootIds)
-          .order("created_at", { ascending: true })
-          .limit(REPLY_FETCH_LIMIT);
-        if (cancelled) return;
+
+      // Profile (needs user.id) and replies (needs rootIds) are independent --
+      // run them together.
+      const [profileRes, repliesRes] = await Promise.all([
+        user
+          ? supabase
+              .from("user_profiles_public")
+              .select("nickname")
+              .eq("user_id", user.id)
+              .maybeSingle()
+          : Promise.resolve(null),
+        rootIds.length > 0
+          ? supabase
+              .from("comments")
+              .select(commentSelect)
+              .eq("question_public_id", questionId)
+              .in("status", VISIBLE_STATUSES)
+              .in("parent_id", rootIds)
+              .order("created_at", { ascending: true })
+              .limit(REPLY_FETCH_LIMIT)
+          : Promise.resolve(null),
+      ]);
+      if (cancelled) return;
+
+      setCurrentUserNickname(profileRes?.data?.nickname ?? null);
+
+      if (repliesRes) {
         if (repliesRes.error) {
           console.warn("[CommentThread] replies fetch failed", repliesRes.error);
         } else {

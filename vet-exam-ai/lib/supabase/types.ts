@@ -887,6 +887,13 @@ export interface Database {
           retry_after_seconds: number;
         }>;
       };
+      questions_category_counts: {
+        Args: Record<string, never>;
+        Returns: Array<{
+          category: string;
+          count:    number;
+        }>;
+      };
       list_rounds_with_stats: {
         Args: Record<string, never>;
         Returns: Array<{
