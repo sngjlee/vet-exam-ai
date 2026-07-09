@@ -47,13 +47,19 @@ export default function PracticeWeakestPage() {
       count: String(PRACTICE_COUNT),
       categories: weakest.category,
     });
-    const res = await fetch(`/api/questions?${params.toString()}`);
-    if (!res.ok) {
+    let qs: Question[];
+    try {
+      const res = await fetch(`/api/questions?${params.toString()}`);
+      if (!res.ok) {
+        setSessionLoading(false);
+        return;
+      }
+      qs = (await res.json()) as Question[];
+    } catch {
+      // Network failure or malformed JSON — clear the spinner so the user can retry.
       setSessionLoading(false);
       return;
     }
-
-    const qs = (await res.json()) as Question[];
     setSessionLoading(false);
     if (qs.length === 0) return;
 
