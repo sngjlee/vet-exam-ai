@@ -119,7 +119,11 @@ export async function GET(req: NextRequest) {
         { status: 500 },
       );
     }
-    return NextResponse.json(meta.data);
+    return NextResponse.json(meta.data, {
+      headers: {
+        "Cache-Control": "private, max-age=300, stale-while-revalidate=600",
+      },
+    });
   }
 
   if (sessionMode) {
@@ -248,6 +252,16 @@ export async function GET(req: NextRequest) {
   }> {
     const counts = new Map<string, number>();
 
+    const rpc = await supabase.rpc("questions_category_counts");
+    if (!rpc.error && rpc.data) {
+      for (const row of rpc.data as Array<{ category: string; count: number }>) {
+        counts.set(row.category, Number(row.count));
+      }
+      return { data: buildMeta(counts), error: null };
+    }
+
+    // Fallback: RPC missing (e.g. deployed before migration applied). Fall back
+    // to the paginated full scan so meta never hard-fails during a deploy gap.
     for (let from = 0; ; from += PAGE_SIZE) {
       const { data, error } = await supabase
         .from("questions")
@@ -270,17 +284,7 @@ export async function GET(req: NextRequest) {
       if (page.length < PAGE_SIZE) break;
     }
 
-    const categories = Array.from(counts.keys()).sort((a, b) =>
-      a.localeCompare(b, "ko"),
-    );
-    return {
-      data: {
-        categories,
-        countsByCategory: Object.fromEntries(counts),
-        total: Array.from(counts.values()).reduce((sum, n) => sum + n, 0),
-      },
-      error: null,
-    };
+    return { data: buildMeta(counts), error: null };
   }
 
   async function loadSessionQuestions(
@@ -406,6 +410,21 @@ export async function GET(req: NextRequest) {
     if (error) return { value: null, error };
     return { value: data?.year != null ? data.year - n + 1 : null, error: null };
   }
+}
+
+function buildMeta(counts: Map<string, number>): {
+  categories: string[];
+  countsByCategory: Record<string, number>;
+  total: number;
+} {
+  const categories = Array.from(counts.keys()).sort((a, b) =>
+    a.localeCompare(b, "ko"),
+  );
+  return {
+    categories,
+    countsByCategory: Object.fromEntries(counts),
+    total: Array.from(counts.values()).reduce((sum, n) => sum + n, 0),
+  };
 }
 
 function parseCategories(raw: string | null): string[] {

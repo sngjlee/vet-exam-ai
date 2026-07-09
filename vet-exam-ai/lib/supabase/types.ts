@@ -874,6 +874,13 @@ export interface Database {
         Args: { col: string };
         Returns: number;
       };
+      questions_category_counts: {
+        Args: Record<string, never>;
+        Returns: Array<{
+          category: string;
+          count:    number;
+        }>;
+      };
       list_rounds_with_stats: {
         Args: Record<string, never>;
         Returns: Array<{
