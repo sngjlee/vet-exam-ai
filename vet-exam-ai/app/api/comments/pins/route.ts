@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "../../../../lib/supabase/server";
+import { requireUser } from "../../../../lib/auth/requireUser";
 
 const pinPayload = z.object({
   question_id: z.string().min(1),
@@ -51,13 +52,9 @@ export async function GET(req: NextRequest) {
 //
 // Returns: { pinned: boolean, comment_id: string | null }
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { supabase, user } = auth;
 
   let parsed: z.infer<typeof pinPayload>;
   try {

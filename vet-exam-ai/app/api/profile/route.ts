@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "../../../lib/supabase/server";
+import { requireUser } from "../../../lib/auth/requireUser";
 import { profileUpdateSchema } from "../../../lib/profile/schema";
 import { canChangeNickname } from "../../../lib/profile/nickname";
 import { maskProfile } from "../../../lib/profile/maskPrivacy";
@@ -24,13 +24,9 @@ export async function PATCH(req: NextRequest) {
   }
   const update = parsed.data;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { supabase, user } = auth;
 
   // Fetch current row to evaluate nickname change rule.
   const { data: current, error: selectErr } = await supabase

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "../../../../lib/supabase/admin";
-import { createClient } from "../../../../lib/supabase/server";
+import { requireUser } from "../../../../lib/auth/requireUser";
 import {
   CORRECTION_REVIEW_PRIORITY,
   isCorrectionReviewStatus,
@@ -21,13 +21,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing question_id" }, { status: 400 });
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { user } = auth;
 
   const admin = createAdminClient();
   const { data, error } = await admin

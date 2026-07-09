@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "../../../../lib/supabase/server";
+import { requireUser } from "../../../../lib/auth/requireUser";
 import { EditCommentSchema } from "../../../../lib/comments/schema";
 import { renderCommentMarkdown } from "../../../../lib/comments/sanitize";
 import { findInvalidImageUrl } from "../../../../lib/comments/imageUrlValidate";
@@ -14,13 +14,9 @@ export async function DELETE(
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { supabase, user } = auth;
 
   const { data: existing, error: selectErr } = await supabase
     .from("comments")
@@ -104,13 +100,9 @@ export async function PATCH(
   }
   const { body_text, image_urls } = parsed.data;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { supabase, user } = auth;
 
   if (image_urls !== undefined) {
     const invalidUrl = findInvalidImageUrl(image_urls, user.id);

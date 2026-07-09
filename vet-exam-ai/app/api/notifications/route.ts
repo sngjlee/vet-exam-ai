@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "../../../lib/supabase/server";
+import { requireUser } from "../../../lib/auth/requireUser";
 import { logWarn } from "../../../lib/utils/logging";
 
 const DEFAULT_LIMIT = 10;
@@ -16,13 +16,9 @@ export async function GET(req: NextRequest) {
     limit = Math.min(Math.floor(parsed), MAX_LIMIT);
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { supabase, user } = auth;
 
   // 1) Notifications for this user, newest first.
   const { data: rows, error } = await supabase
