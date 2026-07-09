@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../lib/supabase/server";
+import { fetchAllPaged } from "../../../lib/supabase/paginate";
 import type { Question, QuestionSummary } from "../../../lib/questions";
 import type { QuestionRow } from "../../../lib/supabase/types";
 import { logError } from "../../../lib/utils/logging";
@@ -40,7 +41,6 @@ const QUESTION_SELECT =
   "id, public_id, question, choices, answer, explanation, category, subject, topic, difficulty, source, year, tags, is_active, question_image_files, explanation_image_files";
 const QUESTION_SUMMARY_SELECT =
   "id, public_id, question, category, topic, difficulty, year, is_active";
-const PAGE_SIZE = 1000;
 const SESSION_POOL_LIMIT = 300;
 // Per-category random pool for balanced sessions. Must be >= MAX_SESSION_COUNT so
 // a single-category balanced mock can still fill `count`.
@@ -159,71 +159,43 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(summaries.data.map(toQuestionSummary));
   }
 
-  const all: QuestionApiRow[] = [];
-  for (let from = 0; ; from += PAGE_SIZE) {
-    let query = supabase
-      .from("questions")
-      .select(QUESTION_SELECT)
-      .eq("is_active", true);
-
-    if (yearCutoff.value !== null) {
-      query = query.gte("year", yearCutoff.value);
-    }
-    if (category) {
-      query = query.eq("category", category);
-    }
-
-    const { data, error } = await query
-      .order("category", { ascending: true })
-      .order("id", { ascending: true })
-      .range(from, from + PAGE_SIZE - 1);
-
-    if (error) {
-      return NextResponse.json(
-        { error: "Failed to load questions" },
-        { status: 500 },
-      );
-    }
-
-    const page = data ?? [];
-    all.push(...page);
-    if (page.length < PAGE_SIZE) break;
+  const { data: all, error: allError } = await fetchAllPaged<QuestionApiRow>(
+    async (from, to) => {
+      let query = supabase
+        .from("questions")
+        .select(QUESTION_SELECT)
+        .eq("is_active", true);
+      if (yearCutoff.value !== null) query = query.gte("year", yearCutoff.value);
+      if (category) query = query.eq("category", category);
+      const res = await query
+        .order("category", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to);
+      return { data: res.data as QuestionApiRow[] | null, error: res.error };
+    },
+  );
+  if (allError) {
+    return NextResponse.json({ error: "Failed to load questions" }, { status: 500 });
   }
-
   return NextResponse.json(all.map(toQuestion));
 
   async function loadQuestionSummaries(
     cutoff: number | null,
     categoryFilter: string | null,
   ): Promise<{ data: QuestionSummaryApiRow[]; error: unknown }> {
-    const allSummaries: QuestionSummaryApiRow[] = [];
-
-    for (let from = 0; ; from += PAGE_SIZE) {
+    return fetchAllPaged<QuestionSummaryApiRow>(async (from, to) => {
       let query = supabase
         .from("questions")
         .select(QUESTION_SUMMARY_SELECT)
         .eq("is_active", true);
-
-      if (cutoff !== null) {
-        query = query.gte("year", cutoff);
-      }
-      if (categoryFilter) {
-        query = query.eq("category", categoryFilter);
-      }
-
-      const { data, error } = await query
+      if (cutoff !== null) query = query.gte("year", cutoff);
+      if (categoryFilter) query = query.eq("category", categoryFilter);
+      const res = await query
         .order("category", { ascending: true })
         .order("id", { ascending: true })
-        .range(from, from + PAGE_SIZE - 1);
-
-      if (error) return { data: [], error };
-
-      const page = data ?? [];
-      allSummaries.push(...page);
-      if (page.length < PAGE_SIZE) break;
-    }
-
-    return { data: allSummaries, error: null };
+        .range(from, to);
+      return { data: res.data as QuestionSummaryApiRow[] | null, error: res.error };
+    });
   }
 
   async function loadQuestionById(id: string): Promise<{
@@ -262,26 +234,25 @@ export async function GET(req: NextRequest) {
 
     // Fallback: RPC missing (e.g. deployed before migration applied). Fall back
     // to the paginated full scan so meta never hard-fails during a deploy gap.
-    for (let from = 0; ; from += PAGE_SIZE) {
-      const { data, error } = await supabase
-        .from("questions")
-        .select("category")
-        .eq("is_active", true)
-        .order("category", { ascending: true })
-        .range(from, from + PAGE_SIZE - 1);
-
-      if (error) {
-        return {
-          data: { categories: [], countsByCategory: {}, total: 0 },
-          error,
-        };
-      }
-
-      const page = data ?? [];
-      for (const row of page) {
-        counts.set(row.category, (counts.get(row.category) ?? 0) + 1);
-      }
-      if (page.length < PAGE_SIZE) break;
+    const { data, error } = await fetchAllPaged<{ category: string }>(
+      async (from, to) => {
+        const res = await supabase
+          .from("questions")
+          .select("category")
+          .eq("is_active", true)
+          .order("category", { ascending: true })
+          .range(from, to);
+        return { data: res.data as Array<{ category: string }> | null, error: res.error };
+      },
+    );
+    if (error) {
+      return {
+        data: { categories: [], countsByCategory: {}, total: 0 },
+        error,
+      };
+    }
+    for (const row of data) {
+      counts.set(row.category, (counts.get(row.category) ?? 0) + 1);
     }
 
     return { data: buildMeta(counts), error: null };

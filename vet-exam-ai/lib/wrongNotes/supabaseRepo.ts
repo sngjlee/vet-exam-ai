@@ -4,12 +4,9 @@ import type { Database, WrongNoteRow } from "../supabase/types";
 import type { WrongNotesRepository } from "./repository";
 import { computeNextReviewAt } from "../review/schedule";
 import { logError } from "../utils/logging";
+import { fetchAllPaged } from "../supabase/paginate";
 
 type WrongNoteInsert = Database["public"]["Tables"]["wrong_notes"]["Insert"];
-
-// PostgREST caps a single response (supabase max_rows = 1000), so every
-// unbounded list must page or it silently truncates. See memory quiz_selector.
-const PAGE_SIZE = 1000;
 
 function rowToNote(row: WrongNoteRow): WrongAnswerNote {
   return {
@@ -34,7 +31,7 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
   ) {}
 
   async getAll(): Promise<WrongAnswerNote[]> {
-    return this.fetchAllPaged("all");
+    return this.listNotes("all");
   }
 
   async upsert(note: WrongAnswerNote): Promise<void> {
@@ -81,21 +78,19 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
   }
 
   async getDue(): Promise<WrongAnswerNote[]> {
-    return this.fetchAllPaged("due");
+    return this.listNotes("due");
   }
 
   // Pages through every matching row — a single select would silently stop at
-  // PAGE_SIZE (PostgREST max_rows), dropping notes for users past 1000.
-  private async fetchAllPaged(scope: "all" | "due"): Promise<WrongAnswerNote[]> {
+  // PostgREST max_rows, dropping notes for users past 1000. Secondary order on
+  // the per-user unique key keeps page boundaries stable.
+  private async listNotes(scope: "all" | "due"): Promise<WrongAnswerNote[]> {
     const nowIso = new Date().toISOString();
-    const rows: WrongNoteRow[] = [];
-
-    for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await fetchAllPaged<WrongNoteRow>(async (from, to) => {
       const base = this.supabase
         .from("wrong_notes")
         .select("*")
         .eq("user_id", this.userId);
-      // Secondary order on the per-user unique key keeps page boundaries stable.
       const query =
         scope === "due"
           ? base
@@ -105,19 +100,15 @@ export class SupabaseWrongNotesRepository implements WrongNotesRepository {
           : base
               .order("saved_at", { ascending: false })
               .order("question_public_id", { ascending: true });
+      const res = await query.range(from, to);
+      return { data: res.data as WrongNoteRow[] | null, error: res.error };
+    });
 
-      const { data, error } = await query.range(from, from + PAGE_SIZE - 1);
-      if (error) {
-        logError(`wrong_notes ${scope === "due" ? "getDue" : "getAll"} failed:`, error);
-        return [];
-      }
-
-      const page = (data as WrongNoteRow[]) ?? [];
-      rows.push(...page);
-      if (page.length < PAGE_SIZE) break;
+    if (error) {
+      logError(`wrong_notes ${scope === "due" ? "getDue" : "getAll"} failed:`, error);
+      return [];
     }
-
-    return rows.map(rowToNote);
+    return data.map(rowToNote);
   }
 
   async updateReview(
