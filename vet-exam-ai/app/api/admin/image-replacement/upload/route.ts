@@ -9,6 +9,7 @@ import { createAdminClient } from "../../../../../lib/supabase/admin";
 import { readWebpDimensions } from "../../../../../lib/webp-dimensions";
 import { toStorageKey } from "../../../../../lib/admin/storage-key";
 import { captureOperationalError, logError } from "../../../../../lib/utils/logging";
+import { jsonError } from "../../../../../lib/api/errors";
 
 const MAX_BYTES = 1_048_576; // 1MB
 const MAX_DIM = 2200;
@@ -19,7 +20,7 @@ async function requireAdmin(): Promise<{ ok: true; userId: string } | { ok: fals
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, status: 401, error: "Authentication required" };
+  if (!user) return { ok: false, status: 401, error: "auth_required" };
 
   const { data: profile, error } = await supabase
     .from("profiles")
@@ -27,25 +28,25 @@ async function requireAdmin(): Promise<{ ok: true; userId: string } | { ok: fals
     .eq("id", user.id)
     .maybeSingle();
   if (error || !profile || profile.role !== "admin" || !profile.is_active) {
-    return { ok: false, status: 403, error: "forbidden: admin only" };
+    return { ok: false, status: 403, error: "forbidden" };
   }
   return { ok: true, userId: user.id };
 }
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin();
-  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  if (!auth.ok) return jsonError(auth.error, auth.status);
 
   const lengthHeader = req.headers.get("content-length");
   if (lengthHeader && Number(lengthHeader) > MAX_BYTES + 8192) {
-    return NextResponse.json({ error: "too_large" }, { status: 400 });
+    return jsonError("too_large", 400);
   }
 
   let formData: FormData;
   try {
     formData = await req.formData();
   } catch {
-    return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
+    return jsonError("invalid_payload", 400);
   }
 
   const file        = formData.get("file");
@@ -54,24 +55,24 @@ export async function POST(req: NextRequest) {
   const indexStr    = formData.get("index");
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "missing_file" }, { status: 400 });
+    return jsonError("missing_file", 400);
   }
   if (typeof questionId !== "string" || questionId.length === 0) {
-    return NextResponse.json({ error: "missing_question_id" }, { status: 400 });
+    return jsonError("missing_question_id", 400);
   }
   if (role !== "q" && role !== "e") {
-    return NextResponse.json({ error: "invalid_role" }, { status: 400 });
+    return jsonError("invalid_role", 400);
   }
   const index = typeof indexStr === "string" ? Number.parseInt(indexStr, 10) : NaN;
   if (!Number.isInteger(index) || index < 0 || index > 99) {
-    return NextResponse.json({ error: "invalid_index" }, { status: 400 });
+    return jsonError("invalid_index", 400);
   }
 
   if (file.type !== "image/webp") {
-    return NextResponse.json({ error: "invalid_mime" }, { status: 400 });
+    return jsonError("invalid_mime", 400);
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "too_large" }, { status: 400 });
+    return jsonError("too_large", 400);
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -80,14 +81,14 @@ export async function POST(req: NextRequest) {
     buffer.readUInt32BE(0) !== 0x52494646 ||
     buffer.readUInt32BE(8) !== 0x57454250
   ) {
-    return NextResponse.json({ error: "invalid_magic" }, { status: 400 });
+    return jsonError("invalid_magic", 400);
   }
   const dims = readWebpDimensions(buffer);
   if (!dims) {
-    return NextResponse.json({ error: "decode_failed" }, { status: 400 });
+    return jsonError("decode_failed", 400);
   }
   if (dims.width > MAX_DIM || dims.height > MAX_DIM) {
-    return NextResponse.json({ error: "dimensions_exceeded" }, { status: 400 });
+    return jsonError("dimensions_exceeded", 400);
   }
 
   const slug      = toStorageKey(questionId);
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
       failureKind: "storage_upload_failed",
       tags: { storage_bucket: BUCKET },
     });
-    return NextResponse.json({ error: "storage_upload_failed" }, { status: 500 });
+    return jsonError("storage_upload_failed", 500);
   }
 
   return NextResponse.json({ filename });
@@ -118,11 +119,11 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const auth = await requireAdmin();
-  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+  if (!auth.ok) return jsonError(auth.error, auth.status);
 
   const url = new URL(req.url);
   const key = url.searchParams.get("key");
-  if (!key) return NextResponse.json({ error: "missing_key" }, { status: 400 });
+  if (!key) return jsonError("missing_key", 400);
 
   const admin = createAdminClient();
   const { error } = await admin.storage.from(BUCKET).remove([key]);
@@ -135,7 +136,7 @@ export async function DELETE(req: NextRequest) {
       level: "warning",
       tags: { storage_bucket: BUCKET },
     });
-    return NextResponse.json({ error: "storage_delete_failed" }, { status: 500 });
+    return jsonError("storage_delete_failed", 500);
   }
   return NextResponse.json({ ok: true });
 }
