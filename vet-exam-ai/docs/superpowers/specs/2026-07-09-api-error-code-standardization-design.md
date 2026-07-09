@@ -116,8 +116,15 @@ export function jsonError(
 
 - server action들의 에러 반환(`_actions.ts` 계열) — 이미 플랫 코드, 별도 계약, 이번 범위 밖.
 - 성공 응답 형식.
-- 클라이언트 에러 UI 카피 변경 — 라우트 응답을 세분 분기하는 클라가 없어 불필요.
+- `app/api/cron/**` — 클라 에러 봉투가 아닌 운영 요약 객체(`{ ok, ... }`)를 반환하고 admin ops 페이지가 소비. 범위 밖.
+- `app/api/search/route.ts` — 전체 `SearchResponse` 페이로드에 리터럴 유니온 `error: null | "too_short" | "internal"`을 임베드(바 에러 봉투 아님, 이미 플랫 코드, 클라는 존재여부만 검사). 범위 밖.
 - Phase 5 잔여 ②④⑤(useQuizSession/quiz분할/noUncheckedIndexedAccess).
+
+### 클라이언트 방어 수정 (범위 내, 최소)
+
+대부분의 클라는 `error` 필드를 세분 분기하지 않지만, **예외 2종**을 확인했으므로 다룬다:
+- **보존 필수**: `ProfileEditController.tsx`가 `data.error === "nickname_taken"`/`"nickname_change_too_soon"`로 분기 → 해당 코드 문자열 **불변 유지**. `search/page.tsx`는 `data.error` 존재 여부만 검사(코드 무관).
+- **방어 수정**: `CommentComposer`/`CommentEditComposer`/`CommentReplyComposer`가 `throw new Error(data.error ?? "...")`로 `data.error`를 사용자 텍스트로 렌더 → 플랫 코드 전환 시 "internal_error" 같은 코드가 노출되므로, `data.error`를 무시하고 기존 한국어 폴백 카피만 표시하도록 변경(현재 raw DB 메시지 노출도 함께 제거되는 개선).
 
 ## 검증 계획
 
