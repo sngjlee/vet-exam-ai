@@ -1,12 +1,18 @@
 #!/usr/bin/env node
 
+// Migration guard. After the 2026-07-09 consolidation there is a SINGLE
+// authoritative migration tree at vet-exam-ai/supabase/migrations. This script
+// validates that tree (filename pattern, unique 14-digit timestamps) and fails
+// if a second tree ever reappears at the workspace-root supabase/migrations
+// (the retired legacy location), so migrations can't silently diverge again.
+
 const fs = require("node:fs");
 const path = require("node:path");
 
 const appRoot = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(appRoot, "..");
 const activeDir = path.join(appRoot, "supabase", "migrations");
-const legacyDir = path.join(repoRoot, "supabase", "migrations");
+const retiredDir = path.join(repoRoot, "supabase", "migrations");
 
 function fail(message) {
   console.error(`migration-check: ${message}`);
@@ -59,29 +65,28 @@ function latestTimestamp(migrations) {
 }
 
 const active = readMigrations(activeDir);
-const legacy = readMigrations(legacyDir);
 
 checkDuplicateTimestamps("active migrations", active);
-checkDuplicateTimestamps("legacy migrations", legacy);
 
-const latestActive = latestTimestamp(active);
-const latestLegacy = latestTimestamp(legacy);
-
-if (!latestActive) {
+if (active.length === 0) {
   fail("active migrations directory has no timestamped SQL files");
 }
 
-if (latestLegacy && latestLegacy > latestActive) {
-  const offenders = legacy
-    .filter((migration) => migration.timestamp > latestActive)
-    .map((migration) => path.relative(repoRoot, migration.path));
-  fail(
-    [
-      "legacy root supabase/migrations is newer than vet-exam-ai/supabase/migrations.",
-      "New migrations must be created under vet-exam-ai/supabase/migrations only.",
-      `Offending file(s): ${offenders.join(", ")}`,
-    ].join(" "),
-  );
+// No-second-tree guard. The workspace-root supabase/migrations was retired in
+// the consolidation; any .sql reappearing there means a divergent second tree.
+if (fs.existsSync(retiredDir)) {
+  const strays = fs
+    .readdirSync(retiredDir)
+    .filter((name) => name.endsWith(".sql"));
+  if (strays.length > 0) {
+    fail(
+      [
+        `retired root supabase/migrations must stay empty (found ${strays.length} .sql).`,
+        "All migrations live in vet-exam-ai/supabase/migrations only.",
+        `Offending file(s): ${strays.join(", ")}`,
+      ].join(" "),
+    );
+  }
 }
 
 if (process.exitCode) {
@@ -89,5 +94,5 @@ if (process.exitCode) {
 }
 
 console.log(
-  `migration-check: ok (${active.length} active, ${legacy.length} legacy; latest active ${latestActive})`,
+  `migration-check: ok (${active.length} migrations; latest ${latestTimestamp(active)})`,
 );
