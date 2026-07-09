@@ -1,4 +1,7 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
+
+const emptyStub = fileURLToPath(new URL("./test/stubs/empty.ts", import.meta.url));
 
 export default defineConfig({
   test: {
@@ -9,6 +12,12 @@ export default defineConfig({
     // prefix during tests.
     env: {
       NEXT_PUBLIC_SUPABASE_URL: "https://test.supabase.co",
+    },
+    // `server-only`/`client-only` throw when imported outside Next's
+    // react-server environment. Stub them so server modules are unit-testable.
+    alias: {
+      "server-only": emptyStub,
+      "client-only": emptyStub,
     },
   },
 });

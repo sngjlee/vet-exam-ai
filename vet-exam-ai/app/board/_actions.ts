@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizePostHtml, htmlToText } from "@/lib/board/sanitize";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 const KindSchema = z.enum(["suggestion", "announcement"]);
 
@@ -31,6 +32,11 @@ export async function createPost(input: z.input<typeof CreateSchema>): Promise<{
   const { data: userRes } = await supabase.auth.getUser();
   if (!userRes.user) {
     redirect("/auth/login?next=/board");
+  }
+
+  const rl = await checkRateLimit(supabase, RATE_LIMITS.boardPost, userRes.user.id);
+  if (!rl.allowed) {
+    throw new Error("글 작성이 너무 잦습니다. 잠시 후 다시 시도해 주세요.");
   }
 
   const safeHtml = sanitizePostHtml(parsed.body_html);

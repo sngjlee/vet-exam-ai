@@ -874,6 +874,19 @@ export interface Database {
         Args: { col: string };
         Returns: number;
       };
+      check_rate_limit: {
+        Args: {
+          p_bucket:         string;
+          p_identifier:     string;
+          p_max:            number;
+          p_window_seconds: number;
+        };
+        Returns: Array<{
+          allowed:             boolean;
+          current_count:       number;
+          retry_after_seconds: number;
+        }>;
+      };
       questions_category_counts: {
         Args: Record<string, never>;
         Returns: Array<{

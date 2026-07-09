@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "../../../lib/supabase/server";
 import type { Database } from "../../../lib/supabase/types";
 import { captureOperationalError, classifySupabaseFailure } from "../../../lib/utils/logging";
+import { checkRateLimit, RATE_LIMITS } from "../../../lib/rate-limit";
 
 type ProofKind     = Database["public"]["Enums"]["signup_proof_kind"];
 type ApplicantType = Database["public"]["Enums"]["applicant_type"];
@@ -25,7 +26,7 @@ export type SubmitResult =
   | { ok: true }
   | {
       ok: false;
-      error: "auth_required" | "invalid_input" | "rpc_failed";
+      error: "auth_required" | "invalid_input" | "rpc_failed" | "rate_limited";
       message?: string;
     };
 
@@ -33,6 +34,15 @@ export async function submitSignupApplicationAction(input: SubmitInput): Promise
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "auth_required" };
+
+  const rl = await checkRateLimit(supabase, RATE_LIMITS.signupApplication, user.id);
+  if (!rl.allowed) {
+    return {
+      ok: false,
+      error: "rate_limited",
+      message: "제출이 너무 잦습니다. 잠시 후 다시 시도해 주세요.",
+    };
+  }
 
   if (!input.university.trim()) {
     return { ok: false, error: "invalid_input", message: "소속 대학을 입력해 주세요." };
