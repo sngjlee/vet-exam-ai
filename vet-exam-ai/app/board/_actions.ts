@@ -177,7 +177,10 @@ export async function toggleUpvote(postId: string): Promise<{ upvoted: boolean }
   const { error } = await supabase
     .from("board_post_upvotes")
     .insert({ post_id: postId, user_id: userId });
-  if (error) throw new Error(error.message);
+  // A concurrent tap may have inserted the same (post_id, user_id) first — the
+  // unique PK makes that a 23505. The end state is "upvoted", so treat it as
+  // success (same idempotent handling as reportPost below).
+  if (error && error.code !== "23505") throw new Error(error.message);
 
   revalidatePath(`/board/suggestions/${postId}`);
   revalidatePath(`/board/announcements/${postId}`);

@@ -494,14 +494,22 @@ export default function QuizPage() {
       params.set("categories", subjects.join(","));
     }
 
-    const res = await fetch(`/api/questions?${params.toString()}`);
-    if (!res.ok) {
+    let newSession: Question[];
+    try {
+      const res = await fetch(`/api/questions?${params.toString()}`);
+      if (!res.ok) {
+        setSessionError("failed");
+        setSessionLoading(false);
+        return;
+      }
+      newSession = (await res.json()) as Question[];
+    } catch {
+      // Network failure or malformed JSON — surface the error and clear the
+      // spinner instead of leaving the session stuck loading.
       setSessionError("failed");
       setSessionLoading(false);
       return;
     }
-
-    const newSession = (await res.json()) as Question[];
     setSessionLoading(false);
     if (newSession.length === 0) return;
 

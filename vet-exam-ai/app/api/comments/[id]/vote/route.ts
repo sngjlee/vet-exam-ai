@@ -75,11 +75,15 @@ export async function POST(
   }
 
   if (!existing) {
-    const { error: insertErr } = await supabase
+    // Upsert instead of insert: a concurrent request for the same
+    // (comment_id, user_id) can win the race between the read above and this
+    // write, which would fail a plain insert with 23505. On conflict we set the
+    // requested value so the stored vote matches what we return — idempotent.
+    const { error: upsertErr } = await supabase
       .from("comment_votes")
-      .insert({ comment_id: id, user_id: user.id, value });
-    if (insertErr) {
-      return NextResponse.json({ error: insertErr.message }, { status: 500 });
+      .upsert({ comment_id: id, user_id: user.id, value }, { onConflict: "comment_id,user_id" });
+    if (upsertErr) {
+      return NextResponse.json({ error: upsertErr.message }, { status: 500 });
     }
     return NextResponse.json({ vote: value }, { status: 201 });
   }
