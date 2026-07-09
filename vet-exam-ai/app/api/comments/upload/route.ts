@@ -10,6 +10,7 @@ import { createAdminClient } from "../../../../lib/supabase/admin";
 import { readWebpDimensions } from "../../../../lib/webp-dimensions";
 import { urlToStoragePath } from "../../../../lib/comments/imageUrlValidate";
 import { captureOperationalError, classifySupabaseFailure } from "../../../../lib/utils/logging";
+import { jsonError } from "../../../../lib/api/errors";
 
 const MAX_BYTES = 1_048_576; // 1MB
 const MAX_DIM = 2200; // 2000px + 10% margin
@@ -24,24 +25,24 @@ export async function POST(req: NextRequest) {
 
   const lengthHeader = req.headers.get("content-length");
   if (lengthHeader && Number(lengthHeader) > MAX_BYTES + 8192 /* multipart overhead */) {
-    return NextResponse.json({ error: "too_large" }, { status: 400 });
+    return jsonError("too_large", 400);
   }
 
   let formData: FormData;
   try {
     formData = await req.formData();
   } catch {
-    return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
+    return jsonError("invalid_payload", 400);
   }
   const file = formData.get("file");
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "missing_file" }, { status: 400 });
+    return jsonError("missing_file", 400);
   }
   if (file.type !== "image/webp") {
-    return NextResponse.json({ error: "invalid_mime" }, { status: 400 });
+    return jsonError("invalid_mime", 400);
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "too_large" }, { status: 400 });
+    return jsonError("too_large", 400);
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -51,15 +52,15 @@ export async function POST(req: NextRequest) {
     buffer.readUInt32BE(0) !== 0x52494646 || // "RIFF"
     buffer.readUInt32BE(8) !== 0x57454250 // "WEBP"
   ) {
-    return NextResponse.json({ error: "invalid_magic" }, { status: 400 });
+    return jsonError("invalid_magic", 400);
   }
 
   const dims = readWebpDimensions(buffer);
   if (!dims) {
-    return NextResponse.json({ error: "decode_failed" }, { status: 400 });
+    return jsonError("decode_failed", 400);
   }
   if (dims.width > MAX_DIM || dims.height > MAX_DIM) {
-    return NextResponse.json({ error: "dimensions_exceeded" }, { status: 400 });
+    return jsonError("dimensions_exceeded", 400);
   }
 
   const admin = createAdminClient();
@@ -76,10 +77,10 @@ export async function POST(req: NextRequest) {
       failureKind: classifySupabaseFailure(countErr),
       tags: { storage_bucket: BUCKET },
     });
-    return NextResponse.json({ error: "rate_lookup_failed" }, { status: 500 });
+    return jsonError("rate_lookup_failed", 500);
   }
   if ((recentCount ?? 0) >= RATE_LIMIT) {
-    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+    return jsonError("rate_limited", 429);
   }
 
   const yyyymm = new Date().toISOString().slice(0, 7).replace("-", "");
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
       failureKind: "storage_upload_failed",
       tags: { storage_bucket: BUCKET },
     });
-    return NextResponse.json({ error: "upload_failed", detail: uploadErr.message }, { status: 500 });
+    return jsonError("upload_failed", 500);
   }
 
   const { error: logErr } = await admin.from("comment_image_upload_log").insert({
@@ -127,14 +128,14 @@ export async function DELETE(req: NextRequest) {
 
   const url = req.nextUrl.searchParams.get("url");
   if (!url) {
-    return NextResponse.json({ error: "missing_url" }, { status: 400 });
+    return jsonError("missing_url", 400);
   }
   const path = urlToStoragePath(url);
   if (!path) {
-    return NextResponse.json({ error: "invalid_url" }, { status: 400 });
+    return jsonError("invalid_url", 400);
   }
   if (!path.startsWith(`${user.id}/`)) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    return jsonError("forbidden", 403);
   }
 
   const admin = createAdminClient();
@@ -147,7 +148,7 @@ export async function DELETE(req: NextRequest) {
       level: "warning",
       tags: { storage_bucket: BUCKET },
     });
-    return NextResponse.json({ ok: false, detail: removeErr.message }, { status: 200 });
+    return NextResponse.json({ ok: false }, { status: 200 });
   }
   return NextResponse.json({ ok: true }, { status: 200 });
 }
