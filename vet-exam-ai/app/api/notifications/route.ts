@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   if (limitParam != null) {
     const parsed = Number(limitParam);
     if (!Number.isFinite(parsed) || parsed < 1) {
-      return jsonError(ApiError.MissingParam, 400);
+      return jsonError(ApiError.ValidationFailed, 400);
     }
     limit = Math.min(Math.floor(parsed), MAX_LIMIT);
   }
