@@ -47,6 +47,7 @@ export async function checkRateLimit(
       return { allowed: true, retryAfterSeconds: 0 };
     }
     const row = data[0];
+    if (!row) return { allowed: true, retryAfterSeconds: 0 };
     return {
       allowed: row.allowed,
       retryAfterSeconds: row.retry_after_seconds,

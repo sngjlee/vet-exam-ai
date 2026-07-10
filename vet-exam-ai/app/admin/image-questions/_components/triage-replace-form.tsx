@@ -100,6 +100,7 @@ export function TriageReplaceForm({
     const setSlots = role === "q" ? setQSlots : setESlots;
     const slots    = role === "q" ? qSlots    : eSlots;
     const slot = slots[index];
+    if (!slot) return;
     if (slot.preview) URL.revokeObjectURL(slot.preview);
     if (slot.filename) {
       // best-effort cleanup

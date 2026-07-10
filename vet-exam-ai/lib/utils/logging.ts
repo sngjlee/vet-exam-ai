@@ -30,7 +30,7 @@ function text(value: unknown): string | undefined {
   return undefined;
 }
 
-export function safeErrorSummary(error: unknown): Record<string, string> {
+export function safeErrorSummary(error: unknown): { message: string; code?: string; status?: string } {
   if (!error || typeof error !== "object") {
     return { message: "unknown_error" };
   }

@@ -78,7 +78,7 @@ export default function CommentImageGallery({ urls, size = "normal" }: Props) {
 
       {openIdx !== null && (
         <Lightbox
-          src={urls[openIdx]}
+          src={urls[openIdx]!}
           index={openIdx}
           total={urls.length}
           onClose={close}
@@ -110,10 +110,10 @@ function Lightbox({
   return (
     <div
       onClick={onClose}
-      onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+      onTouchStart={(e) => setTouchStartX(e.touches[0]!.clientX)}
       onTouchEnd={(e) => {
         if (touchStartX === null) return;
-        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dx = e.changedTouches[0]!.clientX - touchStartX;
         if (Math.abs(dx) > 60) {
           if (dx < 0 && onNext) onNext();
           else if (dx > 0 && onPrev) onPrev();

@@ -292,9 +292,10 @@ function WeekChart({ weekly }: { weekly: DayBucket[] }) {
   const weekData = weekly.map((bucket) => {
     // Parse the KST date via local Y/M/D parts so the weekday label is stable
     // regardless of the viewer's timezone.
+    // bucket.date is a controlled "YYYY-MM-DD" string, so all three parts exist.
     const [y, m, d] = bucket.date.split("-").map(Number);
     return {
-      d: WEEK_DAYS[new Date(y, m - 1, d).getDay()],
+      d: WEEK_DAYS[new Date(y!, m! - 1, d!).getDay()],
       v: bucket.total,
       r: bucket.total > 0 ? bucket.correct / bucket.total : 0,
     };
@@ -346,7 +347,7 @@ function AnnouncementBannerWrapper() {
           .limit(1);
 
         if (posts && posts.length > 0) {
-          setPost(posts[0]);
+          setPost(posts[0]!);
         }
       } catch {
         // ignore fetch errors

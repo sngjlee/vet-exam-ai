@@ -27,7 +27,7 @@ function getDueOffset(note: WrongAnswerNote): number {
 
 function getInterval(note: WrongAnswerNote): number {
   const rc = note.reviewCount ?? 0;
-  return INTERVALS_DAYS[Math.min(rc, INTERVALS_DAYS.length - 1)];
+  return INTERVALS_DAYS[Math.min(Math.max(rc, 0), INTERVALS_DAYS.length - 1)] ?? 1;
 }
 
 function noteToQuestion(note: WrongAnswerNote): Question {
