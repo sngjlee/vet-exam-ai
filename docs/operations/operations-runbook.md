@@ -15,7 +15,7 @@
 - Supabase 대시보드에서 자동 백업이 활성화되어 있고 최신 백업 시각이 예상 범위 안인지 확인합니다.
 - Vercel 환경변수 `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_INDEXING_ENABLED`, `NEXT_PUBLIC_SENTRY_DSN`의 Production/Preview 적용 범위를 확인합니다.
 - Sentry 이벤트는 `docs/operations/sentry-event-quality.md`의 태그 기준에 맞는지 확인합니다.
-- GitHub Actions `CI`가 `main`과 최근 PR에서 통과하는지 확인합니다.
+- GitHub Actions `CI`가 `main`과 최근 PR에서 통과하는지 확인합니다. `main` branch protection이 `Lint, typecheck, build` 체크를 머지 전 필수로 강제하는지는 `docs/operations/production-readiness-checklist.md` 8절 기준으로 유지합니다.
 - 새 SQL을 적용할 때는 `docs/operations/migration-runbook.md`의 active migration 경로와 검증 SQL 절차를 따릅니다.
 - 문제은행 batch import, 이미지 트리아지, topic cleanup은 `docs/operations/question-bank-pipeline.md`의 하루 운영 순서를 따릅니다.
 - 시딩 댓글 작성/투입은 `docs/operations/community-comment-seeding.md` 기준으로 dry-run 후 적용합니다.

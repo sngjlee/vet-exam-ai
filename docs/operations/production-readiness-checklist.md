@@ -90,7 +90,29 @@ npm run build
 정식 공개 또는 큰 운영 배포에서는 이어서 `docs/operations/launch-smoke-test.md`의 역할별 스모크 테스트를 실행합니다.
 베타 공개에서는 같은 순서 전에 `docs/operations/beta-live-security-proof.md`의 seeded 계정 준비와 RLS regression을 완료합니다.
 
-## 8. 결제/프리미엄 기능 게이트
+## 8. 저장소 머지 게이트 (branch protection)
+
+`main`에 들어가는 모든 변경은 CI를 통과해야 한다. CI 워크플로우(`.github/workflows/ci.yml`, job 이름 **`Lint, typecheck, build`**)는 모든 `pull_request`와 `main` push에서 `npm run ci`(`check:migrations` → `lint` → `typecheck` → `test` → `build`)를 실행한다. 이 검증을 **머지 전 필수**로 강제하려면 GitHub에서 branch protection을 1회 설정한다. 이 설정은 repo에 코드로 남지 않으므로 UI(또는 인증된 `gh`)로만 적용된다.
+
+- GitHub → Settings → Branches → Branch protection rules → `main` 규칙에서 확인/설정:
+  - ☑ Require a pull request before merging (main 직접 push 차단)
+  - ☑ Require status checks to pass before merging
+    - ☑ Require branches to be up to date before merging
+    - 필수 체크에 **`Lint, typecheck, build`** 추가 (PR을 한 번 돌려 체크가 목록에 나타난 뒤 선택)
+- 인증된 `gh` CLI로 대체 설정 시:
+  ```bash
+  gh api -X PUT repos/sngjlee/vet-exam-ai/branches/main/protection \
+    -H "Accept: application/vnd.github+json" \
+    -f 'required_status_checks[strict]=true' \
+    -f 'required_status_checks[contexts][]=Lint, typecheck, build' \
+    -f 'enforce_admins=false' \
+    -f 'required_pull_request_reviews[required_approving_review_count]=0' \
+    -f 'restrictions=null'
+  ```
+- 설정 후 확인: 실패하는 체크를 가진 PR이 실제로 "Merge" 버튼이 막히는지 표본 확인한다.
+- 배포 후 검증(공개 표면 smoke, RLS 회귀 SQL)은 코드 게이트가 아니라 배포 게이트다 — `docs/operations/launch-smoke-test.md`(`npm run smoke:public`)와 `docs/operations/rls-permission-regression.md`를 따른다.
+
+## 9. 결제/프리미엄 기능 게이트
 
 결제, 구독, 유료 권한, 프리미엄 API, 가격표 또는 환불 정책이 포함된 배포라면 `docs/operations/premium-readiness.md`를 먼저 확인합니다.
 
