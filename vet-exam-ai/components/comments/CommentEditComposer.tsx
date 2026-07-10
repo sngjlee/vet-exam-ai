@@ -89,8 +89,7 @@ export default function CommentEditComposer({
         return;
       }
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "수정 실패. 다시 시도해주세요.");
+        throw new Error("수정 실패. 다시 시도해주세요.");
       }
       const updated = (await res.json()) as EditedCommentRow;
       onSaved(updated);

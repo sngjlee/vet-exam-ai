@@ -4,6 +4,8 @@ import { profileUpdateSchema } from "../../../lib/profile/schema";
 import { canChangeNickname } from "../../../lib/profile/nickname";
 import { maskProfile } from "../../../lib/profile/maskPrivacy";
 import type { Database } from "../../../lib/supabase/types";
+import { jsonError, ApiError } from "../../../lib/api/errors";
+import { logError } from "../../../lib/utils/logging";
 
 type ProfileUpdate = Database["public"]["Tables"]["user_profiles_public"]["Update"];
 
@@ -12,15 +14,12 @@ export async function PATCH(req: NextRequest) {
   try {
     payload = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return jsonError(ApiError.InvalidJson, 400);
   }
 
   const parsed = profileUpdateSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", issues: parsed.error.issues },
-      { status: 400 },
-    );
+    return jsonError(ApiError.ValidationFailed, 400, { issues: parsed.error.issues });
   }
   const update = parsed.data;
 
@@ -36,10 +35,11 @@ export async function PATCH(req: NextRequest) {
     .maybeSingle();
 
   if (selectErr) {
-    return NextResponse.json({ error: selectErr.message }, { status: 500 });
+    logError("[profile] select failed", selectErr);
+    return jsonError(ApiError.Internal, 500);
   }
   if (!current) {
-    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    return jsonError(ApiError.NotFound, 404);
   }
 
   // Build the update payload.
@@ -55,13 +55,9 @@ export async function PATCH(req: NextRequest) {
   if (update.nickname !== undefined && update.nickname !== current.nickname) {
     const policy = canChangeNickname(current.nickname, current.nickname_changed_at);
     if (!policy.canChange) {
-      return NextResponse.json(
-        {
-          error: "nickname_change_too_soon",
-          next_change_available_at: policy.nextChangeAt.toISOString(),
-        },
-        { status: 400 },
-      );
+      return jsonError("nickname_change_too_soon", 400, {
+        next_change_available_at: policy.nextChangeAt.toISOString(),
+      });
     }
     dbUpdate.nickname = update.nickname;
     dbUpdate.nickname_changed_at = new Date().toISOString();
@@ -82,12 +78,10 @@ export async function PATCH(req: NextRequest) {
   if (updateErr) {
     // PostgREST error code "23505" = unique violation
     if ((updateErr as { code?: string }).code === "23505") {
-      return NextResponse.json(
-        { error: "nickname_taken" },
-        { status: 400 },
-      );
+      return jsonError("nickname_taken", 400);
     }
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    logError("[profile] update failed", updateErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   return NextResponse.json(maskProfile(updated, true));

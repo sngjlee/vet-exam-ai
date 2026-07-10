@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireUser } from "../../../../lib/auth/requireUser";
+import { jsonError, ApiError } from "../../../../lib/api/errors";
+import { logError } from "../../../../lib/utils/logging";
 
 type Body = { read?: boolean };
 
@@ -9,20 +11,17 @@ export async function PATCH(
 ) {
   const { id } = await params;
   if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    return jsonError(ApiError.MissingParam, 400);
   }
 
   let body: Body;
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return jsonError(ApiError.InvalidJson, 400);
   }
   if (body.read !== true) {
-    return NextResponse.json(
-      { error: "Only { read: true } is supported" },
-      { status: 400 },
-    );
+    return jsonError(ApiError.ValidationFailed, 400);
   }
 
   const auth = await requireUser();
@@ -36,10 +35,11 @@ export async function PATCH(
     .maybeSingle();
 
   if (selectErr) {
-    return NextResponse.json({ error: selectErr.message }, { status: 500 });
+    logError("[notifications/:id] select failed", selectErr);
+    return jsonError(ApiError.Internal, 500);
   }
   if (!existing) {
-    return NextResponse.json({ error: "Notification not found" }, { status: 404 });
+    return jsonError(ApiError.NotFound, 404);
   }
 
   if (existing.read_at != null) {
@@ -52,7 +52,8 @@ export async function PATCH(
     .eq("id", id);
 
   if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    logError("[notifications/:id] update failed", updateErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   return NextResponse.json({ ok: true });

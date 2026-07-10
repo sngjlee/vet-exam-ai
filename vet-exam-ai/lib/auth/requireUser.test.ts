@@ -19,7 +19,7 @@ describe("requireUser", () => {
     if (!res.ok) {
       expect(res.response.status).toBe(401);
       await expect(res.response.json()).resolves.toEqual({
-        error: "Authentication required",
+        error: "auth_required",
       });
     }
   });

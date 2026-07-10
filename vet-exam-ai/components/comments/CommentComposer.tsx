@@ -52,8 +52,7 @@ export default function CommentComposer({ questionId, onSubmitted }: Props) {
         }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "전송 실패. 다시 시도해주세요.");
+        throw new Error("전송 실패. 다시 시도해주세요.");
       }
       const created = await res.json();
       onSubmitted({

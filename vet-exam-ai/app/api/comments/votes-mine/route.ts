@@ -1,6 +1,8 @@
 // vet-exam-ai/app/api/comments/votes-mine/route.ts
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../../lib/supabase/server";
+import { jsonError, ApiError } from "../../../../lib/api/errors";
+import { logError } from "../../../../lib/utils/logging";
 
 const QUESTION_COMMENT_STATE_LOOKUP_LIMIT = 1000;
 
@@ -8,7 +10,7 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const questionId = url.searchParams.get("question_id");
   if (!questionId) {
-    return NextResponse.json({ error: "question_id is required" }, { status: 400 });
+    return jsonError(ApiError.MissingParam, 400);
   }
 
   const supabase = await createClient();
@@ -27,7 +29,8 @@ export async function GET(req: NextRequest) {
     .limit(QUESTION_COMMENT_STATE_LOOKUP_LIMIT);
 
   if (idsErr) {
-    return NextResponse.json({ error: idsErr.message }, { status: 500 });
+    logError("[comments/votes-mine] GET ids lookup failed", idsErr);
+    return jsonError(ApiError.Internal, 500);
   }
   if (!ids || ids.length === 0) {
     return NextResponse.json({}, { status: 200 });
@@ -42,7 +45,8 @@ export async function GET(req: NextRequest) {
     .in("comment_id", commentIds);
 
   if (votesErr) {
-    return NextResponse.json({ error: votesErr.message }, { status: 500 });
+    logError("[comments/votes-mine] GET votes lookup failed", votesErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   const map: Record<string, 1 | -1> = {};

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "../../../../lib/auth/requireUser";
+import { jsonError, ApiError } from "../../../../lib/api/errors";
+import { logError } from "../../../../lib/utils/logging";
 
 export async function POST() {
   const auth = await requireUser();
@@ -14,7 +16,8 @@ export async function POST() {
     .select("id");
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logError("[notifications/mark-all-read] failed", error);
+    return jsonError(ApiError.Internal, 500);
   }
 
   return NextResponse.json({ updated: data?.length ?? 0 });

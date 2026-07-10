@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../../../lib/supabase/server";
+import { jsonError, ApiError } from "../../../../../lib/api/errors";
+import { logError } from "../../../../../lib/utils/logging";
 
 const PAGE_SIZE = 20;
 
@@ -24,7 +26,8 @@ export async function GET(
     .range(offset, offset + PAGE_SIZE);
 
   if (cErr) {
-    return NextResponse.json({ error: cErr.message }, { status: 500 });
+    logError("[profile/comments] load comments failed", cErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   const rows = comments ?? [];
@@ -42,7 +45,8 @@ export async function GET(
       .select("public_id, question")
       .in("public_id", questionIds);
     if (qErr) {
-      return NextResponse.json({ error: qErr.message }, { status: 500 });
+      logError("[profile/comments] load question stems failed", qErr);
+      return jsonError(ApiError.Internal, 500);
     }
     for (const q of qs ?? []) {
       if (q.public_id) stemById.set(q.public_id, q.question);

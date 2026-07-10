@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "../supabase/server";
+import { jsonError, ApiError } from "../api/errors";
 import type { Database } from "../supabase/types";
 
 export type RequireUserResult =
@@ -28,10 +29,7 @@ export async function requireUser(): Promise<RequireUserResult> {
   if (!user) {
     return {
       ok: false,
-      response: NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 },
-      ),
+      response: jsonError(ApiError.AuthRequired, 401),
     };
   }
   return { ok: true, supabase, user };

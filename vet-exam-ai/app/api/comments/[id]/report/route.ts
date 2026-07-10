@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireUser } from "../../../../../lib/auth/requireUser";
 import { ReportRequestSchema } from "../../../../../lib/comments/reportSchema";
 import { checkRateLimit, RATE_LIMITS } from "../../../../../lib/rate-limit";
+import { jsonError, ApiError } from "../../../../../lib/api/errors";
+import { logError } from "../../../../../lib/utils/logging";
 
 export async function POST(
   req: NextRequest,
@@ -9,22 +11,19 @@ export async function POST(
 ) {
   const { id } = await params;
   if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    return jsonError(ApiError.MissingParam, 400);
   }
 
   let payload: unknown;
   try {
     payload = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return jsonError(ApiError.InvalidJson, 400);
   }
 
   const parsed = ReportRequestSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", issues: parsed.error.issues },
-      { status: 422 }
-    );
+    return jsonError(ApiError.ValidationFailed, 422, { issues: parsed.error.issues });
   }
   const { reason, description } = parsed.data;
 
@@ -34,10 +33,9 @@ export async function POST(
 
   const rl = await checkRateLimit(supabase, RATE_LIMITS.commentReport, user.id);
   if (!rl.allowed) {
-    return NextResponse.json(
-      { error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." },
-      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } },
-    );
+    const res = jsonError(ApiError.RateLimited, 429);
+    res.headers.set("Retry-After", String(rl.retryAfterSeconds));
+    return res;
   }
 
   const { data: comment, error: commentErr } = await supabase
@@ -47,22 +45,17 @@ export async function POST(
     .maybeSingle();
 
   if (commentErr) {
-    return NextResponse.json({ error: commentErr.message }, { status: 500 });
+    logError("[comments/[id]/report] POST select comment failed", commentErr);
+    return jsonError(ApiError.Internal, 500);
   }
   if (!comment) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    return jsonError(ApiError.NotFound, 404);
   }
   if (comment.user_id === user.id) {
-    return NextResponse.json(
-      { error: "Cannot report own comment" },
-      { status: 403 }
-    );
+    return jsonError(ApiError.Forbidden, 403);
   }
   if (comment.status !== "visible" && comment.status !== "hidden_by_votes") {
-    return NextResponse.json(
-      { error: "Comment is no longer available" },
-      { status: 410 }
-    );
+    return jsonError(ApiError.Gone, 410);
   }
 
   const insertPayload = {
@@ -78,12 +71,10 @@ export async function POST(
 
   if (insertErr) {
     if (insertErr.code === "23505") {
-      return NextResponse.json(
-        { error: "Already reported" },
-        { status: 409 }
-      );
+      return jsonError(ApiError.Conflict, 409);
     }
-    return NextResponse.json({ error: insertErr.message }, { status: 500 });
+    logError("[comments/[id]/report] POST insert failed", insertErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   return NextResponse.json({ ok: true }, { status: 201 });

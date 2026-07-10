@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "../../../../lib/supabase/server";
 import { requireUser } from "../../../../lib/auth/requireUser";
+import { jsonError, ApiError } from "../../../../lib/api/errors";
+import { logError } from "../../../../lib/utils/logging";
 
 const pinPayload = z.object({
   question_id: z.string().min(1),
@@ -15,10 +17,7 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const questionId = url.searchParams.get("question_id");
   if (!questionId) {
-    return NextResponse.json(
-      { error: "question_id is required" },
-      { status: 400 },
-    );
+    return jsonError(ApiError.MissingParam, 400);
   }
 
   const supabase = await createClient();
@@ -37,7 +36,8 @@ export async function GET(req: NextRequest) {
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logError("[comments/pins] GET lookup failed", error);
+    return jsonError(ApiError.Internal, 500);
   }
 
   return NextResponse.json(
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   try {
     parsed = pinPayload.parse(await req.json());
   } catch {
-    return NextResponse.json({ error: "invalid payload" }, { status: 400 });
+    return jsonError(ApiError.ValidationFailed, 400);
   }
 
   // Check current pin to decide between toggle-off and replace.
@@ -72,7 +72,8 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   if (existingErr) {
-    return NextResponse.json({ error: existingErr.message }, { status: 500 });
+    logError("[comments/pins] POST existing lookup failed", existingErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   if (existing && existing.comment_id === parsed.comment_id) {
@@ -82,7 +83,8 @@ export async function POST(req: NextRequest) {
       .delete()
       .eq("id", existing.id);
     if (delErr) {
-      return NextResponse.json({ error: delErr.message }, { status: 500 });
+      logError("[comments/pins] POST unpin delete failed", delErr);
+      return jsonError(ApiError.Internal, 500);
     }
     return NextResponse.json(
       { pinned: false, comment_id: null },
@@ -104,7 +106,8 @@ export async function POST(req: NextRequest) {
     );
 
   if (upsertErr) {
-    return NextResponse.json({ error: upsertErr.message }, { status: 500 });
+    logError("[comments/pins] POST upsert failed", upsertErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   return NextResponse.json(

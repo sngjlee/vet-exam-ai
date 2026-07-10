@@ -4,6 +4,8 @@ import { EditCommentSchema } from "../../../../lib/comments/schema";
 import { renderCommentMarkdown } from "../../../../lib/comments/sanitize";
 import { findInvalidImageUrl } from "../../../../lib/comments/imageUrlValidate";
 import { logAdminAction } from "../../../../lib/admin/audit";
+import { jsonError, ApiError } from "../../../../lib/api/errors";
+import { logError } from "../../../../lib/utils/logging";
 
 export async function DELETE(
   _req: NextRequest,
@@ -11,7 +13,7 @@ export async function DELETE(
 ) {
   const { id } = await params;
   if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    return jsonError(ApiError.MissingParam, 400);
   }
 
   const auth = await requireUser();
@@ -25,10 +27,11 @@ export async function DELETE(
     .maybeSingle();
 
   if (selectErr) {
-    return NextResponse.json({ error: selectErr.message }, { status: 500 });
+    logError("[comments/[id]] DELETE select failed", selectErr);
+    return jsonError(ApiError.Internal, 500);
   }
   if (!existing) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    return jsonError(ApiError.NotFound, 404);
   }
   const { data: profile, error: profileErr } = await supabase
     .from("profiles")
@@ -37,13 +40,14 @@ export async function DELETE(
     .maybeSingle();
 
   if (profileErr) {
-    return NextResponse.json({ error: profileErr.message }, { status: 500 });
+    logError("[comments/[id]] DELETE profile lookup failed", profileErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   const isOwner = existing.user_id === user.id;
   const isAdmin = profile?.role === "admin" && profile.is_active === true;
   if (!isOwner && !isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return jsonError(ApiError.Forbidden, 403);
   }
 
   const nextStatus = !isOwner && isAdmin ? "removed_by_admin" : "hidden_by_author";
@@ -53,7 +57,8 @@ export async function DELETE(
     .eq("id", id);
 
   if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    logError("[comments/[id]] DELETE update failed", updateErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   if (nextStatus === "removed_by_admin") {
@@ -81,22 +86,19 @@ export async function PATCH(
 ) {
   const { id } = await params;
   if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    return jsonError(ApiError.MissingParam, 400);
   }
 
   let payload: unknown;
   try {
     payload = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return jsonError(ApiError.InvalidJson, 400);
   }
 
   const parsed = EditCommentSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Validation failed", issues: parsed.error.issues },
-      { status: 422 }
-    );
+    return jsonError(ApiError.ValidationFailed, 422, { issues: parsed.error.issues });
   }
   const { body_text, image_urls } = parsed.data;
 
@@ -107,10 +109,7 @@ export async function PATCH(
   if (image_urls !== undefined) {
     const invalidUrl = findInvalidImageUrl(image_urls, user.id);
     if (invalidUrl) {
-      return NextResponse.json(
-        { error: "invalid_image_url", detail: invalidUrl },
-        { status: 400 }
-      );
+      return jsonError("invalid_image_url", 400, { detail: invalidUrl });
     }
   }
 
@@ -123,19 +122,17 @@ export async function PATCH(
     .maybeSingle();
 
   if (selectErr) {
-    return NextResponse.json({ error: selectErr.message }, { status: 500 });
+    logError("[comments/[id]] PATCH select failed", selectErr);
+    return jsonError(ApiError.Internal, 500);
   }
   if (!existing) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    return jsonError(ApiError.NotFound, 404);
   }
   if (existing.user_id !== user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return jsonError(ApiError.Forbidden, 403);
   }
   if (existing.status !== "visible") {
-    return NextResponse.json(
-      { error: "이 댓글은 더 이상 수정할 수 없습니다" },
-      { status: 409 }
-    );
+    return jsonError(ApiError.Conflict, 409);
   }
 
   const nextBodyText = body_text !== undefined ? body_text : existing.body_text;
@@ -143,10 +140,7 @@ export async function PATCH(
     image_urls !== undefined ? image_urls : existing.image_urls ?? [];
 
   if (nextBodyText.length === 0 && nextImageUrls.length === 0) {
-    return NextResponse.json(
-      { error: "내용 또는 이미지 중 하나는 남아있어야 합니다" },
-      { status: 422 }
-    );
+    return jsonError(ApiError.ValidationFailed, 422);
   }
 
   const textChanged = body_text !== undefined && body_text !== existing.body_text;
@@ -191,7 +185,8 @@ export async function PATCH(
     .single();
 
   if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    logError("[comments/[id]] PATCH update failed", updateErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   return NextResponse.json(updated, { status: 200 });

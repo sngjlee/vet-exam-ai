@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "../../../../../lib/supabase/server";
+import { jsonError, ApiError } from "../../../../../lib/api/errors";
+import { logError } from "../../../../../lib/utils/logging";
 
 export async function GET(
   _req: NextRequest,
@@ -7,7 +9,7 @@ export async function GET(
 ) {
   const { id } = await params;
   if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    return jsonError(ApiError.MissingParam, 400);
   }
 
   const supabase = await createClient();
@@ -19,13 +21,14 @@ export async function GET(
     .maybeSingle();
 
   if (cErr) {
-    return NextResponse.json({ error: cErr.message }, { status: 500 });
+    logError("[comments/[id]/history] GET select comment failed", cErr);
+    return jsonError(ApiError.Internal, 500);
   }
   if (!comment) {
-    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    return jsonError(ApiError.NotFound, 404);
   }
   if (comment.status === "hidden_by_author") {
-    return NextResponse.json({ error: "Comment unavailable" }, { status: 410 });
+    return jsonError(ApiError.Gone, 410);
   }
 
   const { data: history, error: hErr } = await supabase
@@ -35,7 +38,8 @@ export async function GET(
     .order("edited_at", { ascending: false });
 
   if (hErr) {
-    return NextResponse.json({ error: hErr.message }, { status: 500 });
+    logError("[comments/[id]/history] GET select history failed", hErr);
+    return jsonError(ApiError.Internal, 500);
   }
 
   return NextResponse.json(
