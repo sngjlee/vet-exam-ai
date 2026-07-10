@@ -10,8 +10,8 @@
 const INTERVALS_DAYS = [1, 3, 7, 14] as const;
 
 export function computeNextReviewAt(reviewCount: number): Date {
-  const idx = Math.min(reviewCount, INTERVALS_DAYS.length - 1);
-  const days = INTERVALS_DAYS[idx];
+  const idx = Math.min(Math.max(reviewCount, 0), INTERVALS_DAYS.length - 1);
+  const days = INTERVALS_DAYS[idx] ?? INTERVALS_DAYS[0];
   const next = new Date();
   next.setDate(next.getDate() + days);
   return next;

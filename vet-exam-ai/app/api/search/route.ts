@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
   }
 
   const rows = data ?? [];
-  let total = rows.length > 0 ? Number(rows[0].total_count) : 0;
+  let total = rows.length > 0 ? Number(rows[0]!.total_count) : 0;
 
   // Pagination overshoot guard: if the requested page returned 0 rows but the
   // user wasn't on page 0, the URL may be stale (e.g. user changes filters
@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
       page_offset:     0,
     });
     if (probe && probe.length > 0) {
-      total = Number(probe[0].total_count);
+      total = Number(probe[0]!.total_count);
     }
   }
 
@@ -150,7 +150,7 @@ export async function GET(req: NextRequest) {
       commentId:   comment.id,
       commentType: comment.type,
     }));
-    commentTotal = comments.length > 0 ? Number(comments[0].total_count) : 0;
+    commentTotal = comments.length > 0 ? Number(comments[0]!.total_count) : 0;
   }
 
   const combined = includeComments ? interleave(questionHits, commentHits) : questionHits;
@@ -187,8 +187,10 @@ function interleave<T>(first: T[], second: T[]): T[] {
   const out: T[] = [];
   const max = Math.max(first.length, second.length);
   for (let i = 0; i < max; i += 1) {
-    if (first[i]) out.push(first[i]);
-    if (second[i]) out.push(second[i]);
+    const a = first[i];
+    if (a) out.push(a);
+    const b = second[i];
+    if (b) out.push(b);
   }
   return out;
 }

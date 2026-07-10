@@ -58,9 +58,10 @@ export default function QuestionDetailPage() {
     }
     if (idx < 0) return null;
     return {
-      prevId: idx > 0 ? listContext.ids[idx - 1] : null,
+      // The bounds checks guarantee the neighbour index is in range.
+      prevId: idx > 0 ? listContext.ids[idx - 1]! : null,
       nextId:
-        idx < listContext.ids.length - 1 ? listContext.ids[idx + 1] : null,
+        idx < listContext.ids.length - 1 ? listContext.ids[idx + 1]! : null,
       position: idx + 1,
       total: listContext.ids.length,
     };

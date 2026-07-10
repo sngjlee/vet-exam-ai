@@ -63,8 +63,10 @@ async function loadPage(sp: ReturnType<typeof parseReportsSearchParams>): Promis
         first_reported_at: r.created_at as string,
       };
     }
-    grouped[cid].report_count += 1;
-    grouped[cid].reasons.push(r.reason as string);
+    // grouped[cid] was just created above (or in a prior iteration for a seen cid).
+    const group = grouped[cid]!;
+    group.report_count += 1;
+    group.reasons.push(r.reason as string);
   }
 
   const totalGroups = ordered.length;
@@ -144,7 +146,8 @@ async function loadPage(sp: ReturnType<typeof parseReportsSearchParams>): Promis
     }
   }
 
-  const groups: ReportGroupRow[] = visibleIds.map((id) => grouped[id]);
+  // visibleIds is a subset of grouped's keys, so every lookup resolves.
+  const groups: ReportGroupRow[] = visibleIds.map((id) => grouped[id]!);
 
   return { groups, totalPages, commentMap, rawMap, nicknameMap };
 }

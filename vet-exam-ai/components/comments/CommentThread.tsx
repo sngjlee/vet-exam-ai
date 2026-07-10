@@ -348,6 +348,7 @@ export default function CommentThread({ questionId, highlightCommentId }: Props)
       for (const [pid, arr] of repliesByParent) {
         if (!knownRootIds.has(pid)) {
           const oldestReply = arr[0];
+          if (!oldestReply) continue;
           assembled.push({
             id: pid,
             user_id: null,

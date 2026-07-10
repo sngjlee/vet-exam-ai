@@ -437,7 +437,8 @@ function shuffle<T>(items: T[]): T[] {
   const copied = [...items];
   for (let i = copied.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [copied[i], copied[j]] = [copied[j], copied[i]];
+    // i > 0 and 0 <= j <= i, so both indices are in-bounds.
+    [copied[i], copied[j]] = [copied[j]!, copied[i]!];
   }
   return copied;
 }

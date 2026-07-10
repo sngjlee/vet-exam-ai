@@ -179,7 +179,7 @@ export default function SessionSetup({
               ? "선택한 과목에 출제 가능한 문제가 없습니다."
               : availablePoolSize < VALID_COUNTS[0]
                 ? `${availablePoolSize}문제로 시작 — 풀 사이즈가 작아 자동 조정됨`
-                : config.count === availablePoolSize && availablePoolSize < VALID_COUNTS[VALID_COUNTS.length - 1]
+                : config.count === availablePoolSize && availablePoolSize < VALID_COUNTS[VALID_COUNTS.length - 1]!
                   ? `선택 범위 ${availablePoolSize}문제 중 ${config.count}문제 출제`
                   : `선택 범위에 충분한 문제 — ${config.count}문제 출제`}
       </p>

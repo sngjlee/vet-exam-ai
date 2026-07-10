@@ -34,9 +34,10 @@ export function findInvalidImageUrl(urls: string[], ownerUserId: string): string
     const remainder = url.slice(PUBLIC_PREFIX.length);
     const segments = remainder.split("/");
     if (segments.length !== 3) return url;
+    // length === 3 guarantees all three segments are present.
     if (segments[0] !== ownerUserId) return url;
-    if (!/^\d{6}$/.test(segments[1])) return url;
-    if (!/^[A-Za-z0-9_-]{16}\.webp$/.test(segments[2])) return url;
+    if (!/^\d{6}$/.test(segments[1]!)) return url;
+    if (!/^[A-Za-z0-9_-]{16}\.webp$/.test(segments[2]!)) return url;
   }
   return null;
 }

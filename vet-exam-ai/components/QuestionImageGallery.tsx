@@ -25,12 +25,12 @@ export default function QuestionImageGallery({ files, altPrefix }: Props) {
   const next  = () => setOpenIdx((i) => {
     if (i === null) return null;
     const pos = visibleIndexes.indexOf(i);
-    return visibleIndexes[(pos + 1) % visibleIndexes.length];
+    return visibleIndexes[(pos + 1) % visibleIndexes.length] ?? i;
   });
   const prev = () => setOpenIdx((i) => {
     if (i === null) return null;
     const pos = visibleIndexes.indexOf(i);
-    return visibleIndexes[(pos - 1 + visibleIndexes.length) % visibleIndexes.length];
+    return visibleIndexes[(pos - 1 + visibleIndexes.length) % visibleIndexes.length] ?? i;
   });
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export default function QuestionImageGallery({ files, altPrefix }: Props) {
 
       {openIdx !== null && (
         <Lightbox
-          src={urls[openIdx]}
+          src={urls[openIdx]!}
           alt={`${altPrefix} ${openIdx + 1}`}
           position={visibleIndexes.indexOf(openIdx) + 1}
           total={visibleIndexes.length}
@@ -129,10 +129,10 @@ function Lightbox({
   return (
     <div
       onClick={onClose}
-      onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+      onTouchStart={(e) => setTouchStartX(e.touches[0]!.clientX)}
       onTouchEnd={(e) => {
         if (touchStartX === null) return;
-        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dx = e.changedTouches[0]!.clientX - touchStartX;
         if (Math.abs(dx) > 60) {
           if (dx < 0 && onNext) onNext();
           else if (dx > 0 && onPrev) onPrev();
