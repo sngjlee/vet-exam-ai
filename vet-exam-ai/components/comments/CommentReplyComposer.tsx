@@ -86,8 +86,7 @@ export default function CommentReplyComposer(props: Props) {
           return;
         }
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error ?? "수정 실패. 다시 시도해주세요.");
+          throw new Error("수정 실패. 다시 시도해주세요.");
         }
         const updated = (await res.json()) as EditedCommentRow;
         props.onSaved(updated);
@@ -103,8 +102,7 @@ export default function CommentReplyComposer(props: Props) {
           }),
         });
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error ?? "전송 실패. 다시 시도해주세요.");
+          throw new Error("전송 실패. 다시 시도해주세요.");
         }
         const created = await res.json();
         props.onSubmitted({
