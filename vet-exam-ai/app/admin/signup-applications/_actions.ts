@@ -51,6 +51,31 @@ export async function rejectSignupAction(userId: string, reason: string): Promis
 
 export async function getProofImageUrlAction(path: string): Promise<{ url: string | null }> {
   const supabase = await createClient();
+
+  // Explicit admin gate. signup-proofs holds student-ID images (PII); do NOT
+  // rely solely on the bucket's storage RLS for authorization — enforce it in
+  // code too, so access doesn't hinge on a single policy surviving future
+  // refactors. Non-admins get {url:null}, same as an RLS miss.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { url: null };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profile || profile.role !== "admin" || !profile.is_active) {
+    return { url: null };
+  }
+
+  // Defense in depth: proof keys are "<uuid>/<file>". Reject path traversal and
+  // non-ASCII keys before minting a signed URL.
+  if (!path || path.includes("..") || !/^[\x20-\x7e]+$/.test(path)) {
+    return { url: null };
+  }
+
   const url = await signedProofUrl(supabase, path);
   return { url };
 }

@@ -35,7 +35,7 @@ export async function submitSignupApplicationAction(input: SubmitInput): Promise
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "auth_required" };
 
-  const rl = await checkRateLimit(supabase, RATE_LIMITS.signupApplication, user.id);
+  const rl = await checkRateLimit(RATE_LIMITS.signupApplication, user.id);
   if (!rl.allowed) {
     return {
       ok: false,

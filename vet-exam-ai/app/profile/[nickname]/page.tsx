@@ -30,11 +30,12 @@ export default async function ProfilePage({
   const nickname = decodeURIComponent(rawNickname);
   const supabase = await createClient();
 
-  // 1. Profile by nickname
+  // 1. Profile by nickname.
+  // university / target_round are not directly selectable by client roles
+  // (see 20260713000000_profile_privacy_column_hardening); this RPC applies the
+  // visibility toggles in the DB and returns the owner's own raw values.
   const { data: profile, error: pErr } = await supabase
-    .from("user_profiles_public")
-    .select("*")
-    .eq("nickname", nickname)
+    .rpc("get_public_profile", { p_nickname: nickname })
     .maybeSingle();
 
   if (pErr) {

@@ -15,9 +15,7 @@ export default async function PendingProofPage() {
 
   const supabase = await createClient();
   const { data: profile } = await supabase
-    .from("user_profiles_public")
-    .select("university, target_round")
-    .eq("user_id", me.userId)
+    .rpc("get_my_profile")
     .maybeSingle();
 
   return (

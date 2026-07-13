@@ -866,6 +866,14 @@ export interface Database {
         Args: { n: string };
         Returns: boolean;
       };
+      get_public_profile: {
+        Args: { p_nickname: string };
+        Returns: Database["public"]["Tables"]["user_profiles_public"]["Row"][];
+      };
+      get_my_profile: {
+        Args: Record<string, never>;
+        Returns: Database["public"]["Tables"]["user_profiles_public"]["Row"][];
+      };
       get_user_total_vote_score: {
         Args: { uid: string };
         Returns: number;
