@@ -27,11 +27,11 @@ export async function PATCH(req: NextRequest) {
   if (!auth.ok) return auth.response;
   const { supabase, user } = auth;
 
-  // Fetch current row to evaluate nickname change rule.
+  // Fetch current row to evaluate nickname change rule. Uses the owner RPC
+  // because university / target_round are no longer directly selectable by the
+  // authenticated role (see 20260713000000_profile_privacy_column_hardening).
   const { data: current, error: selectErr } = await supabase
-    .from("user_profiles_public")
-    .select("*")
-    .eq("user_id", user.id)
+    .rpc("get_my_profile")
     .maybeSingle();
 
   if (selectErr) {
@@ -68,12 +68,10 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json(maskProfile(current, true));
   }
 
-  const { data: updated, error: updateErr } = await supabase
+  const { error: updateErr } = await supabase
     .from("user_profiles_public")
     .update(dbUpdate)
-    .eq("user_id", user.id)
-    .select()
-    .single();
+    .eq("user_id", user.id);
 
   if (updateErr) {
     // PostgREST error code "23505" = unique violation
@@ -81,6 +79,17 @@ export async function PATCH(req: NextRequest) {
       return jsonError("nickname_taken", 400);
     }
     logError("[profile] update failed", updateErr);
+    return jsonError(ApiError.Internal, 500);
+  }
+
+  // Read the fresh row back via the owner RPC (the UPDATE ... RETURNING path
+  // would expand to columns the authenticated role can no longer SELECT).
+  const { data: updated, error: readErr } = await supabase
+    .rpc("get_my_profile")
+    .maybeSingle();
+
+  if (readErr || !updated) {
+    logError("[profile] readback failed", readErr);
     return jsonError(ApiError.Internal, 500);
   }
 

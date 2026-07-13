@@ -32,7 +32,7 @@ export async function POST(
   if (!auth.ok) return auth.response;
   const { supabase, user } = auth;
 
-  const rl = await checkRateLimit(supabase, RATE_LIMITS.commentVote, user.id);
+  const rl = await checkRateLimit(RATE_LIMITS.commentVote, user.id);
   if (!rl.allowed) {
     const res = jsonError(ApiError.RateLimited, 429);
     res.headers.set("Retry-After", String(rl.retryAfterSeconds));

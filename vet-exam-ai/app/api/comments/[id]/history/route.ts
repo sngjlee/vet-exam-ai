@@ -27,7 +27,11 @@ export async function GET(
   if (!comment) {
     return jsonError(ApiError.NotFound, 404);
   }
-  if (comment.status === "hidden_by_author") {
+  // Edit history is exposed only for currently-visible comments. Any hidden /
+  // blinded / removed status must not leak prior body versions (RLS already
+  // withholds blinded_by_report & removed_by_admin from non-owners; this also
+  // covers hidden_by_votes and hidden_by_author).
+  if (comment.status !== "visible") {
     return jsonError(ApiError.Gone, 410);
   }
 

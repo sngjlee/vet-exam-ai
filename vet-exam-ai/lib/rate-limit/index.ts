@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../supabase/types";
+import { createAdminClient } from "../supabase/admin";
 import { logError } from "../utils/logging";
 
 export type RateLimitResult = {
@@ -26,16 +27,24 @@ export const RATE_LIMITS = {
 /**
  * Fixed-window rate limit backed by the check_rate_limit Postgres RPC.
  *
+ * The RPC is service-role-only (see 20260713030000): it is invoked through the
+ * admin client so a client can never call it directly to poison another user's
+ * counter or reset its own window. The caller passes `identifier` (always the
+ * authenticated user's own id), never a value taken from the request body.
+ *
  * Fails OPEN: if the limiter itself errors (RPC missing during a deploy gap,
- * transient DB error), we allow the request rather than block legitimate users.
- * Rate limiting is defense-in-depth, not the primary authz gate.
+ * transient DB error, admin env unset), we allow the request rather than block
+ * legitimate users. Rate limiting is defense-in-depth, not the primary authz gate.
+ *
+ * `clientOverride` exists only for tests to inject a fake Supabase client.
  */
 export async function checkRateLimit(
-  supabase: SupabaseClient<Database>,
   config: RateLimitConfig,
   identifier: string,
+  clientOverride?: SupabaseClient<Database>,
 ): Promise<RateLimitResult> {
   try {
+    const supabase = clientOverride ?? createAdminClient();
     const { data, error } = await supabase.rpc("check_rate_limit", {
       p_bucket: config.bucket,
       p_identifier: identifier,

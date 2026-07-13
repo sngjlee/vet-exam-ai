@@ -26,12 +26,16 @@ export async function PATCH(
 
   const auth = await requireUser();
   if (!auth.ok) return auth.response;
-  const { supabase } = auth;
+  const { supabase, user } = auth;
 
+  // Scope by user_id explicitly. RLS already restricts notifications to the
+  // owner, but pinning the filter here means correctness never hinges on that
+  // single policy (defense in depth against a future RLS regression).
   const { data: existing, error: selectErr } = await supabase
     .from("notifications")
     .select("id, read_at")
     .eq("id", id)
+    .eq("user_id", user.id)
     .maybeSingle();
 
   if (selectErr) {
@@ -49,7 +53,8 @@ export async function PATCH(
   const { error: updateErr } = await supabase
     .from("notifications")
     .update({ read_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", user.id);
 
   if (updateErr) {
     logError("[notifications/:id] update failed", updateErr);

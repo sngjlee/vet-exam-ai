@@ -23,7 +23,7 @@ describe("checkRateLimit", () => {
       data: [{ allowed: true, current_count: 1, retry_after_seconds: 0 }],
       error: null,
     });
-    const res = await checkRateLimit(client, RATE_LIMITS.commentVote, "user-1");
+    const res = await checkRateLimit(RATE_LIMITS.commentVote, "user-1", client);
     expect(res).toEqual({ allowed: true, retryAfterSeconds: 0 });
   });
 
@@ -32,19 +32,19 @@ describe("checkRateLimit", () => {
       data: [{ allowed: false, current_count: 61, retry_after_seconds: 42 }],
       error: null,
     });
-    const res = await checkRateLimit(client, RATE_LIMITS.commentVote, "user-1");
+    const res = await checkRateLimit(RATE_LIMITS.commentVote, "user-1", client);
     expect(res).toEqual({ allowed: false, retryAfterSeconds: 42 });
   });
 
   it("fails open on RPC error", async () => {
     const client = fakeClient({ data: null, error: { message: "boom" } });
-    const res = await checkRateLimit(client, RATE_LIMITS.boardPost, "user-1");
+    const res = await checkRateLimit(RATE_LIMITS.boardPost, "user-1", client);
     expect(res.allowed).toBe(true);
   });
 
   it("fails open on empty data", async () => {
     const client = fakeClient({ data: [], error: null });
-    const res = await checkRateLimit(client, RATE_LIMITS.boardPost, "user-1");
+    const res = await checkRateLimit(RATE_LIMITS.boardPost, "user-1", client);
     expect(res.allowed).toBe(true);
   });
 
@@ -54,7 +54,7 @@ describe("checkRateLimit", () => {
       { data: [{ allowed: true, current_count: 1, retry_after_seconds: 0 }], error: null },
       capture,
     );
-    await checkRateLimit(client, RATE_LIMITS.signupApplication, "user-9");
+    await checkRateLimit(RATE_LIMITS.signupApplication, "user-9", client);
     expect(capture.args).toEqual({
       p_bucket: "signup_application",
       p_identifier: "user-9",

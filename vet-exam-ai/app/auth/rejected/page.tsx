@@ -18,9 +18,7 @@ export default async function RejectedPage() {
     .select("decision_reason, rejection_count")
     .maybeSingle();
   const { data: profile } = await supabase
-    .from("user_profiles_public")
-    .select("university, target_round")
-    .eq("user_id", me.userId)
+    .rpc("get_my_profile")
     .maybeSingle();
 
   return (
