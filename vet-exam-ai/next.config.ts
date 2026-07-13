@@ -5,6 +5,30 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : undefined;
 
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          // Vercel defaults prerendered/static responses to
+          // "Access-Control-Allow-Origin: *"; pin it to our own origin so no
+          // third-party site can read API/page responses cross-origin.
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "https://www.kvle.app",
+          },
+          // Block MIME sniffing — uploads (e.g. comment images) must be
+          // served strictly as their declared Content-Type.
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // No page on this site is meant to be embedded in a frame —
+          // both headers together cover legacy and modern browsers.
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: supabaseHostname
       ? [
