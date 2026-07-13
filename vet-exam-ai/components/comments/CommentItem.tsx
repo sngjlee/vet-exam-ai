@@ -221,7 +221,7 @@ export default function CommentItem({
           size={isReply ? "small" : "normal"}
         />
         <span style={{ color: "var(--text-faint)" }}>· {formatRelative(comment.created_at)}</span>
-        {comment.edit_count > 0 && onShowHistory && (
+        {comment.edit_count > 0 && onShowHistory && isAuthed && (
           <button
             type="button"
             onClick={() => onShowHistory(comment.id, comment.edit_count)}
@@ -239,6 +239,9 @@ export default function CommentItem({
           >
             · 수정됨
           </button>
+        )}
+        {comment.edit_count > 0 && !(onShowHistory && isAuthed) && (
+          <span style={{ color: "var(--text-faint)", fontSize: 11 }}>· 수정됨</span>
         )}
         {status === "blinded_by_report" && isOwner && (
           <span

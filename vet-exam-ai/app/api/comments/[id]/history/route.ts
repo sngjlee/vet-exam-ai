@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "../../../../../lib/supabase/server";
+import { requireUser } from "../../../../../lib/auth/requireUser";
 import { jsonError, ApiError } from "../../../../../lib/api/errors";
 import { logError } from "../../../../../lib/utils/logging";
 
@@ -12,7 +12,12 @@ export async function GET(
     return jsonError(ApiError.MissingParam, 400);
   }
 
-  const supabase = await createClient();
+  // Edit history is a signed-in-only surface: pre-edit bodies must not be
+  // readable anonymously (RLS narrows comment_edit_history to authenticated;
+  // this gate keeps the API contract explicit instead of returning [] to anon).
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+  const { supabase } = auth;
 
   const { data: comment, error: cErr } = await supabase
     .from("comments")
