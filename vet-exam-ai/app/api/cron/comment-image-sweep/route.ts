@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       if (rows.length < REF_PAGE) break;
     }
 
-    // 2) Walk storage tree: {userId}/{yyyymm}/* and collect orphans
+    // 2) Walk storage tree: {comment_image_prefix}/{yyyymm}/* and collect orphans
     const cutoff = Date.now() - MAX_AGE_MS;
     let scanned = 0;
     const orphans: string[] = [];

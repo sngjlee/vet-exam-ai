@@ -24,10 +24,12 @@ function publicPrefix(): string {
 }
 
 /**
- * 모든 URL이 본인 prefix(`{userId}/...`)인지 검증.
+ * 모든 URL이 본인 prefix(`{comment_image_prefix}/...`)인지 검증.
+ * ownerPrefix = profiles.comment_image_prefix — 공개 URL에 auth UUID를
+ * 싣지 않기 위한 불투명 랜덤 프리픽스 (getCommentImagePrefix로 조회).
  * @returns 첫 번째로 발견된 위반 URL (없으면 null)
  */
-export function findInvalidImageUrl(urls: string[], ownerUserId: string): string | null {
+export function findInvalidImageUrl(urls: string[], ownerPrefix: string): string | null {
   const PUBLIC_PREFIX = publicPrefix();
   for (const url of urls) {
     if (!url.startsWith(PUBLIC_PREFIX)) return url;
@@ -35,7 +37,7 @@ export function findInvalidImageUrl(urls: string[], ownerUserId: string): string
     const segments = remainder.split("/");
     if (segments.length !== 3) return url;
     // length === 3 guarantees all three segments are present.
-    if (segments[0] !== ownerUserId) return url;
+    if (segments[0] !== ownerPrefix) return url;
     if (!/^\d{6}$/.test(segments[1]!)) return url;
     if (!/^[A-Za-z0-9_-]{16}\.webp$/.test(segments[2]!)) return url;
   }
