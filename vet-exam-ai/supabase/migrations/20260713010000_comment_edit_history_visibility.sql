@@ -21,6 +21,10 @@ begin;
 drop policy if exists "comment_edit_history: world read"
   on public.comment_edit_history;
 
+-- Re-runnable: drop the new policy too, in case a prior partial apply created it.
+drop policy if exists "comment_edit_history: read when parent comment visible"
+  on public.comment_edit_history;
+
 create policy "comment_edit_history: read when parent comment visible"
   on public.comment_edit_history for select
   using (
