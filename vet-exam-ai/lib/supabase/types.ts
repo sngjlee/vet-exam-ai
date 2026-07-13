@@ -18,6 +18,7 @@ export interface Database {
           role: Database["public"]["Enums"]["user_role"];
           is_active: boolean;
           signup_status: Database["public"]["Enums"]["signup_status"];
+          comment_image_prefix: string; // opaque random 16-hex storage prefix (DB default)
           created_at: string;
           updated_at: string;
         };
@@ -26,6 +27,7 @@ export interface Database {
           display_name?: string | null;
           role?: Database["public"]["Enums"]["user_role"];
           is_active?: boolean;
+          comment_image_prefix?: string;
           created_at?: string;
           updated_at?: string;
         };

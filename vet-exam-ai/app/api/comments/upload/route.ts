@@ -9,6 +9,7 @@ import { requireUser } from "../../../../lib/auth/requireUser";
 import { createAdminClient } from "../../../../lib/supabase/admin";
 import { readWebpDimensions } from "../../../../lib/webp-dimensions";
 import { urlToStoragePath } from "../../../../lib/comments/imageUrlValidate";
+import { getCommentImagePrefix } from "../../../../lib/comments/imageStoragePrefix";
 import { captureOperationalError, classifySupabaseFailure } from "../../../../lib/utils/logging";
 import { jsonError } from "../../../../lib/api/errors";
 
@@ -83,8 +84,21 @@ export async function POST(req: NextRequest) {
     return jsonError("rate_limited", 429);
   }
 
+  // Path owner segment = opaque per-user prefix, NOT auth.uid() — the public
+  // URL must not leak the uploader's internal UUID.
+  const ownerPrefix = await getCommentImagePrefix(admin, user.id);
+  if (!ownerPrefix) {
+    captureOperationalError(new Error("comment_image_prefix missing"), {
+      area: "supabase",
+      operation: "comment_image_prefix_lookup",
+      failureKind: "row_missing",
+      tags: { storage_bucket: BUCKET },
+    });
+    return jsonError("prefix_lookup_failed", 500);
+  }
+
   const yyyymm = new Date().toISOString().slice(0, 7).replace("-", "");
-  const path = `${user.id}/${yyyymm}/${nanoid(16)}.webp`;
+  const path = `${ownerPrefix}/${yyyymm}/${nanoid(16)}.webp`;
 
   const { error: uploadErr } = await admin.storage
     .from(BUCKET)
@@ -134,11 +148,12 @@ export async function DELETE(req: NextRequest) {
   if (!path) {
     return jsonError("invalid_url", 400);
   }
-  if (!path.startsWith(`${user.id}/`)) {
-    return jsonError("forbidden", 403);
-  }
 
   const admin = createAdminClient();
+  const ownerPrefix = await getCommentImagePrefix(admin, user.id);
+  if (!ownerPrefix || !path.startsWith(`${ownerPrefix}/`)) {
+    return jsonError("forbidden", 403);
+  }
   const { error: removeErr } = await admin.storage.from(BUCKET).remove([path]);
   if (removeErr) {
     captureOperationalError(removeErr, {

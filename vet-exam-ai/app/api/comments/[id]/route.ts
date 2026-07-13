@@ -3,6 +3,7 @@ import { requireUser } from "../../../../lib/auth/requireUser";
 import { EditCommentSchema } from "../../../../lib/comments/schema";
 import { renderCommentMarkdown } from "../../../../lib/comments/sanitize";
 import { findInvalidImageUrl } from "../../../../lib/comments/imageUrlValidate";
+import { getCommentImagePrefix } from "../../../../lib/comments/imageStoragePrefix";
 import { logAdminAction } from "../../../../lib/admin/audit";
 import { jsonError, ApiError } from "../../../../lib/api/errors";
 import { logError } from "../../../../lib/utils/logging";
@@ -106,8 +107,13 @@ export async function PATCH(
   if (!auth.ok) return auth.response;
   const { supabase, user } = auth;
 
-  if (image_urls !== undefined) {
-    const invalidUrl = findInvalidImageUrl(image_urls, user.id);
+  if (image_urls !== undefined && image_urls.length > 0) {
+    // Owner segment = profiles.comment_image_prefix (opaque), not auth.uid().
+    const ownerPrefix = await getCommentImagePrefix(supabase, user.id);
+    if (!ownerPrefix) {
+      return jsonError("invalid_image_url", 400, { detail: "owner_prefix_unavailable" });
+    }
+    const invalidUrl = findInvalidImageUrl(image_urls, ownerPrefix);
     if (invalidUrl) {
       return jsonError("invalid_image_url", 400, { detail: invalidUrl });
     }

@@ -4,8 +4,9 @@ import { findInvalidImageUrl, urlToStoragePath } from "./imageUrlValidate";
 // Prefix derived from NEXT_PUBLIC_SUPABASE_URL set in vitest.config.ts.
 const PREFIX =
   "https://test.supabase.co/storage/v1/object/public/comment-images/";
-const OWNER = "11111111-1111-1111-1111-111111111111";
-const OTHER = "22222222-2222-2222-2222-222222222222";
+// Owner segment = profiles.comment_image_prefix (opaque 16-hex), NOT auth.uid().
+const OWNER = "a1b2c3d4e5f60718";
+const OTHER = "ffffffffffffffff";
 const OBJECT = `${"a".repeat(16)}.webp`;
 
 describe("urlToStoragePath", () => {
@@ -26,8 +27,13 @@ describe("findInvalidImageUrl", () => {
     expect(findInvalidImageUrl([url], OWNER)).toBeNull();
   });
 
-  it("rejects a url whose owner segment is a different user (forgery guard)", () => {
+  it("rejects a url whose owner segment is a different user's prefix (forgery guard)", () => {
     const url = `${PREFIX}${OTHER}/202607/${OBJECT}`;
+    expect(findInvalidImageUrl([url], OWNER)).toBe(url);
+  });
+
+  it("rejects a legacy auth-UUID owner segment (pre-prefix scheme)", () => {
+    const url = `${PREFIX}11111111-1111-1111-1111-111111111111/202607/${OBJECT}`;
     expect(findInvalidImageUrl([url], OWNER)).toBe(url);
   });
 
