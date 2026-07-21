@@ -3,6 +3,8 @@ import { Activity, AlertTriangle, CheckCircle2, Clock3, ShieldAlert } from "luci
 import { createClient } from "../../../lib/supabase/server";
 import { getIndexingEnabled, getSiteUrl, ROBOTS_PRIVATE_PATHS } from "../../../lib/seo";
 import type { Database } from "../../../lib/supabase/types";
+import { AiCommentOpsCard } from "./_components/ai-comment-ops-card";
+import { loadAiCommentOpsSnapshot } from "./_lib/ai-comment-ops";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +35,12 @@ const CRON_JOBS = [
   {
     path: "/api/cron/signup-proof-purge",
     schedule: "매일 04:30 UTC",
-    purpose: "거절 후 30일 지난 가입 증빙 자료를 정리하고 일일 댓글 시딩을 실행합니다.",
+    purpose: "거절 후 30일 지난 가입 증빙 자료만 정리합니다.",
+  },
+  {
+    path: "/api/cron/ai-comment-candidates",
+    schedule: "매일 05:00 UTC",
+    purpose: "상한 안에서 AI 댓글 후보를 만들며 관리자 승인 전에는 게시하지 않습니다.",
   },
 ];
 
@@ -65,6 +72,10 @@ const SERVICE_ROLE_PATHS: OpsReference[] = [
   {
     label: "app/api/comments/correction-status/route.ts",
     detail: "정정 댓글 상태 조회를 관리자 권한으로 집계합니다.",
+  },
+  {
+    label: "app/api/cron/ai-comment-candidates/route.ts",
+    detail: "인증된 예약 실행에서 비공개 댓글 후보를 생성하고 집계 결과만 기록합니다.",
   },
   {
     label: "scripts/seed-community-comments.cjs",
@@ -196,6 +207,15 @@ function loadChecks(): OpsCheck[] {
       detail: "Vercel Cron 엔드포인트의 Bearer 인증에 필요합니다.",
     },
     {
+      label: "OpenAI API key",
+      level: hasEnv("OPENAI_API_KEY")
+        ? "ok"
+        : process.env.AI_COMMENT_GENERATION_ENABLED === "true" ? "fail" : "warn",
+      detail: hasEnv("OPENAI_API_KEY")
+        ? "서버 전용 키가 설정되어 있습니다. 키 값은 표시하지 않습니다."
+        : "라이브 후보 생성에 필요한 서버 전용 키가 없습니다. 키 값은 화면이나 로그에 표시하지 않습니다.",
+    },
+    {
       label: "Sentry DSN",
       level: hasEnv("NEXT_PUBLIC_SENTRY_DSN") ? "ok" : "warn",
       detail: "오류 추적을 위해 설정을 권장합니다. 누락 시 Sentry 테스트 페이지가 비활성 상태로 보입니다.",
@@ -281,7 +301,7 @@ function summarizeDetail(detail: CronRunLog["detail"]): string {
   if (!detail) return "요약 없음";
 
   const parts: string[] = [];
-  for (const key of ["scanned", "deleted", "inserted", "remaining", "limit"]) {
+  for (const key of ["scanned", "deleted", "inserted", "remaining", "limit", "generated", "failed", "pendingTotal", "limitReason"]) {
     const value = detail[key];
     if (typeof value === "number" || typeof value === "string") {
       parts.push(`${key}=${value}`);
@@ -376,6 +396,7 @@ function CronRunRows({ rows, error }: { rows: CronRunLog[]; error: string | null
 export default async function AdminOpsPage() {
   const checks = loadChecks();
   const cronRuns = await loadCronRuns();
+  const aiCommentOps = await loadAiCommentOpsSnapshot(cronRuns.rows);
   const siteUrl = getSiteUrl();
   const indexingEnabled = getIndexingEnabled();
   const failCount = checks.filter((check) => check.level === "fail").length;
@@ -424,6 +445,8 @@ export default async function AdminOpsPage() {
           ))}
         </ul>
       </section>
+
+      <AiCommentOpsCard snapshot={aiCommentOps} />
 
       <section>
         <h2 className="mb-3 text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
@@ -534,6 +557,12 @@ export default async function AdminOpsPage() {
               Sentry 검증 페이지
             </Link>
             에서 클라이언트와 서버 이벤트가 모두 수집되는지 확인합니다.
+          </p>
+          <p>
+            <Link href="/admin/ai-comments" style={{ color: "var(--teal)", textDecoration: "underline" }}>
+              AI 댓글 승인 큐
+            </Link>
+            에서 승인·거절이 공개 댓글과 감사 로그에 정확히 반영되는지 확인합니다.
           </p>
           <p>가입 증빙, 댓글 이미지, 계정 삭제처럼 개인정보가 섞인 경로는 운영 로그에 원문 값이 남지 않는지 확인합니다.</p>
         </div>

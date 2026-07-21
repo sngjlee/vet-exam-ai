@@ -416,6 +416,88 @@ select pg_temp.assert_ok(
   )
 );
 
+select pg_temp.assert_ok(
+  'client roles cannot create objects in public schema',
+  not has_schema_privilege('anon', 'public', 'CREATE')
+  and not has_schema_privilege('authenticated', 'public', 'CREATE')
+);
+-- AI comment candidates: private admin queue, with all writes reserved for
+-- service-role generation and the administrator-only SECURITY DEFINER RPC.
+select pg_temp.assert_ok(
+  'AI comment candidates RLS enabled',
+  pg_temp.rls_enabled('public', 'ai_comment_candidates')
+);
+select pg_temp.assert_ok(
+  'AI comment candidates admin read policy exists',
+  pg_temp.policy_exists(
+    'public', 'ai_comment_candidates', 'ai_comment_candidates: admin read', 'SELECT'
+  )
+  and pg_temp.policy_mentions(
+    'public', 'ai_comment_candidates', 'ai_comment_candidates: admin read', 'is_admin'
+  )
+);
+select pg_temp.assert_ok(
+  'AI comment candidates have no client write policy',
+  not exists (
+    select 1 from pg_policies
+     where schemaname = 'public'
+       and tablename = 'ai_comment_candidates'
+       and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL')
+  )
+  and not has_table_privilege('anon', 'public.ai_comment_candidates', 'INSERT, UPDATE, DELETE')
+  and not has_table_privilege('authenticated', 'public.ai_comment_candidates', 'INSERT, UPDATE, DELETE')
+);
+select pg_temp.assert_ok(
+  'AI comment candidates are hidden from anon',
+  not has_table_privilege('anon', 'public.ai_comment_candidates', 'SELECT')
+);
+select pg_temp.assert_ok(
+  'AI comment reservation RPC is service-role only',
+  exists (
+    select 1 from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.proname = 'reserve_ai_comment_generation'
+       and p.prosecdef
+       and p.proconfig @> array['search_path=pg_catalog']
+  )
+  and has_function_privilege(
+    'service_role',
+    'public.reserve_ai_comment_generation(text, text, text, text, integer, integer, integer)',
+    'EXECUTE'
+  )
+  and not has_function_privilege(
+    'authenticated',
+    'public.reserve_ai_comment_generation(text, text, text, text, integer, integer, integer)',
+    'EXECUTE'
+  )
+  and not has_function_privilege(
+    'anon',
+    'public.reserve_ai_comment_generation(text, text, text, text, integer, integer, integer)',
+    'EXECUTE'
+  )
+);
+select pg_temp.assert_ok(
+  'AI comment review RPC is locked down',
+  exists (
+    select 1 from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.proname = 'review_ai_comment_candidate'
+       and p.prosecdef
+       and p.proconfig @> array['search_path=pg_catalog']
+  )
+  and has_function_privilege(
+    'authenticated',
+    'public.review_ai_comment_candidate(uuid, text, text)',
+    'EXECUTE'
+  )
+  and not has_function_privilege(
+    'anon',
+    'public.review_ai_comment_candidate(uuid, text, text)',
+    'EXECUTE'
+  )
+);
 do $$
 declare
   failures text;

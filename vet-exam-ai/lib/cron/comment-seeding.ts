@@ -4,7 +4,7 @@ import type { Database } from "../supabase/types";
 
 type AdminClient = SupabaseClient<Database>;
 
-type SeedAuthor = "ops" | "memory" | "explain" | "correction" | "wrong";
+export type SeedAuthor = "ops" | "memory" | "explain" | "correction" | "wrong";
 
 type SeedComment = {
   questionId: string;
@@ -250,7 +250,7 @@ async function listAllUsers(admin: AdminClient) {
   }
 }
 
-async function ensureSeedAccounts(admin: AdminClient) {
+export async function ensureSeedAccounts(admin: AdminClient) {
   const existingUsers = await listAllUsers(admin);
   const usersByEmail = new Map(existingUsers.map((user) => [user.email, user]));
   const result: Record<SeedAuthor, string> = {} as Record<SeedAuthor, string>;
@@ -281,7 +281,7 @@ async function ensureSeedAccounts(admin: AdminClient) {
         {
           user_id: user.id,
           nickname: account.nickname,
-          bio: "클로즈베타 학습 댓글 계정입니다.",
+          bio: "KVLE 학습 댓글 운영 계정입니다.",
         },
         { onConflict: "user_id" },
       );

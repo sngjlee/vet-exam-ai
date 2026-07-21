@@ -419,7 +419,7 @@ async function ensureSeedAccounts() {
         {
           user_id: user.id,
           nickname: account.nickname,
-          bio: "클로즈베타 학습 댓글 시딩 계정입니다.",
+          bio: "KVLE 학습 댓글 운영 계정입니다.",
         },
         { onConflict: "user_id" },
       );

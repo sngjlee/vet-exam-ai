@@ -29,6 +29,50 @@ exception
 end;
 $$;
 
+-- Baseline: existing comment publication and audit posture must remain intact.
+select pg_temp.assert_ok('comments retain approved-owner insert gating',
+  exists (
+    select 1
+      from pg_policies
+     where schemaname = 'public'
+       and tablename = 'comments'
+       and policyname = 'comments: authenticated insert own'
+       and cmd = 'INSERT'
+       and coalesce(with_check, '') ilike '%signup_status_of%'
+       and coalesce(with_check, '') ilike '%approved%'
+  )
+);
+
+select pg_temp.assert_ok('admin audit rows remain client immutable',
+  not exists (
+    select 1
+      from pg_policies
+     where schemaname = 'public'
+       and tablename = 'admin_audit_logs'
+       and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL')
+  )
+);
+
+-- Red-first contract: false until the candidate review RPC migration exists.
+select pg_temp.assert_ok('AI comment review audits publish and reject',
+  pg_temp.function_mentions(
+    'public.review_ai_comment_candidate(uuid, text, text)',
+    'ai_comment_publish'
+  )
+  and pg_temp.function_mentions(
+    'public.review_ai_comment_candidate(uuid, text, text)',
+    'ai_comment_reject'
+  )
+  and pg_temp.function_mentions(
+    'public.review_ai_comment_candidate(uuid, text, text)',
+    'for update'
+  )
+  and pg_temp.function_mentions(
+    'public.review_ai_comment_candidate(uuid, text, text)',
+    'p_resolution is null'
+  )
+);
+
 select pg_temp.assert_ok('set_user_role audits role_change',
   pg_temp.function_mentions('public.set_user_role(uuid, public.user_role, text)', 'log_admin_action')
   and pg_temp.function_mentions('public.set_user_role(uuid, public.user_role, text)', 'role_change')
@@ -105,4 +149,30 @@ select pg_temp.assert_ok('board report resolution audit',
 select pg_temp.assert_ok('ip ban grant/revoke audit',
   pg_temp.function_mentions('public.add_ip_ban(cidr, text)', 'ip_ban_grant')
   and pg_temp.function_mentions('public.revoke_ip_ban(uuid, text)', 'ip_ban_revoke')
+);
+select pg_temp.assert_ok('AI comment generation reservation is serialized and bounded',
+  pg_temp.function_mentions(
+    'public.reserve_ai_comment_generation(text, text, text, text, integer, integer, integer)',
+    'pg_advisory_xact_lock'
+  )
+  and pg_temp.function_mentions(
+    'public.reserve_ai_comment_generation(text, text, text, text, integer, integer, integer)',
+    'daily_limit'
+  )
+  and pg_temp.function_mentions(
+    'public.reserve_ai_comment_generation(text, text, text, text, integer, integer, integer)',
+    'monthly_limit'
+  )
+  and pg_temp.function_mentions(
+    'public.reserve_ai_comment_generation(text, text, text, text, integer, integer, integer)',
+    'pending_limit'
+  )
+  and pg_temp.function_mentions(
+    'public.reserve_ai_comment_generation(text, text, text, text, integer, integer, integer)',
+    'insert into public.ai_comment_candidates'
+  )
+  and pg_temp.function_mentions(
+    'public.reserve_ai_comment_generation(text, text, text, text, integer, integer, integer)',
+    '''failed'''
+  )
 );

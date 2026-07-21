@@ -8,7 +8,6 @@
 // 같은 패턴: app/api/cron/comment-image-sweep/route.ts
 
 import type { NextRequest } from "next/server";
-import { runDailyCommentSeeding } from "../../../../lib/cron/comment-seeding";
 import { runCronJob } from "../../../../lib/cron/run";
 
 const BUCKET = "signup-proofs";
@@ -16,11 +15,6 @@ const BATCH = 100;
 
 export async function GET(req: NextRequest) {
   return runCronJob(req, "signup-proof-purge", async (admin) => {
-    let commentSeeding:
-      | Awaited<ReturnType<typeof runDailyCommentSeeding>>
-      | { ok: false; error: string }
-      | null = null;
-
     const cutoffIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const { data: rows, error: selErr } = await admin
       .from("signup_applications")
@@ -63,25 +57,14 @@ export async function GET(req: NextRequest) {
           scanned,
           deleted,
           path_clear_error: rpcErr.message,
-          commentSeeding,
         };
       }
-    }
-
-    try {
-      commentSeeding = await runDailyCommentSeeding(admin);
-    } catch (error) {
-      commentSeeding = {
-        ok: false,
-        error: error instanceof Error ? error.message : "Unknown comment seeding error",
-      };
     }
 
     return {
       ok: true,
       scanned,
       deleted,
-      commentSeeding,
     };
   });
 }
