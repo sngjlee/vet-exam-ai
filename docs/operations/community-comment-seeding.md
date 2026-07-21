@@ -7,8 +7,8 @@
 | 경로 | 목적 | 기본 동작 |
 |---|---|---|
 | `scripts/seed-community-comments.cjs` | 수동 일괄 투입 | 기본 dry-run, `--apply`일 때만 DB insert |
-| `lib/cron/comment-seeding.ts` | daily drip seeding | `DAILY_COMMENT_SEED_LIMIT`만큼 미투입 댓글 insert |
-| `/api/cron/comment-seed` | cron route | `CRON_SECRET` 인증 후 실행 |
+| `lib/cron/comment-seeding.ts` | legacy 정적 풀 helper | 예약 실행에서는 호출하지 않으며 수동 복구·참조용으로만 보존 |
+| `/api/cron/comment-seed` | legacy 수동 route | `CRON_SECRET` 인증 뒤 운영자가 명시적으로 호출할 때만 실행 |
 | `scripts/update-seed-comment-voices.cjs` | 기존 댓글 문체 보정 | 기존 seed 계정 댓글 update |
 
 ## 투입 전 확인
@@ -43,20 +43,14 @@ node scripts\seed-community-comments.cjs --apply
 
 스크립트는 seed 계정을 생성/갱신하고, 같은 `question_id + body_text` 조합이 이미 있으면 중복 삽입하지 않습니다.
 
-## Daily drip
+## Legacy 정적 시딩 경로 (수동 전용)
 
-cron seeding은 한 번에 모든 댓글을 노출하지 않고 하루 단위로 나눠 넣는 경로입니다.
+정적 댓글 풀은 더 이상 Vercel 예약 작업이나 `signup-proof-purge`에서 자동 실행하지 않습니다. `lib/cron/comment-seeding.ts`와 `/api/cron/comment-seed`는 과거 데이터 복구·점검을 위한 legacy 경로이며, 운영 책임자가 대상 DB와 투입 범위를 확인한 뒤에만 수동 호출합니다.
 
-| 설정 | 기본값 | 기준 |
-|---|---:|---|
-| `DAILY_COMMENT_SEED_LIMIT` | 5 | 1 이상, 최대 20 |
-
-운영 확인:
-
-- `/admin/ops`에서 `comment-seed` 최근 성공 시각과 inserted/remaining 값을 확인합니다.
-- `CRON_SECRET` 없이 `/api/cron/comment-seed`가 401을 반환하는지 확인합니다.
-- Production에서 대량 투입이 필요하면 cron보다 수동 스크립트 `--apply`를 사용하고 작업 기록을 남깁니다.
-
+- Production에서는 `scripts/seed-community-comments.cjs --dry-run` 결과와 대상 문항을 기록한 후 `--apply`를 명시합니다.
+- `/api/cron/comment-seed`를 `vercel.json`에 다시 등록하지 않습니다.
+- 자동 후보 생성은 `/api/cron/ai-comment-candidates`와 `/admin/ai-comments` 승인 큐를 사용하며, 이 정적 시딩 경로와 분리합니다.
+- legacy 호출 뒤에는 inserted/remaining 집계와 공개 댓글 표본을 확인하고, 반복 호출 전 중복 안전성을 재확인합니다.
 ## 검증
 
 투입 후 다음을 표본 확인합니다.

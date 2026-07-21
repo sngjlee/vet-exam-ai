@@ -5,7 +5,7 @@
 
 ## 1. 매일 점검
 
-- `/admin/ops`에서 필수 환경변수, Sentry 설정, 최근 cron 실행 이력을 확인합니다.
+- `/admin/ops`에서 필수 환경변수, Sentry 설정, 최근 cron 실행 이력과 AI 댓글 생성 상태·일/월/pending 카운터·상한 사유를 확인합니다.
 - `comment-image-sweep`, `signup-proof-purge`의 마지막 성공 시각이 36시간을 넘으면 Vercel Cron 실행 로그를 확인합니다.
 - 실패한 cron이 있으면 Sentry 이슈의 `cron_job` 태그로 원인을 확인하고, 재실행 전 중복 실행이 안전한 작업인지 확인합니다.
 - 가입 증빙, 댓글 이미지, 계정 삭제 경로에서 원문 개인정보가 로그에 남지 않는지 확인합니다.
@@ -19,6 +19,8 @@
 - 새 SQL을 적용할 때는 `docs/operations/migration-runbook.md`의 active migration 경로와 검증 SQL 절차를 따릅니다.
 - 문제은행 batch import, 이미지 트리아지, topic cleanup은 `docs/operations/question-bank-pipeline.md`의 하루 운영 순서를 따릅니다.
 - 시딩 댓글 작성/투입은 `docs/operations/community-comment-seeding.md` 기준으로 dry-run 후 적용합니다.
+- AI 댓글 후보 생성은 `docs/operations/ai-comment-generation.md`의 기본 비활성, 관리자 승인, 요청 상한, provider 예산·rollback 기준을 따릅니다.
+- OpenAI 키는 `/admin/ops`에서 설정 여부만 확인합니다. 키 값이나 provider/client request ID를 관리자 화면·Sentry·외부 티켓에 남기지 않습니다.
 - RLS/권한 변경 SQL을 적용할 때는 `docs/operations/rls-permission-regression.md`의 매트릭스와 `vet-exam-ai/supabase/tests/rls-permission-regression.sql`을 함께 실행합니다.
 - 관리자 mutation 변경 뒤에는 `docs/operations/admin-audit-coverage.md`와 `vet-exam-ai/supabase/tests/admin-audit-coverage.sql` 기준으로 audit 누락이 없는지 확인합니다.
 - 보존/삭제 동작은 `docs/operations/data-retention-schedule.md`의 주기와 실제 cron 결과가 맞는지 확인합니다.
@@ -52,6 +54,7 @@
 - Storage 삭제 실패: 버킷명, 객체 path 구조, Storage 정책 변경 여부를 확인합니다.
 - DB RPC 실패: 최신 migration 적용 여부와 함수 권한을 확인합니다.
 - 부분 실패가 기록된 경우 본 작업의 집계값을 먼저 확인하고, 개인정보 원문 path를 외부 티켓에 복사하지 않습니다.
+- AI 생성의 `disabled`, `missing_api_key`, `daily_cap`, `monthly_cap`, `pending_cap`은 원인을 확인한 뒤 자동 재시도하지 않습니다. 상한을 임의로 올리지 말고 UTC 경계 또는 승인 큐 처리로 정상 해제합니다.
 
 ## 6. 비밀값 교체
 
@@ -70,3 +73,12 @@
 - 영향 범위, 시작·탐지·복구 시각, 사용자 영향, 재발 방지 조치를 기록합니다.
 - 사용자에게 안내가 필요한 경우 약관·개인정보처리방침의 톤에 맞춰 사실, 영향, 조치, 문의 경로를 짧게 안내합니다.
 - 임시 조치가 남았다면 별도 이슈로 분리하고 담당자와 기한을 정합니다.
+## 9. AI 댓글 생성 지원 절차
+
+1. `/admin/ops`에서 `API 키 누락`, `생성 비활성`, `요청 상한 도달`, `생성 가능` 중 현재 상태와 모델·카운터·최근 집계를 기록합니다.
+2. missing key는 서버 환경 범위만 수정하고 값을 복사하지 않습니다. disabled는 승인된 rollout인지 확인하기 전 스위치를 켜지 않습니다.
+3. daily/monthly cap은 다음 UTC 기간까지 기다리고, pending cap은 `/admin/ai-comments`에서 검수 큐를 처리합니다. 실패 예약은 자동 재시도하지 않습니다.
+4. provider 지원 문의가 필요하면 권한이 제한된 내부 후보 provenance에서 해당 request ID와 발생 시각만 조회합니다. 관리자 UI에는 request ID를 추가하지 않습니다.
+5. 지원 티켓에는 request ID·발생 시각·일반화된 실패 코드만 전달합니다. API 키, prompt/response, 문제·정답·해설 전문, 댓글 본문, 사용자 식별자는 제외합니다.
+6. 복구가 우선이면 `AI_COMMENT_GENERATION_ENABLED=false`를 반영하고 AI Cron만 일시 중단합니다. 개인정보 purge와 이미지 정리 Cron은 유지합니다.
+7. 재활성화 전 staging에서 후보 생성 1건, 거절 1건, 승인 1건, 중복 승인 방지와 공개 provenance 비노출을 다시 확인합니다.

@@ -15,6 +15,14 @@
 | `NEXT_PUBLIC_INDEXING_ENABLED` | 필수 | 필수 | Production 공개 전환 시 `true`, Preview/베타 보류 시 `false`다. |
 | `NEXT_PUBLIC_SENTRY_DSN` | 권장 | 권장 | 클라이언트/서버 이벤트가 같은 Sentry 프로젝트로 들어간다. |
 | `SENTRY_AUTH_TOKEN` | 선택 | 선택 | source map 업로드가 필요한 배포 환경에만 설정한다. |
+| `OPENAI_API_KEY` | 활성화 시 필수 | staging smoke 시 필수 | 서버 전용이며 `/admin/ops`에는 설정 여부만 표시한다. |
+| `AI_COMMENT_GENERATION_ENABLED` | 필수 | 필수 | 최초 배포·rollback은 `false`; 승인된 활성화 배포만 `true`다. |
+| `AI_COMMENT_MODEL` | 필수 | 필수 | 기본 `gpt-5.6-terra`이며 운영 화면의 모델 값과 일치한다. |
+| `AI_COMMENT_PROMPT_VERSION` | 필수 | 필수 | 기본 `v1`; 생성 provenance와 중복 예약 기준에 사용한다. |
+| `AI_COMMENT_DAILY_LIMIT` | 필수 | 필수 | 기본 `5`; 코드/DB 예약 상한이다. |
+| `AI_COMMENT_MONTHLY_REQUEST_LIMIT` | 필수 | 필수 | 기본 `150`; provider 달러 예산과 별도인 요청 상한이다. |
+| `AI_COMMENT_PENDING_LIMIT` | 필수 | 필수 | 기본 `50`; 승인 큐가 쌓이면 생성을 중단한다. |
+| `AI_COMMENT_MAX_OUTPUT_TOKENS` | 필수 | 필수 | 기본 `800`; 요청당 출력 상한이다. |
 
 ## 2. Supabase 환경
 
@@ -37,11 +45,12 @@
 ## 4. Cron
 
 - `vercel.json`의 cron 경로가 실제 route와 일치한다.
-- `/api/cron/comment-image-sweep`와 `/api/cron/signup-proof-purge`가 `CRON_SECRET` 없이 401을 반환한다.
-- Vercel Cron 실행 로그에서 두 작업이 200으로 완료된다.
+- `/api/cron/comment-image-sweep`, `/api/cron/signup-proof-purge`, `/api/cron/ai-comment-candidates`가 `CRON_SECRET` 없이 401을 반환한다.
+- Vercel Cron 실행 로그에서 세 작업이 200으로 완료된다. AI 생성이 비활성 또는 상한 도달이면 200 집계의 `limitReason`을 정상 제어 상태로 분류한다.
 - `/admin/ops`의 최근 cron 실행 표에 성공/실패와 집계값이 표시된다.
 - `comment-image-sweep`가 댓글 이미지 임시 파일/업로드 로그와 90일 초과 `cron_run_logs`를 정리한다.
-- `signup-proof-purge`가 반려 후 30일 초과 가입 증빙 원본과 DB path를 정리한다.
+- `signup-proof-purge`가 반려 후 30일 초과 가입 증빙 원본과 DB path만 정리하며 댓글 시딩을 실행하지 않는다.
+- `ai-comment-candidates`는 후보만 생성하고 관리자 승인 전 공개 댓글을 만들지 않는다.
 - 실패 재시도 전 작업이 idempotent한지 확인한다.
 
 ## 5. Service role 사용 경로
@@ -121,3 +130,14 @@ npm run build
 - webhook 중복 처리, 결제 실패, 해지, 환불, 관리자 수동 권한 변경이 smoke test에 포함되어야 합니다.
 - 유료 기능 권한 체크는 클라이언트 표시가 아니라 서버/RLS 또는 서버 API 기준으로 보호되어야 합니다.
 - 위 항목이 준비되지 않은 경우 결제 UI와 Stripe 등 결제 연동은 production에서 비활성화합니다.
+## 10. AI 댓글 후보 생성·승인 게이트
+
+- `/admin/ops`에서 OpenAI 키는 원문이 아니라 설정 여부만 보이고, 모델·활성화 상태·오늘/월간 요청·승인 대기 카운터·최근 실행·상한 사유가 표시된다.
+- `API 키 누락`, `생성 비활성`, `요청 상한 도달`, `생성 가능` 상태를 staging fixture로 각각 렌더 검증한다. provider/client request ID와 키 값은 HTML에 없어야 한다.
+- 기본 비활성 배포 뒤 운영 책임자의 승인을 받아 staging에서 1개 후보 smoke를 실행한다. 자동 공개 댓글은 0개여야 한다.
+- `/admin/ai-comments`에서 한 후보를 거절해 공개 댓글 0개를 확인하고, 별도 후보를 승인해 해당 시딩 닉네임의 댓글이 정확히 한 번만 공개되는지 확인한다.
+- 상한 도달 시 자동 재시도하지 않는다. 일일 상한은 다음 UTC 일자, 월간 상한은 다음 UTC 월, pending 상한은 승인·거절 처리 뒤 해제한다. 임의로 상한을 올리기 전에 비용·큐 원인을 확인한다.
+- provider 지원 문의가 필요하면 제한된 내부 후보 provenance에서 request ID와 발생 시각만 조회한다. 관리자 화면·Sentry·공개 티켓에는 request ID, prompt/response, 댓글 본문, 정답·해설 전문, 키를 복사하지 않는다.
+- OpenAI 프로젝트 월 USD 5 예산/알림은 대시보드 통제이고, 일 5·월 150·pending 50은 코드/DB 요청 통제임을 별도로 확인한다.
+- rollback은 `AI_COMMENT_GENERATION_ENABLED=false` 반영과 AI Cron 일시 중단 순서로 수행한다. 기존 pending 후보를 자동 게시하거나 승인된 댓글을 자동 삭제하지 않는다.
+- 브라우저 visual QA와 Vercel 플랜별 Cron 개수/주기 검증이 불가능하면 활성화를 보류하고 제한 사항을 배포 기록에 남긴다.
