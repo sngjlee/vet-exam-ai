@@ -31,7 +31,7 @@ describe("AI comment database security contract", () => {
         "revoke execute on function public.render_ai_comment_body_html",
         start,
       );
-      const renderer = sql.slice(start, end);
+      const renderer = sql.slice(start, end).replaceAll("\r\n", "\n");
 
       // Then: PostgreSQL sees a complete opening and closing dollar quote.
       expect(renderer).toContain("\nas $$\n");
