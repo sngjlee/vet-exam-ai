@@ -219,6 +219,22 @@ second line</p>'
 end;
 $$;
 
+do $$
+declare
+  v_fixture ai_comment_review_fixture%rowtype;
+begin
+  select * into strict v_fixture from ai_comment_review_fixture;
+  if (
+    select count(*)
+      from public.search_comments('apostrophe', null, null, 30, 0)
+     where id = v_fixture.published_comment_id
+       and question_public_id = v_fixture.question_public_id
+  ) <> 1 then
+    raise exception 'approved AI comment missing from comment search';
+  end if;
+end;
+$$;
+
 with inserted as (
   insert into public.ai_comment_candidates (
     question_public_id, seed_author_key, seed_user_id, comment_type, body_text,
