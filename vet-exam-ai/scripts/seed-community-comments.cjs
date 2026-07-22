@@ -440,21 +440,44 @@ async function main() {
 
   initSupabase();
   const authorIds = await ensureSeedAccounts();
-  const questionIds = [...new Set(comments.map((comment) => comment.question_id))];
+  const internalIds = [...new Set(comments.map((comment) => comment.question_id))];
 
+  // B1: the fixture keeps historical internal IDs; resolve them before writing
+  // so this documented manual path stays compatible with public-ID consumers.
+  const { data: questionRows, error: questionError } = await supabase
+    .from("questions")
+    .select("id, public_id")
+    .in("id", internalIds);
+  if (questionError) throw questionError;
+
+  const publicIdByInternal = new Map(
+    (questionRows ?? [])
+      .filter((row) => row.public_id)
+      .map((row) => [row.id, row.public_id]),
+  );
+  const unresolved = internalIds.filter((id) => !publicIdByInternal.has(id));
+  if (unresolved.length > 0) {
+    throw new Error(`Missing public question IDs for: ${unresolved.join(", ")}`);
+  }
+
+  const questionPublicIds = internalIds.map((id) => publicIdByInternal.get(id));
   const { data: existingRows, error: existingError } = await supabase
     .from("comments")
-    .select("question_id, body_text")
-    .in("question_id", questionIds);
+    .select("question_public_id, body_text")
+    .in("question_public_id", questionPublicIds);
   if (existingError) throw existingError;
 
   const existing = new Set(
-    (existingRows ?? []).map((row) => `${row.question_id}\n${row.body_text}`),
+    (existingRows ?? []).map(
+      (row) => `${row.question_public_id}\n${row.body_text}`,
+    ),
   );
+  const keyOf = (comment) =>
+    `${publicIdByInternal.get(comment.question_id)}\n${comment.body_text}`;
   const rows = comments
-    .filter((comment) => !existing.has(`${comment.question_id}\n${comment.body_text}`))
+    .filter((comment) => !existing.has(keyOf(comment)))
     .map((comment) => ({
-      question_id: comment.question_id,
+      question_public_id: publicIdByInternal.get(comment.question_id),
       user_id: authorIds[comment.author],
       parent_id: null,
       type: comment.type,
@@ -472,7 +495,7 @@ async function main() {
   const { data, error } = await supabase
     .from("comments")
     .insert(rows)
-    .select("id, question_id, type, user_id");
+    .select("id, question_public_id, type, user_id");
   if (error) throw error;
 
   console.log(`Inserted ${data.length} comments.`);
