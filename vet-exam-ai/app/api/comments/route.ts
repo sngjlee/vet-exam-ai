@@ -17,6 +17,7 @@ import {
   type CommentsListResponse,
   type CommentsSortMode,
 } from "../../../lib/comments/list";
+import { toPublicCommentPreview } from "../../../lib/comments/publicProjection";
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -138,21 +139,11 @@ export async function GET(req: NextRequest) {
 
   const comments: CommentPreview[] = rows.map((row) => {
     const question = questionById.get(row.question_public_id ?? "");
-    return {
-      id: row.id,
-      questionId: row.question_public_id ?? "",
-      userId: row.user_id,
-      type: row.type,
-      bodyText: row.body_text,
-      voteScore: row.vote_score ?? 0,
-      replyCount: row.reply_count ?? 0,
-      createdAt: row.created_at,
-      questionPublicId: question?.public_id ?? null,
-      questionPreview: question?.question ?? "문제 정보를 불러올 수 없습니다.",
-      category: question?.category ?? "기타",
-      topic: question?.topic ?? null,
+    return toPublicCommentPreview({
+      row,
+      question,
       authorNickname: row.user_id ? nicknameByUserId.get(row.user_id) ?? null : null,
-    };
+    });
   });
 
   const body: CommentsListResponse = {

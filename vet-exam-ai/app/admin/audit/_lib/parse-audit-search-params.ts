@@ -135,6 +135,8 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   announcement_pinned:                  "공지 고정",
   ip_ban_grant:                         "IP 차단 추가",
   ip_ban_revoke:                        "IP 차단 해제",
+  ai_comment_publish:                   "댓글 후보 승인",
+  ai_comment_reject:                    "댓글 후보 거절",
 };
 
 export const TARGET_TYPE_LABEL: Record<string, string> = {

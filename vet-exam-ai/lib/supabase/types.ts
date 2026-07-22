@@ -349,6 +349,78 @@ export interface Database {
         Relationships: [];
       };
 
+      ai_comment_candidates: {
+        Row: {
+          id: string;
+          question_public_id: string;
+          seed_author_key: "memory" | "explain" | "wrong" | "correction" | null;
+          seed_user_id: string | null;
+          comment_type: Database["public"]["Enums"]["comment_type"] | null;
+          body_text: string | null;
+          status: "generating" | "pending" | "published" | "rejected" | "failed";
+          model: string;
+          prompt_version: string;
+          input_hash: string;
+          openai_request_id: string | null;
+          client_request_id: string | null;
+          risk_flags: unknown[];
+          input_tokens: number | null;
+          output_tokens: number | null;
+          reasoning_tokens: number | null;
+          failure_code: string | null;
+          completed_at: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          published_comment_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          question_public_id: string;
+          seed_author_key?: "memory" | "explain" | "wrong" | "correction" | null;
+          seed_user_id?: string | null;
+          comment_type?: Database["public"]["Enums"]["comment_type"] | null;
+          body_text?: string | null;
+          status?: "generating" | "pending" | "published" | "rejected" | "failed";
+          model: string;
+          prompt_version: string;
+          input_hash: string;
+          openai_request_id?: string | null;
+          client_request_id?: string | null;
+          risk_flags?: unknown[];
+          input_tokens?: number | null;
+          output_tokens?: number | null;
+          reasoning_tokens?: number | null;
+          failure_code?: string | null;
+          completed_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          published_comment_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          seed_author_key?: "memory" | "explain" | "wrong" | "correction" | null;
+          seed_user_id?: string | null;
+          comment_type?: Database["public"]["Enums"]["comment_type"] | null;
+          body_text?: string | null;
+          status?: "generating" | "pending" | "published" | "rejected" | "failed";
+          openai_request_id?: string | null;
+          client_request_id?: string | null;
+          risk_flags?: unknown[];
+          input_tokens?: number | null;
+          output_tokens?: number | null;
+          reasoning_tokens?: number | null;
+          failure_code?: string | null;
+          completed_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          published_comment_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       comment_votes: {
         Row: {
           comment_id: string;
@@ -864,6 +936,29 @@ export interface Database {
       };
     };
     Functions: {
+      reserve_ai_comment_generation: {
+        Args: {
+          p_question_public_id: string;
+          p_input_hash: string;
+          p_model: string;
+          p_prompt_version: string;
+          p_daily_limit?: number;
+          p_monthly_limit?: number;
+          p_pending_limit?: number;
+        };
+        Returns: {
+          result: Database["public"]["Enums"]["ai_comment_claim_result"];
+          candidate_id: string | null;
+        }[];
+      };
+      review_ai_comment_candidate: {
+        Args: {
+          p_candidate_id: string;
+          p_resolution: "approve" | "reject";
+          p_note?: string | null;
+        };
+        Returns: string | null;
+      };
       is_temp_nickname: {
         Args: { n: string };
         Returns: boolean;
@@ -1293,6 +1388,12 @@ export interface Database {
         | "announcement_published"
         | "post_blinded";
       correction_status: "proposed" | "reviewing" | "accepted" | "rejected";
+      ai_comment_claim_result:
+        | "claimed"
+        | "duplicate"
+        | "daily_limit"
+        | "monthly_limit"
+        | "pending_limit";
       audit_action:
         | "comment_remove"
         | "comment_unblind"
@@ -1316,7 +1417,9 @@ export interface Database {
         | "board_post_comment_visibility_change"
         | "announcement_pinned"
         | "ip_ban_grant"
-        | "ip_ban_revoke";
+        | "ip_ban_revoke"
+        | "ai_comment_publish"
+        | "ai_comment_reject";
       image_triage_status:
         | "pending"
         | "activate_no_image"
@@ -1343,6 +1446,7 @@ export type WrongNoteRow           = Database["public"]["Tables"]["wrong_notes"]
 export type UserProfilePublicRow   = Database["public"]["Tables"]["user_profiles_public"]["Row"];
 export type BadgeRow               = Database["public"]["Tables"]["badges"]["Row"];
 export type CommentRow             = Database["public"]["Tables"]["comments"]["Row"];
+export type AiCommentCandidateRow   = Database["public"]["Tables"]["ai_comment_candidates"]["Row"];
 export type CommentVoteRow         = Database["public"]["Tables"]["comment_votes"]["Row"];
 export type CommentReportRow       = Database["public"]["Tables"]["comment_reports"]["Row"];
 export type CommentPinRow          = Database["public"]["Tables"]["comment_pins"]["Row"];

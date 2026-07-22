@@ -12,6 +12,7 @@ import {
   Ban,
   Activity,
   ChartNoAxesColumnIncreasing,
+  MessageSquareText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -33,6 +34,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "시험",      href: "/admin/exams",           icon: GraduationCap },
   { label: "신고",      href: "/admin/reports",         icon: Flag },
   { label: "정정",      href: "/admin/corrections",     icon: GitPullRequest },
+  { label: "댓글 초안", href: "/admin/ai-comments",     icon: MessageSquareText },
   { label: "감사",      href: "/admin/audit",           icon: History },
   { label: "건의 관리", href: "/admin/suggestions",     icon: MessageSquareDot },
   { label: "운영 점검", href: "/admin/ops",             icon: Activity },
