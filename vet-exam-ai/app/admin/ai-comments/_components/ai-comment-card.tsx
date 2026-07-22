@@ -130,7 +130,7 @@ export function AiCommentCard({ item }: AiCommentCardProps) {
             <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>댓글 초안</p>
             <blockquote
               className="mt-2 whitespace-pre-wrap rounded-xl border p-4 text-sm leading-7"
-              style={{ background: "var(--surface)", borderColor: "var(--teal-border)", color: "var(--text)" }}
+              style={{ background: "var(--surface)", borderColor: "var(--teal-border)", color: "var(--text)", wordBreak: "keep-all" }}
             >
               {item.bodyText}
             </blockquote>

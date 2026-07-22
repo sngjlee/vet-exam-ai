@@ -44,6 +44,7 @@ describe("AiCommentCard", () => {
     expect(html).toContain("다음 중 가장 적절한 처치는 무엇인가?");
     expect(html).toContain("두 번째 처치가 공식 해설의 근거에 부합한다.");
     expect(html).toContain("개념산책");
+    expect(html).toContain("word-break:keep-all");
     expect(html).toContain("gpt-5.6-terra");
     expect(html).toContain("승인하고 게시");
     expect(uuidOccurrences).toBe(1);
